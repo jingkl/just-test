@@ -51,7 +51,7 @@ class DefaultConfigs:
         :param deploy_mode: cluster or standalone
         :param other_configs: [{}], configuration of custom dictionary format
         :param update_helm_file: bool
-        :param values_file_path: /
+        :param values_file_path: str
         :param kwargs: support setting replicas for dataNode, queryNode, indexNode, proxy
         :return: dictionary format configuration, config name, configuration -> dict
         Configure priority: default value -> default setting -> params setting -> other_configs -> cmd arguments

@@ -11,6 +11,10 @@ class EnvVariable:
     FOURAM_LOG_PATH_NAME = 'FOURAM_LOG_PATH'
     FOURAM_LOG_PATH = BaseConfig.get_env_variable(default_var=FOURAM_LOG_PATH_NAME, default_value='/tmp/fouram_logs/')
 
+    FOURAM_LOG_SUB_FOLDER_PREFIX_NAME = "FOURAM_LOG_SUB_FOLDER_PREFIX"
+    FOURAM_LOG_SUB_FOLDER_PREFIX = BaseConfig.get_env_variable(default_var=FOURAM_LOG_SUB_FOLDER_PREFIX_NAME,
+                                                               default_value="")
+
     FOURAM_LOG_LEVEL = "FOURAM_LOG_LEVEL"
     LOG_LEVEL = BaseConfig.get_env_variable(default_var=FOURAM_LOG_LEVEL, default_value="INFO")
 
@@ -18,7 +22,7 @@ class EnvVariable:
     WORK_DIR = BaseConfig.get_env_variable(default_var=WORK_DIR_NAME, default_value="/Users/wt/Desktop/")
 
     KUBECONFIG_NAME = "KUBECONFIG"
-    KUBECONFIG = BaseConfig.get_env_variable(default_var=KUBECONFIG_NAME, default_value="~/.kube/config")
+    KUBECONFIG = BaseConfig.get_env_variable(default_var=KUBECONFIG_NAME, default_value="")  # ~/.kube/config
 
     NAMESPACE_NAME = "NAMESPACE"
     NAMESPACE = BaseConfig.get_env_variable(default_var=NAMESPACE_NAME, default_value="default")
@@ -29,6 +33,9 @@ class EnvVariable:
 
     MILVUS_GOBENCH_NAME = "MILVUS_GOBENCH"
     MILVUS_GOBENCH_PATH = BaseConfig.get_env_variable(default_var=MILVUS_GOBENCH_NAME, default_value="/src/benchmark")
+
+    KUBERNETES_SERVICE_HOST = BaseConfig.get_env_variable(default_var="KUBERNETES_SERVICE_HOST",
+                                                          default_value="localhost")
 
 
 class GlobalParams:

@@ -33,7 +33,7 @@ class LogLevel:
 
 class DefaultValue:
     default_dim = 128
-    default_max_length = 65535
+    default_max_length = 256  # 65535
     default_desc = ""
 
     default_int64_field_name = "int64"
@@ -41,6 +41,7 @@ class DefaultValue:
     default_double_field_name = "double"
     default_float_vec_field_name = "float_vector"
     default_binary_vector_name = "binary_vector"
+    default_varchar_field_name = "varchar"
 
     err_code = "err_code"
     err_msg = "err_msg"

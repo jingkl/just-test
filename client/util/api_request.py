@@ -8,7 +8,7 @@ from commons.common_type import PRECISION
 from commons.common_func import truncated_output
 from utils.util_log import log
 
-log_row_length = 300
+log_row_length = 3000
 info_logout = ["Collection.insert", "Index", "Collection.load", "Collection.search", "Collection.query"]
 
 

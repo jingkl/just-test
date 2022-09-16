@@ -16,7 +16,11 @@ class CmdExe:
             res = subprocess.check_output(self._cmd, shell=True, stderr=subprocess.STDOUT, timeout=timeout,
                                           encoding='utf-8')
             return res.rstrip('\n')
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
+            log.error("[Cmd Exe] Execute cmd:{0} raise error output:{1}, code:{2}".format(self._cmd,
+                                                                                          e.output, e.returncode))
+            return ''
+        except subprocess.SubprocessError as e:
             log.error("[Cmd Exe] Execute cmd:{0} raise error:{1}".format(self._cmd, e))
             return ''
 

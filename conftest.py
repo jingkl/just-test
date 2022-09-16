@@ -1,5 +1,6 @@
 import pytest
 import sys
+from pprint import pformat
 from utils.util_log import log
 from client.check.param_check import ip_check, number_check
 from configs.log_config import log_config
@@ -20,9 +21,12 @@ def pytest_addoption(parser):
     parser.addoption("--milvus_tag_prefix", action="store", default="", help="milvus container tag prefix")
     parser.addoption("--tag_repository", action="store", default=None, help="tag repository")
     parser.addoption("--update_helm_file", action="store_true", default=False, help="update helm file values.yaml")
+    parser.addoption("--release_name_prefix", action="store", default="", help="release name prefix")
     # case input params
     parser.addoption("--deploy_skip", action="store_true", default=False,
                      help="skip deploy, use the incoming address or the default address")
+    parser.addoption("--client_test_skip", action="store_true", default=False,
+                     help="skip client test, only deploy or other test")
     parser.addoption("--deploy_tool", action="store", default=Helm, help="helm or operator")
     parser.addoption("--deploy_mode", action="store", default="", help="standalone or cluster")
     parser.addoption("--deploy_config", action="store", default="", help="str or dict")
@@ -70,56 +74,6 @@ def err_msg(request):
     return request.config.getoption("--err_msg")
 
 
-@pytest.fixture
-def deploy_skip(request):
-    return request.config.getoption("--deploy_skip")
-
-
-@pytest.fixture
-def deploy_tool(request):
-    return request.config.getoption("--deploy_tool")
-
-
-@pytest.fixture
-def deploy_mode(request):
-    return request.config.getoption("--deploy_mode")
-
-
-@pytest.fixture
-def deploy_config(request):
-    return request.config.getoption("--deploy_config")
-
-
-@pytest.fixture
-def deploy_retain(request):
-    return request.config.getoption("--deploy_retain")
-
-
-@pytest.fixture
-def case_params(request):
-    return request.config.getoption("--case_params")
-
-
-@pytest.fixture
-def case_skip_prepare(request):
-    return request.config.getoption("--case_skip_prepare")
-
-
-@pytest.fixture
-def case_skip_prepare_clean(request):
-    return request.config.getoption("--case_skip_prepare_clean")
-
-
-@pytest.fixture
-def case_skip_build_index(request):
-    return request.config.getoption("--case_skip_build_index")
-
-
-@pytest.fixture
-def case_skip_clean_collection(request):
-    return request.config.getoption("--case_skip_clean_collection")
-
-
 """ fixture func """
 
 
@@ -137,6 +91,9 @@ def initialize_env(request):
     update_helm_file = request.config.getoption("--update_helm_file")
     deploy_skip = request.config.getoption("--deploy_skip")
     deploy_retain = request.config.getoption("--deploy_retain")
+    client_test_skip = request.config.getoption("--client_test_skip")
+    release_name_prefix = request.config.getoption("--release_name_prefix")
+    # release_name_prefix = getattr(request.config.option, "release_name_prefix")
 
     """ params check """
     # assert ip_check(host) and number_check(port)
@@ -150,11 +107,13 @@ def initialize_env(request):
     param_info.prepare_param_info(client_version, host, port, secure=secure, milvus_tag=milvus_tag,
                                   milvus_tag_prefix=milvus_tag_prefix, tag_repository=tag_repository,
                                   deploy_skip=deploy_skip, deploy_retain=deploy_retain,
-                                  update_helm_file=update_helm_file)
-    yield
-    if param_info.test_status is False:
-        log.error("Test result is False, please check!!!")
-        sys.exit(-1)
+                                  client_test_skip=client_test_skip, update_helm_file=update_helm_file,
+                                  release_name_prefix=release_name_prefix)
+    log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
+    # yield
+    # if param_info.test_status is False:
+    #     log.error("Test result is False, please check!!!")
+    #     sys.exit(-1)
 
 
 @pytest.fixture(scope="session")

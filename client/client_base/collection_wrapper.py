@@ -11,7 +11,7 @@ from client.util.api_request import api_request
 from parameters.input_params import param_info
 
 
-TIMEOUT = 200
+TIMEOUT = 300
 
 
 class ApiCollectionWrapper:
@@ -110,24 +110,34 @@ class ApiCollectionWrapper:
                                        **kwargs).run()
         return res, check_result
 
+    # def flush(self, check_task=None, check_items=None, **kwargs):
+    #     # TODO:currently, flush is not supported by sdk in milvus
+    #     timeout = kwargs.get("timeout", TIMEOUT)
+    #
+    #     @timeout_decorator.timeout(timeout, timeout_exception=TimeoutError)
+    #     def _flush():
+    #         start = time.perf_counter()
+    #         _res = self.collection.num_entities
+    #         rt = time.perf_counter() - start
+    #         return _res, rt
+    #
+    #     try:
+    #         res = _flush()
+    #         return res, True
+    #     except TimeoutError as e:
+    #         # log.error(f"flush timeout error: {e}")
+    #         res = None
+    #         return res, False
+
     def flush(self, check_task=None, check_items=None, **kwargs):
-        # TODO:currently, flush is not supported by sdk in milvus
         timeout = kwargs.get("timeout", TIMEOUT)
+        kwargs.update({"timeout": timeout})
 
-        @timeout_decorator.timeout(timeout, timeout_exception=TimeoutError)
-        def _flush():
-            start = time.perf_counter()
-            _res = self.collection.num_entities
-            rt = time.perf_counter() - start
-            return _res, rt
-
-        try:
-            res = _flush()
-            return res, True
-        except TimeoutError as e:
-            # log.error(f"flush timeout error: {e}")
-            res = None
-            return res, False
+        func_name = sys._getframe().f_code.co_name
+        res, check = api_request([self.collection.flush], **kwargs)
+        check_result = ResponseChecker(res, func_name, check_task,
+                                       check_items, check, **kwargs).run()
+        return res, check_result
 
     def search(self, data, anns_field, param, limit, expr=None,
                partition_names=None, output_fields=None, timeout=None, round_decimal=-1,
@@ -147,7 +157,7 @@ class ApiCollectionWrapper:
     def query(self, expr, output_fields=None, partition_names=None, timeout=None, check_task=None, check_items=None,
               **kwargs):
         # time.sleep(5)
-        timeout = TIMEOUT if timeout is None else timeout
+        # timeout = TIMEOUT if timeout is None else timeout
 
         func_name = sys._getframe().f_code.co_name
         res, check = api_request([self.collection.query, expr, output_fields, partition_names, timeout])

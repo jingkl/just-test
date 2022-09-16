@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from collections import Iterable, Iterator
 from pprint import pformat
+import copy
 
 from workflow.base import Base
 from parameters.input_params import param_info, InputParamsBase
@@ -22,13 +23,15 @@ class PerfTemplate(Base):
     def serial_template(self, input_params: InputParamsBase, case_callable_obj: callable,
                         default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
+        input_params = copy.deepcopy(input_params)
 
         # server
         if not param_info.deploy_skip:
             input_params.deploy_mode = input_params.deploy_mode or deploy_mode
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
-                                other_config=input_params.deploy_config, cpu=cpu, mem=mem)
+                                other_config=input_params.deploy_config, cpu=cpu,
+                                mem=mem)
             # update server metric
             Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                                deploy_mode=input_params.deploy_mode,
@@ -36,6 +39,11 @@ class PerfTemplate(Base):
         else:
             self.clear_deploy_report_params(input_params=input_params)
         Report_Metric_Object.update_server(host=param_info.param_host)
+
+        if param_info.client_test_skip:
+            log.info("[PerfTemplate] Skip client test, display server host:{0}, port:{1}".format(param_info.param_host,
+                                                                                                 param_info.param_port))
+            return param_info.param_host, param_info.param_port
 
         # client
         run_perf_case = self.run_perf_case(callable_obj=case_callable_obj,
@@ -57,8 +65,8 @@ class PerfTemplate(Base):
                     log.info("[PerfTemplate] Report data: \n{}".format(pformat(Report_Metric_Object.to_dict(),
                                                                                sort_dicts=False)))
                     Database_Client.mongo_insert(Report_Metric_Object.to_dict())
-                elif len(res) == 2 and res[1] is False:
-                    param_info.test_status = False
+                # elif len(res) == 2 and res[1] is False:
+                #     param_info.test_status = False
 
         if isinstance(run_perf_case, Iterator):
             return next(run_perf_case)

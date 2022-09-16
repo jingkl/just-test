@@ -146,18 +146,23 @@ class CommonCases(Base):
             end_time = start_time + 500
 
             cnt = 0
+            search_rt = []
             while cnt < 100 and start_time < end_time:
-                self.search(**_params)
+                res_search = self.search(**_params)
+                search_rt.append(round(res_search[0][1], Precision.SEARCH_PRECISION))
                 cnt += 1
                 start_time = time.time()
 
             result, check_result = self.search(**_params)
             rt = result[1]
+            search_rt.append(rt)
 
             result_ids = get_search_ids(result[0])
             acc_value = get_recall_value(self.dataset_neighbors[:nq, :top_k].tolist(), result_ids)
 
-            search_res = {"Recall": acc_value, "RT": round(rt, Precision.SEARCH_PRECISION)}
+            search_res = {"Recall": acc_value,
+                          "RT": round(float(np.mean(search_rt)), Precision.SEARCH_PRECISION),
+                          "LastRT": round(rt, Precision.SEARCH_PRECISION)}
             self.case_report.add_attr(**{"search": search_res})
 
             log.info("[AccCases] Search result:{0}".format(search_res))

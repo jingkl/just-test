@@ -27,7 +27,8 @@ class ParamsBase:
 class ParamsFormat:
     base = {
         collection_params: {other_fields: ([type(list())], OPTION),
-                            shards_num: ([type(int())], OPTION)},
+                            shards_num: ([type(int())], OPTION),
+                            dim: ([type(int())], OPTION)},
         load_params: {replica_number: ([type(int())], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
@@ -71,15 +72,17 @@ class ParamsFormat:
     }, base)
 
     common_scene_query_ids = update_dict_value({
+        dataset_params: {req_run_counts: ([type((int()))], MUST)},
         query_params: {ids: ([type(list())], MUST)}
     }, common_scene_load)
 
     common_scene_query_expr = update_dict_value({
+        dataset_params: {req_run_counts: ([type((int()))], MUST)},
         query_params: {expression: ([type(str())], MUST)}
     }, common_scene_load)
 
     common_scene_search = update_dict_value({
-        dataset_params: {req_run_counts: ([type((int()))], OPTION)},
+        dataset_params: {req_run_counts: ([type((int()))], MUST)},
         search_params: {top_k: ([type(int()), type(list())], MUST),
                         nq: ([type(int()), type(list())], MUST),
                         search_param: ([type(dict())], MUST),

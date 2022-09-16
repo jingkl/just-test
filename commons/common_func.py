@@ -10,6 +10,8 @@ import copy
 from sklearn import preprocessing
 from typing import List
 
+from deploy.commons.common_params import Helm, Operator
+
 from utils.util_log import log
 from utils.util_catch import func_request
 
@@ -83,6 +85,7 @@ def read_json_file(file_path):
     finally:
         if f:
             f.close()
+    log.debug("[read_json_file] Read file:{0}, content:{1}".format(file_path, file_dict))
     return file_dict
 
 
@@ -105,6 +108,7 @@ def read_yaml_file(file_path):
     finally:
         if f:
             f.close()
+    log.debug("[read_yaml_file] Read file:{0}, content:{1}".format(file_path, file_dict))
     return file_dict
 
 
@@ -126,6 +130,8 @@ def parser_input_config(input_content):
         _content = input_content
     else:
         raise Exception(msg)
+    _content = {} if _content is None else _content
+    log.debug("[parser_input_config] Parser content: {0}".format(_content))
     return _content
 
 
@@ -167,3 +173,11 @@ def execute_funcs(funcs: List[tuple]):
 def truncated_output(context, row_length=300):
     _str = str(context)
     return _str[0:row_length] + '......' if len(_str) > row_length else _str
+
+
+def check_deploy_config(deploy_tool, configs):
+    if deploy_tool == Helm:
+        configs = configs if isinstance(configs, str) else ""
+    elif deploy_tool == Operator:
+        configs = configs if isinstance(configs, dict) else {}
+    return configs
