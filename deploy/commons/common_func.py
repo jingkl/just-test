@@ -10,7 +10,6 @@ import json
 import copy
 import pytz
 from yaml import full_load, dump
-import yaml
 import tableprint as tp
 from pprint import pprint
 
@@ -80,6 +79,28 @@ def update_dict_value(server_resource, values_dict):
     target = dict_update(_source, _target)
 
     return target
+
+
+def read_file(file_path):
+    if not isinstance(file_path, str):
+        log.error("[read_file] Param of file_path({}) is not a str.".format(type(file_path)))
+        return {}
+
+    if not os.path.isfile(file_path):
+        log.error("[read_file] file(%s) is not exist." % file_path)
+        return {}
+
+    try:
+        with open(file_path) as f:
+            file_content = f.read()
+            f.close()
+    except Exception as e:
+        file_content = ""
+        log.error("[read_file] Can not open file({0}), error: {1}".format(file_path, e))
+    finally:
+        if f:
+            f.close()
+    return file_content
 
 
 def read_json_file(file_path):
@@ -332,8 +353,8 @@ def format_dict_output(data_keys: tuple, data_list: list):
         if not isinstance(_dict, dict):
             return data_list
         for k in data_keys:
-            if len_dict[k] < len(_dict[k]):
-                len_dict.update({k: len(_dict[k])})
+            if len_dict[k] < len(str(_dict[k])):
+                len_dict.update({k: len(str(_dict[k]))})
 
     title = ""
     for k in data_keys:
@@ -355,6 +376,42 @@ def format_dict_output(data_keys: tuple, data_list: list):
     return output_str
     # return {"title": data_keys,
     #         "values": values}
+
+
+def check_multi_keys_exist(target: dict, keys: list):
+    """
+    :return key's value
+    """
+    t = target
+    for k in keys:
+        if k in t:
+            t = t[k]
+        else:
+            raise ValueError("[check_multi_keys_exist] Keys:{0} not in target dict:{1}".format(keys, target))
+    return t
+
+
+def parser_op_item(item: dict):
+    # _tt = utc_conversion(item["metadata"]["creationTimestamp"])
+    # return {"NAME": item["metadata"]["name"],
+    #         "STATUS": item["status"]["phase"],
+    #         "RESTARTS": item["status"]["containerStatuses"][0]["restartCount"],
+    #         "AGE": _tt,
+    #         "IP": item["status"]["podIP"],
+    #         "NODE": item["spec"]["nodeName"]}
+
+    container_status = check_multi_keys_exist(item, ["status", "containerStatuses"])
+    max_count = 0
+    for c in container_status:
+        if "restartCount" in c:
+            max_count = c["restartCount"] if c["restartCount"] > max_count else max_count
+    _tt = utc_conversion(check_multi_keys_exist(item, ["metadata", "creationTimestamp"]))
+    return {"NAME": check_multi_keys_exist(item, ["metadata", "name"]),
+            "STATUS": check_multi_keys_exist(item, ["status", "phase"]),
+            "RESTARTS": max_count,
+            "AGE": _tt,
+            "IP": check_multi_keys_exist(item, ["status", "podIP"]),
+            "NODE": check_multi_keys_exist(item, ["spec", "nodeName"])}
 
 
 def hide_value(source, keys):
@@ -407,45 +464,46 @@ def get_class_mode(deploy_mode, deploy_class):
 
 def get_vdc_server_resource(resource):
     template = {
-           "imageTag": -1,
-           "rootCoord": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "dataCoord": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "indexCoord": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "dataNode": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "indexNode": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "queryNode": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "proxy": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           },
-           "standalone": {
-                "replicas": -1,
-                "cpu": -1,
-                "memory": -1
-           }
+        "imageTag": -1,
+        "rootCoord": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "dataCoord": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "indexCoord": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "dataNode": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "indexNode": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "queryNode": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "proxy": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        },
+        "standalone": {
+            "replicas": -1,
+            "cpu": -1,
+            "memory": -1
+        }
     }
+

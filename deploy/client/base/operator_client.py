@@ -3,7 +3,8 @@ from pprint import pformat
 
 from utils.util_log import log
 
-from deploy.commons.common_func import update_dict_value, utc_conversion, format_dict_output, get_api_version
+from deploy.commons.common_func import update_dict_value, utc_conversion, format_dict_output, get_api_version, \
+    parser_op_item, check_multi_keys_exist
 from deploy.commons.common_params import CLUSTER, STANDALONE, MilvusCluster, Milvus, PersistentVolumeClaim, Pod
 from deploy.client.base.dynamic_client import DynamicClient
 from deploy.client.base.base_client import BaseClient
@@ -42,6 +43,11 @@ class OperatorClient(BaseClient):
 
         self.release_name = release_name
 
+    @staticmethod
+    def _raise(msg: str):
+        log.error(msg)
+        raise Exception(msg)
+
     def reset_release_name(self, release_name):
         self.release_name = release_name
 
@@ -76,10 +82,11 @@ class OperatorClient(BaseClient):
         if self.release_name != "":
             body = update_dict_value({"metadata": {"name": self.release_name}}, body)
 
+        log.debug("[install] Final config for operator deployment: {0}".format(body))
         res, result = self.dc.create(body=body, namespace=namespace, result_check=True)
         if not result:
             status = res.status if "status" in dir(res) else res
-            log.error("[install] Create failed, error:{0}, body:{1}".format(status, body))
+            self._raise("[install] Create failed, error:{0}, body:{1}".format(status, body))
         else:
             log.info("[install] Install:{0}, namespace:{1}".format(body, namespace))
             self.release_name = body["metadata"]["name"]
@@ -100,8 +107,8 @@ class OperatorClient(BaseClient):
         res, result = self.dc.patch(body=body, namespace=namespace, content_type=content_type, result_check=True)
         if not result:
             status = res.status if "status" in dir(res) else res
-            log.error("[upgrade] Upgrade failed, error:{0}, body:{1}".format(status, body))
-        log.info("[upgrade] Upgrade:{0}, namespace:{1}".format(body, namespace))
+            self._raise("[upgrade] Upgrade failed, error:{0}, body:{1}".format(status, body))
+        log.debug("[upgrade] Upgrade:{0}, namespace:{1}".format(body, namespace))
         return self.dc.result_to_dict(res) if parser_result else res
 
     def uninstall(self, release_name: str, namespace=None, delete_pvc=False, parser_result=True):
@@ -115,7 +122,7 @@ class OperatorClient(BaseClient):
         res, result = self.dc.delete(name=release_name, namespace=namespace, result_check=True)
         if not result:
             status = res.status if "status" in dir(res) else res
-            log.error("[uninstall] Instance:{0} uninstall failed, error:{1}".format(release_name, status))
+            self._raise("[uninstall] Instance:{0} uninstall failed, error:{1}".format(release_name, status))
         else:
             log.info(
                 "[uninstall] Uninstall:{0}, namespace:{1}, delete_pvc:{2}".format(release_name, namespace, delete_pvc))
@@ -136,10 +143,7 @@ class OperatorClient(BaseClient):
                         log.info("[endpoint] Get the endpoint:{0} of {1}".format(ep, release_name))
                         return ep
                     else:
-                        raise Exception(
-                            "[endpoint] Can not get the endpoint of {}, please check later".format(release_name))
-        # log.error("[endpoint] Can not get the endpoint of {}".format(release_name))
-        # return ""
+                        self._raise("[endpoint] Can not get the endpoint of {}, please check.".format(release_name))
 
     def delete_pvc(self, release_name: str, namespace=None):
         release_name = release_name or self.release_name
@@ -154,7 +158,7 @@ class OperatorClient(BaseClient):
             if not result:
                 results = False
                 status = res.status if "status" in dir(res) else res
-                log.error("[delete_pvc] Delete pvc:{0} failed, error:{1}".format(pvc_name, status))
+                self._raise("[delete_pvc] Delete pvc:{0} failed, error:{1}".format(pvc_name, status))
 
         log.info("[delete_pvc] Delete pvc:{0}, namespace:{1}".format(list(pvc_names), namespace))
         return results
@@ -178,9 +182,7 @@ class OperatorClient(BaseClient):
 
             log.info("[wait_for_healthy] Waiting for instance:{0} health...".format(release_name))
             time.sleep(30)
-
-        log.error("[wait_for_healthy] Instance:{0} is not ready.".format(release_name))
-        return status
+        self._raise("[wait_for_healthy] Instance:{0} is not ready.".format(release_name))
 
     def get_status(self, release_name: str, namespace=None):
         release_name = release_name or self.release_name
@@ -228,7 +230,7 @@ class OperatorClient(BaseClient):
                 for _list in check_list:
                     if _list in _config["metadata"]["name"]:
                         result_dict.update({_config["metadata"]["name"]: _config})
-        log.info("[check_pvc_exist] pvc details of release({0}): {1}".format(release_name, result_dict))
+        log.debug("[check_pvc_exist] pvc details of release({0}): {1}".format(release_name, result_dict))
         return result_dict
 
     def get_pvc(self, release_name: str, namespace=None):
@@ -238,16 +240,25 @@ class OperatorClient(BaseClient):
         release_pvc = self.check_pvc_exist(release_name=release_name, namespace=namespace)
         pvc_storage = []
         for pvc_name in release_pvc:
-            _tt = utc_conversion(release_pvc[pvc_name]["metadata"]["creationTimestamp"])
+            # _tt = utc_conversion(release_pvc[pvc_name]["metadata"]["creationTimestamp"])
+            _tt = utc_conversion(check_multi_keys_exist(release_pvc, [pvc_name, "metadata", "creationTimestamp"]))
             pvc_storage.append({"NAME": pvc_name,
-                                "STATUS": release_pvc[pvc_name]["status"]["phase"],
-                                "VOLUME": release_pvc[pvc_name]["spec"]["volumeName"],
-                                "CAPACITY": release_pvc[pvc_name]["status"]["capacity"]["storage"],
-                                "STORAGECLASS": release_pvc[pvc_name]["spec"]["storageClassName"],
+                                "STATUS": check_multi_keys_exist(release_pvc, [pvc_name, "status", "phase"]),
+                                "VOLUME": check_multi_keys_exist(release_pvc, [pvc_name, "spec", "volumeName"]),
+                                "CAPACITY": check_multi_keys_exist(release_pvc,
+                                                                   [pvc_name, "status", "capacity", "storage"]),
+                                "STORAGECLASS": check_multi_keys_exist(release_pvc,
+                                                                       [pvc_name, "spec", "storageClassName"]),
                                 "AGE": _tt})
+            # pvc_storage.append({"NAME": pvc_name,
+            #                     "STATUS": release_pvc[pvc_name]["status"]["phase"],
+            #                     "VOLUME": release_pvc[pvc_name]["spec"]["volumeName"],
+            #                     "CAPACITY": release_pvc[pvc_name]["status"]["capacity"]["storage"],
+            #                     "STORAGECLASS": release_pvc[pvc_name]["spec"]["storageClassName"],
+            #                     "AGE": _tt})
         log.info("[get_pvc] pvc storage class of release({0}): ".format(release_name))
-        format_dict_output(("NAME", "STATUS", "VOLUME", "CAPACITY", "STORAGECLASS", "AGE"), pvc_storage)
-        return pformat(pvc_storage)
+        return format_dict_output(("NAME", "STATUS", "VOLUME", "CAPACITY", "STORAGECLASS", "AGE"), pvc_storage)
+        # return pformat(pvc_storage)
 
     # kind: pod
     def get_pods(self, release_name: str, namespace=None):
@@ -265,12 +276,7 @@ class OperatorClient(BaseClient):
             parser_res = self.dc_pod.result_to_dict(res)
             if "items" in parser_res:
                 for item in parser_res["items"]:
-                    _tt = utc_conversion(item["metadata"]["creationTimestamp"])
-                    pod_details_list.append({"NAME": item["metadata"]["name"],
-                                             "STATUS": item["status"]["phase"],
-                                             "AGE": _tt,
-                                             "IP": item["status"]["podIP"],
-                                             "NODE": item["spec"]["nodeName"]})
+                    pod_details_list.append(parser_op_item(item))
         log.info("[get_pods] pod details of release({0}): ".format(release_name))
-        return format_dict_output(("NAME", "STATUS", "AGE", "IP", "NODE"), pod_details_list)
+        return format_dict_output(("NAME", "STATUS", "RESTARTS", "AGE", "IP", "NODE"), pod_details_list)
         # return pformat(pod_details_list)

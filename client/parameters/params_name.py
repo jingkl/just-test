@@ -57,7 +57,7 @@ class AccDatasetsName:
     glove_200_angular = "glove-200-angular"
     glove_100_angular = "glove-100-angular"
     glove_25_angular = "glove-25-angular"
-    kosarak_27983_jaccard = "binary_27984_jaccard"
+    kosarak_27983_jaccard = "kosarak-27983-jaccard"
 
 
 class DatasetsName:

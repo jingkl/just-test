@@ -77,6 +77,7 @@ class TestPerformanceCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=eval("AccParams().{0}()".format(p)))
 
+    # @pytest.mark.skip("https://github.com/milvus-io/milvus/issues/19321")
     @pytest.mark.recall
     @pytest.mark.parametrize("p", ["kosarak_27983_jaccard_bin_ivf_flat"])
     @pytest.mark.parametrize("deploy_mode", [STANDALONE, CLUSTER])
@@ -145,7 +146,7 @@ class TestPerformanceCases(PerfTemplate):
             1. insert and calculation of load time
         """
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
-                             case_callable_obj=Load().scene_load)
+                             case_callable_obj=Load().scene_load, default_case_params=LoadParams().params_load())
 
     def test_query_custom_parameters(self, input_params: InputParamsBase):
         """
@@ -167,6 +168,7 @@ class TestPerformanceCases(PerfTemplate):
                              case_callable_obj=Query().scene_query_ids,
                              default_case_params=eval("QueryParams().{0}()".format(p)))
 
+    # @pytest.mark.skip("https://github.com/milvus-io/milvus/issues/19102")
     @pytest.mark.query
     @pytest.mark.parametrize("p", ["params_scene_query_ids_local"])
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])

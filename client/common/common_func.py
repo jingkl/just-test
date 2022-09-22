@@ -13,7 +13,6 @@ from sklearn import preprocessing
 from itertools import product
 import subprocess
 
-
 from pymilvus import DataType
 from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper
 from client.common.common_type import DefaultValue as dv
@@ -51,16 +50,14 @@ def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_prim
     if dtype is None:
         for _field in field_types.keys():
             if name.startswith(_field.lower()):
+                _kwargs = {}
                 if _field in ["STRING", "VARCHAR"]:
-                    # _max_length = kwargs.get("max_length_per_row", dv.default_max_length_per_row)
-                    _max_length = kwargs.get("max_length", dv.default_max_length)
-                    kwargs.update({"max_length": _max_length})
+                    _kwargs.update({"max_length": kwargs.get("max_length", dv.default_max_length)})
                 if _field in ["BINARY_VECTOR", "FLOAT_VECTOR"]:
-                    _dim = kwargs.get("dim", dv.default_dim)
-                    kwargs.update({"dim": _dim})
+                    _kwargs.update({"dim": kwargs.get("dim", dv.default_dim)})
                 return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=field_types[_field],
                                                                  description=description, is_primary=is_primary,
-                                                                 **kwargs)[0][0]
+                                                                 **_kwargs)[0][0]
     else:
         if dtype in field_types.values():
             return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=dtype, description=description,
@@ -89,11 +86,17 @@ def get_recall_value(true_ids, result_ids):
     Use the intersection length
     """
     sum_radio = 0.0
+    topk_check = True
     for index, item in enumerate(result_ids):
         # tmp = set(item).intersection(set(flat_id_list[index]))
         tmp = set(true_ids[index]).intersection(set(item))
-        sum_radio = sum_radio + len(tmp) / len(item)
-        # logger.debug(sum_radio)
+        if len(item) != 0:
+            sum_radio += len(tmp) / len(item)
+        else:
+            topk_check = False
+            log.error("[get_recall_value] Length of returned topk is 0, please check.")
+    if topk_check is False:
+        raise ValueError("[get_recall_value] The result of topk is wrong, please check: {}".format(result_ids))
     return round(sum_radio / len(result_ids), 3)
 
 
@@ -113,6 +116,8 @@ def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
         field_name = dv.default_int64_field_name
     elif data_type == DataType.FLOAT:
         field_name = dv.default_float_field_name
+    elif data_type == DataType.VARCHAR:
+        field_name = dv.default_varchar_field_name
     else:
         msg = "[get_default_field_name] Not supported data type: {}".format(data_type)
         log.error(msg)
@@ -186,6 +191,8 @@ def gen_values(data_type, vectors, ids):
         values = pd.Series(data=[(i + 0.0) for i in ids], dtype="float32")
     elif data_type in [DataType.FLOAT_VECTOR, DataType.BINARY_VECTOR]:
         values = vectors
+    elif data_type in [DataType.VARCHAR]:
+        values = [str(i) for i in ids]
     return values
 
 
@@ -276,7 +283,7 @@ def compare_expr(left, comp, right):
     raise Exception("[compare_expr] Not support expr: {0}".format(comp))
 
 
-def parser_search_params_expr(expr: dict):
+def parser_search_params_expr(expr):
     """
     :param expr:
         LT: less than
@@ -288,12 +295,18 @@ def parser_search_params_expr(expr: dict):
     :return: expression of search
     """
     expression = ""
-    for key, value in expr.items():
-        field_name = key
-        if isinstance(value, dict):
-            for k, v in value.items():
-                _e = compare_expr(field_name, k, v)
-                expression = _e if expression == "" else "{0} && {1}".format(expression, _e)
+    if isinstance(expr, str):
+        return expr
+    elif isinstance(expr, dict):
+        for key, value in expr.items():
+            field_name = key
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    _e = compare_expr(field_name, k, v)
+                    expression = _e if expression == "" else "{0} && {1}".format(expression, _e)
+    else:
+        raise Exception("[parser_search_params_expr] Can't parser search expression: {0}, type:{1}".format(expr,
+                                                                                                           type(expr)))
     if expression == "":
         expression = None
     return expression

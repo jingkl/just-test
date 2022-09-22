@@ -7,7 +7,7 @@ from deploy.client.default_client import DefaultClient
 
 from utils.util_log import log
 from parameters.input_params import param_info
-from commons.common_func import parser_input_config, execute_funcs, update_dict_value
+from commons.common_func import parser_input_config, execute_funcs, update_dict_value, check_deploy_config
 from commons.auto_get import AutoGetTag
 from data_report.metrics import Report_Metric_Object
 
@@ -87,7 +87,7 @@ class Base:
         self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
 
         # install server and get endpoint
-        server_install_params = self.deploy_config[0] if isinstance(self.deploy_config[0], str) else ""
+        server_install_params = check_deploy_config(deploy_tool=deploy_tool, configs=self.deploy_config[0])
         self.deploy_release_name = self.deploy_client.install(server_install_params)
         self.deploy_client.wait_for_healthy(release_name=self.deploy_release_name)
         endpoint = self.deploy_client.endpoint(release_name=self.deploy_release_name)
@@ -121,6 +121,7 @@ class Base:
             self.deploy_end_state = self.deploy_client.get_pods(release_name=self.deploy_release_name)
 
             log.info("[Base] Start deleting services: {0}".format(deploy_release_name))
+            deploy_client.get_pvc(release_name=deploy_release_name)
             deploy_client.uninstall(release_name=deploy_release_name)
             deploy_client.delete_pvc(release_name=deploy_release_name)
             log.info("[Base] Service deleted successfully: {0}".format(deploy_release_name))

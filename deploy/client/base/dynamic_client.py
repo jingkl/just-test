@@ -1,8 +1,11 @@
 from kubernetes import config, dynamic
-from kubernetes.client import api_client
+from kubernetes.client import api_client, Configuration
 
 from utils.util_catch import func_catch
 from utils.util_log import log
+
+from deploy.commons.common_func import read_file
+from commons.common_params import EnvVariable
 
 
 class DynamicClient:
@@ -29,7 +32,17 @@ class DynamicClient:
 
     @func_catch()
     def create_dynamic_client(self):
-        c = dynamic.DynamicClient(api_client.ApiClient(configuration=config.load_kube_config(self.kubeconfig)))
+        if self.kubeconfig == "" or self.kubeconfig is None:
+            # NOTE: Just support 4am cluster!
+            configuration = Configuration()
+            configuration.api_key["authorization"] = read_file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+            configuration.api_key_prefix['authorization'] = 'Bearer'
+            configuration.verify_ssl = False
+            configuration.host = 'https://' + EnvVariable.KUBERNETES_SERVICE_HOST
+            c = dynamic.DynamicClient(api_client.ApiClient(configuration=configuration))
+        else:
+            c = dynamic.DynamicClient(api_client.ApiClient(configuration=config.load_kube_config(self.kubeconfig)))
+
         if type(c).__name__ == "DynamicClient":
             return c
         else:
@@ -60,7 +73,8 @@ class DynamicClient:
         else:
             msg = "[OperatorClient] crd_api init failed, please check."
             log.error(msg)
-            return False
+            # return False
+            raise Exception(msg)
 
     @staticmethod
     def result_to_dict(_res):

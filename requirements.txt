@@ -22,6 +22,7 @@ delayed-assert
 pytest-reportportal==5.0.10
 pytest-parallel
 pytest-random-order
+pytest-sugar==0.9.5
 
 # for customize config test
 python-benedict==0.24.3
@@ -34,7 +35,6 @@ protobuf==3.17.1
 #grpcio-tools==1.37.1
 pandas==1.2.4  # 1.1.5
 h5py==3.3.0  # 2.7.1
-influxdb-client==1.21.0
 PyYAML==5.4.1
 tableprint==0.8.0
 ansicolors==1.1.8
@@ -48,3 +48,6 @@ timeout_decorator==0.5.0
 requests==2.26.0
 urllib3==1.25.11
 PyMySQL==1.0.2
+influxdb-client==1.21.0
+influxdb==5.3.1
+

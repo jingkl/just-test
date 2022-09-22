@@ -14,7 +14,7 @@ class ClientMetric:
         self.test_case_name = test_case_name
         self.test_case_params = test_case_params
 
-        self.run_id = int(time.time()) + int(random.randint(1, 9999))
+        self.run_id = self.gen_id()
         self.datetime = str(datetime.now())
         self.client_version = client_version or param_info.client_version
 
@@ -30,5 +30,12 @@ class ClientMetric:
         self.test_case_name = ""
         self.test_case_params = {}
 
-        self.run_id = int(time.time()) + int(random.randint(1, 9999))
+        self.run_id = self.gen_id()
         self.datetime = str(datetime.now())
+
+    @staticmethod
+    def gen_id():
+        _date = "{:%Y%m%d}".format(datetime.now())
+        _timestamp = str(int(time.time()))[-4:]
+        _random = str(int(random.randint(1000, 9999)))
+        return int(_date + _timestamp + _random)

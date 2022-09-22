@@ -76,7 +76,7 @@ class CliClient(BaseClient):
         return uninstall_instance
 
     @func_catch()
-    def endpoint(self, release_name: str, _domain="ip"):
+    def endpoint(self, release_name: str, _domain=True):
         release_name = release_name or self.release_name
         if _domain is True:
             namespace = self.namespace if self.namespace is not None and self.namespace != "" else default_namespace

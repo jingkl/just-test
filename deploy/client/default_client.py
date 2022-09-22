@@ -4,6 +4,7 @@ from configs.base_config import BaseConfig
 from deploy.client.base import get_client_obj
 from deploy.commons.common_func import gen_release_name
 from deploy.commons.common_params import Helm, CLUSTER, Operator, STANDALONE, APIVERSION, MilvusCluster, Milvus
+from parameters.input_params import param_info
 
 
 class DefaultClient:
@@ -25,7 +26,7 @@ class DefaultClient:
         # params for helm
         self.chart = kwargs.get("chart", EnvVariable.FOURAM_HELM_CHART_PATH)
 
-        self.release_name = kwargs.get("release_name", gen_release_name('fouram'))
+        self.release_name = kwargs.get("release_name", self.gen_default_release_name())
 
         # params for op
         self.kind = MilvusCluster if self.deploy_mode is CLUSTER else Milvus
@@ -41,6 +42,10 @@ class DefaultClient:
             "kind": self.kind
         }
         self.obj = get_client_obj(self.deploy_tool, **client_params)
+
+    def gen_default_release_name(self):
+        prefix = str(param_info.release_name_prefix) or "fouram"
+        return gen_release_name(prefix) if self.deploy_tool == Helm else gen_release_name(prefix + "-op")
 
     def install(self, configs, check_health=True):
         self.release_name = self.obj.install(configs, return_release_name=True, check_health=check_health)

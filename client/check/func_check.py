@@ -34,8 +34,10 @@ class ResponseChecker:
 
         return result
 
-    @staticmethod
-    def assert_succ(actual, expect):
+    # @staticmethod
+    def assert_succ(self, actual, expect):
+        if actual is not expect:
+            log.error("[CheckFunc] Request check failed, response:{0}".format(self.response))
         assert actual is expect
         return actual is expect
 

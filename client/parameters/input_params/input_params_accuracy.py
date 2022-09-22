@@ -1,5 +1,6 @@
 from client.parameters import params_name as pn
 from client.common.common_func import dict_recursive_key
+from client.common.common_type import DefaultValue as dv
 from utils.util_log import log
 
 
@@ -7,11 +8,12 @@ class AccParams:
 
     @staticmethod
     def base(dataset_name, index_type, index_param, search_param, expr=None, top_k=[10], nq=[10000],
-             guarantee_timestamp=None, other_fields=[], replica_number=1, ni_per=200):
+             guarantee_timestamp=None, other_fields=[], replica_number=1, ni_per=10000, dim=dv.default_dim):
 
         dataset_params = {pn.dataset_name: dataset_name,
                           pn.ni_per: ni_per}
-        collection_params = {pn.other_fields: other_fields}
+        collection_params = {pn.other_fields: other_fields,
+                             pn.dim: dim}
         load_params = {pn.replica_number: replica_number}
         index_params = {pn.index_type: index_type,
                         pn.index_param: index_param}
@@ -114,19 +116,19 @@ class AccParams:
         search_param = {"ef": ef}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=200)
         log.debug("[AccParams] Default params of glove_200_angular_hnsw: {0}".format(default_params))
         return default_params
 
     def glove_200_angular_ivf_flat(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
-                                   index_type=pn.IndexTypeName.BIN_IVF_FLAT, nlist=1024, nprobe=None):
+                                   index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None):
         index_param = {"nlist": nlist}
 
         nprobe = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512] if nprobe is None else nprobe
         search_param = {"nprobe": nprobe}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=200)
         log.debug("[AccParams] Default params of glove_200_angular_ivf_flat: {0}".format(default_params))
         return default_params
 
@@ -138,6 +140,6 @@ class AccParams:
         search_param = {"nprobe": nprobe}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=27983)
         log.debug("[AccParams] Default params of kosarak_27983_jaccard_bin_ivf_flat: {0}".format(default_params))
         return default_params

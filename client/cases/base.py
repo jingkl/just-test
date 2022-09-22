@@ -25,12 +25,14 @@ class Base:
         self.collection_name = ''
         self.collection_schema = None
 
-    def __del__(self):
-        log.info("[Base] Start disconnect connection.")
-        self.remove_connect()
+    # def __del__(self):
+    #     log.info("[Base] Start disconnect connection.")
+    #     self.remove_connect()
 
     def connect(self, host=None, port=None, secure=False):
         """ Add a connection and create the connect """
+        # remove connect before new connection
+        self.remove_connect()
         host = host or param_info.param_host
         port = port or param_info.param_port
         secure = secure or param_info.param_secure
@@ -67,6 +69,7 @@ class Base:
     def clean_all_collection(self, clean=True):
         """ Drop all collections in the database """
         if not clean:
+            self.remove_connect()
             return
         collections = self.utility_wrap.list_collections()[0][0]
         log.info("[Base] Start clean all collections {}".format(collections))

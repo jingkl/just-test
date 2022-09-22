@@ -55,7 +55,11 @@ class CommonCases(Base):
 
     def prepare_load(self, **kwargs):
         res_load = self.load_collection(**kwargs)
-        self.case_report.add_attr(**{"load": {"load_RT": round(res_load[0][1], Precision.LOAD_PRECISION)}})
+        self.case_report.add_attr(**{"load": {"RT": round(res_load[0][1], Precision.LOAD_PRECISION)}})
+
+    def prepare_flush(self):
+        res_flush = self.flush_collection()
+        self.case_report.add_attr(**{"flush": {"RT": round(res_flush[0][1], Precision.FLUSH_PRECISION)}})
 
     def prepare_index(self, vector_field_name, metric_type, clean_index_before=False):
         self.show_index()
@@ -71,16 +75,26 @@ class CommonCases(Base):
             result, check_result = self.build_index(**_index_params)
             rt = round(result[1], Precision.INDEX_PRECISION)
             # set report data
-            self.case_report.add_attr(**{"index": {"build_RT": rt}})
+            self.case_report.add_attr(**{"index": {"RT": rt}})
 
             log.info(
                 "[CommonCases] RT of build index {1}: {0}s".format(rt, self.params_obj.index_params[pn.index_type]))
             self.show_index()
             log.info("[CommonCases] Prepare index {0} done.".format(self.params_obj.index_params[pn.index_type]))
 
-    def prepare_query(self, **kwargs):
-        res_query = self.query(**kwargs)
-        self.case_report.add_attr(**{"query": {"query_RT": round(res_query[0][1], Precision.QUERY_PRECISION)}})
+    def prepare_query(self, req_run_counts, **kwargs):
+        query_rt = []
+        for i in range(req_run_counts):
+            res_query = self.query(**kwargs)
+            query_rt.append(round(res_query[0][1], Precision.QUERY_PRECISION))
+
+        self.case_report.add_attr(**{"query": {
+            "RT": round(float(np.mean(query_rt)), Precision.QUERY_PRECISION),
+            "MinRT": round(float(np.min(query_rt)), Precision.QUERY_PRECISION),
+            "MaxRT": round(float(np.max(query_rt)), Precision.QUERY_PRECISION),
+            "TP99": round(np.percentile(query_rt, 99), Precision.QUERY_PRECISION),
+            "TP95": round(np.percentile(query_rt, 95), Precision.QUERY_PRECISION)}})
+        return self.case_report.to_dict(), True
 
     def prepare_search(self, req_run_counts, **kwargs):
         search_rt = []
@@ -88,11 +102,12 @@ class CommonCases(Base):
             res_search = self.search(**kwargs)
             search_rt.append(round(res_search[0][1], Precision.SEARCH_PRECISION))
 
-        self.case_report.add_attr(**{"search": {"RT": round(float(np.mean(search_rt)), Precision.SEARCH_PRECISION),
-                                                "MinRT": round(float(np.min(search_rt)), Precision.SEARCH_PRECISION),
-                                                "MaxRT": round(float(np.max(search_rt)), Precision.SEARCH_PRECISION),
-                                                "TP99": round(np.percentile(search_rt, 99), Precision.SEARCH_PRECISION),
-                                                "TP95": round(np.percentile(search_rt, 95), Precision.SEARCH_PRECISION)}})
+        self.case_report.add_attr(**{"search": {
+            "RT": round(float(np.mean(search_rt)), Precision.SEARCH_PRECISION),
+            "MinRT": round(float(np.min(search_rt)), Precision.SEARCH_PRECISION),
+            "MaxRT": round(float(np.max(search_rt)), Precision.SEARCH_PRECISION),
+            "TP99": round(np.percentile(search_rt, 99), Precision.SEARCH_PRECISION),
+            "TP95": round(np.percentile(search_rt, 95), Precision.SEARCH_PRECISION)}})
         return self.case_report.to_dict(), True
 
     def parser_search_params(self):
@@ -198,6 +213,7 @@ class BuildIndex(CommonCases):
                                 dim=self.params_obj.dataset_params[pn.dim],
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
+        self.prepare_flush()
         self.count_entities()
 
         # build index
@@ -253,6 +269,7 @@ class Load(CommonCases):
                                 ni=self.params_obj.dataset_params[pn.ni_per])
         else:
             self.release_collection()
+        self.prepare_flush()
         self.count_entities()
 
         # load collection
@@ -306,6 +323,7 @@ class Query(CommonCases):
                                 ni=self.params_obj.dataset_params[pn.ni_per])
         else:
             self.release_collection()
+        self.prepare_flush()
         self.count_entities()
 
         # load collection
@@ -314,7 +332,7 @@ class Query(CommonCases):
         # query
         def run():
             try:
-                self.prepare_query(**self.params_obj.query_params)
+                self.prepare_query(self.params_obj.dataset_params[pn.req_run_counts], **self.params_obj.query_params)
                 return self.case_report.to_dict(), True
             except Exception as e:
                 log.error("[Query] Query raise error: {}".format(e))
@@ -364,6 +382,7 @@ class Search(CommonCases):
                                 dim=self.params_obj.dataset_params[pn.dim],
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
+            self.prepare_flush()
             self.count_entities()
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
