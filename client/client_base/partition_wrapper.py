@@ -4,9 +4,10 @@ from pymilvus import Partition
 
 from client.check.func_check import ResponseChecker
 from client.util.api_request import api_request
+from parameters.input_params import param_info
 
 
-TIMEOUT = 20
+TIMEOUT = None
 
 
 class ApiPartitionWrapper:
@@ -39,9 +40,6 @@ class ApiPartitionWrapper:
         return self.partition.num_entities if self.partition else None
 
     def drop(self, check_task=None, check_items=None, **kwargs):
-        timeout = kwargs.get("timeout", TIMEOUT)
-        kwargs.update({"timeout": timeout})
-
         func_name = sys._getframe().f_code.co_name
         res, succ = api_request([self.partition.drop], **kwargs)
         check_result = ResponseChecker(res, func_name,
@@ -49,7 +47,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def load(self, replica_number=NaN, timeout=None, check_task=None, check_items=None, **kwargs):
-        timeout = TIMEOUT if timeout is None else timeout
         replica_number = param_info.param_replica_num if replica_number is NaN else replica_number
 
         func_name = sys._getframe().f_code.co_name
@@ -60,9 +57,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def release(self, check_task=None, check_items=None, **kwargs):
-        timeout = kwargs.get("timeout", TIMEOUT)
-        kwargs.update({"timeout": timeout})
-
         func_name = sys._getframe().f_code.co_name
         res, succ = api_request([self.partition.release], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task,
@@ -71,9 +65,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def insert(self, data, check_task=None, check_items=None, **kwargs):
-        timeout = kwargs.get("timeout", TIMEOUT)
-        kwargs.update({"timeout": timeout})
-
         func_name = sys._getframe().f_code.co_name
         res, succ = api_request([self.partition.insert, data], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task,
@@ -83,9 +74,6 @@ class ApiPartitionWrapper:
 
     def search(self, data, anns_field, params, limit, expr=None, output_fields=None,
                check_task=None, check_items=None, **kwargs):
-        timeout = kwargs.get("timeout", TIMEOUT)
-        kwargs.update({"timeout": timeout})
-
         func_name = sys._getframe().f_code.co_name
         res, succ = api_request([self.partition.search, data, anns_field, params,
                                  limit, expr, output_fields], **kwargs)
@@ -96,8 +84,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def query(self, expr, output_fields=None, timeout=None, check_task=None, check_items=None, **kwargs):
-        timeout = TIMEOUT if timeout is None else timeout
-
         func_name = sys._getframe().f_code.co_name
         res, check = api_request([self.partition.query, expr, output_fields, timeout], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task, check_items, check,
@@ -106,9 +92,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def delete(self, expr, check_task=None, check_items=None, **kwargs):
-        timeout = kwargs.get("timeout", TIMEOUT)
-        kwargs.update({"timeout": timeout})
-
         func_name = sys._getframe().f_code.co_name
         res, succ = api_request([self.partition.delete, expr], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task,
@@ -117,7 +100,6 @@ class ApiPartitionWrapper:
         return res, check_result
 
     def get_replicas(self, timeout=None, check_task=None, check_items=None, **kwargs):
-        timeout = TIMEOUT if timeout is None else timeout
         func_name = sys._getframe().f_code.co_name
         res, check = api_request([self.partition.get_replicas, timeout], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task, check_items, check, **kwargs).run()

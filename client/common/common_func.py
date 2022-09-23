@@ -9,9 +9,11 @@ import numpy as np
 import pandas as pd
 import h5py
 import sklearn
+import tqdm
 from sklearn import preprocessing
 from itertools import product
 import subprocess
+import uuid
 
 from pymilvus import DataType
 from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper
@@ -19,7 +21,7 @@ from client.common.common_type import DefaultValue as dv
 # from client.common.common_type import ParamsCheckType as pct
 from client.parameters import params_name as pn
 from client.common.common_type import NAS, SimilarityMetrics, AccMetrics
-from client.common.common_param import DatasetPath
+from client.common.common_param import DatasetPath, GoBenchIndex
 from utils.util_log import log
 
 """API func"""
@@ -145,8 +147,7 @@ def gen_file_name(file_id, dim, data_type):
 
 
 def parser_data_size(data_size):
-    return eval(str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
-                                                                                                             "*1000000000"))
+    return eval(str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b", "*1000000000"))
 
 
 def get_file_list(data_size, dim, data_type):
@@ -158,14 +159,18 @@ def get_file_list(data_size, dim, data_type):
     """
     data_size = parser_data_size(data_size)
     file_names = []
-    for i in range(dv.Max_file_count):
-        file_name = gen_file_name(i, dim, data_type)
-        file_names.append(file_name)
+    _data_size = data_size
+    with tqdm.tqdm(range(_data_size)) as bar:
+        bar.set_description("Get File List Processing")
+        for i in range(dv.Max_file_count):
+            file_name = gen_file_name(i, dim, data_type)
+            file_names.append(file_name)
 
-        file_size = len(read_npy_file(file_name))
-        data_size -= file_size
-        if data_size <= 0:
-            break
+            file_size = len(read_npy_file(file_name))
+            data_size -= file_size
+            bar.update(file_size)
+            if data_size <= 0:
+                break
     if data_size > 0:
         log.error("[get_file_list] The current dataset size is less than {}".format(data_size))
         return []
@@ -181,7 +186,7 @@ def gen_ids(start_id, end_id):
     return [k for k in range(start_id, end_id)]
 
 
-def gen_values(data_type, vectors, ids):
+def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
     values = None
     if data_type in [DataType.INT8, DataType.INT16, DataType.INT32, DataType.INT64]:
         values = ids
@@ -192,11 +197,18 @@ def gen_values(data_type, vectors, ids):
     elif data_type in [DataType.FLOAT_VECTOR, DataType.BINARY_VECTOR]:
         values = vectors
     elif data_type in [DataType.VARCHAR]:
-        values = [str(i) for i in ids]
+        if varchar_filled is False:
+            values = [str(i) for i in ids]
+        else:
+            _len = int(field["params"]["max_length"])
+            _str = string.ascii_letters + string.digits
+            for i in range(int(_len/len(_str))):
+                _str += _str
+            values = [''.join(random.sample(_str, _len - 1)) for i in ids]
     return values
 
 
-def gen_entities(info, vectors=None, ids=None):
+def gen_entities(info, vectors=None, ids=None, varchar_filled=False):
     if not isinstance(info, dict):
         log.error("[gen_entities] info is not a dict, please check: {}".format(type(info)))
         return {}
@@ -207,7 +219,7 @@ def gen_entities(info, vectors=None, ids=None):
     entities = {}
     for field in info["fields"]:
         _type = field["type"]
-        entities.update({field["name"]: gen_values(_type, vectors, ids)})
+        entities.update({field["name"]: gen_values(_type, vectors, ids, varchar_filled, field)})
     return pd.DataFrame(entities)
 
 
@@ -389,6 +401,27 @@ def modify_file(file_path_list, is_modify=False, input_content=""):
                 log.info("[modify_file] file(%s) modification is complete." % file_path)
 
 
+def write_json_file(data, json_file_path=""):
+    modify_file([json_file_path], is_modify=True)
+    with open(json_file_path, "w") as f:
+        json.dump(data, f)
+    log.info("[write_json_file] Write json file:{0} done.".format(json_file_path))
+    return json_file_path
+    # if not os.path.isfile(json_file_path):
+    #     log.debug("[write_json_file] File(%s) is not exist." % json_file_path)
+    #     # os.mknod(json_file_path)
+    #     open(json_file_path, "a").close()
+    #     log.debug("[write_json_file] Create file(%s) complete." % json_file_path)
+    # else:
+    #     log.debug("[write_json_file] Remove file(%s)." % json_file_path)
+    #     os.remove(json_file_path)
+    #
+    # with open(json_file_path, "w") as f:
+    #     json.dump(data, f)
+    # log.info("[write_json_file] Write json file:{0} done.".format(json_file_path))
+    # return json_file_path
+
+
 def read_json_file(file_name):
     if check_file_exist(file_name):
         with open(file_name) as f:
@@ -446,6 +479,11 @@ def read_file(file_path, block_size=1024):
 def loop_files(files):
     for file in files:
         yield file
+
+
+def loop_gen_files(dim, data_type):
+    for i in range(dv.Max_file_count):
+        yield gen_file_name(i, dim, data_type)
 
 
 def loop_ids(step=50000, start_id=0):
@@ -590,6 +628,124 @@ def check_params_type(source: dict, target: dict):
     return flag
 
 
-def run_gobench_process(params: list):
+def run_go_bench_process(params: list):
     process = subprocess.Popen(params, stderr=subprocess.PIPE)
     return process.communicate()[1].decode('utf-8')
+
+
+def check_params_exist(target: dict, keys: list):
+    k = target.keys()
+    for i in keys:
+        if i not in k:
+            raise Exception("[check_params_exist] Key:{0} not in target:{1}".format(i, target))
+    return True
+
+
+def go_bench(go_benchmark: str, uri: str, collection_name: str, index_type: str, search_params: dict,
+             search_timeout: int, search_vector, concurrent_number: int, during_time: int, interval: int,
+             log_path: str, output_format="json", partition_names=[], secure=False, user="", password="",
+             json_file_path="/root/query_vector.json") -> dict:
+    """
+    :param go_benchmark: path to the go executable
+    :param uri: milvus connection address host:port
+    :param user: root user name
+    :param password: root password
+    :param collection_name: searched for collection name
+    :param search_params: params of search
+                        {"anns_field": str,  # field name to search
+                         "metric_type": str,  # e.g. L2
+                         "params": {
+                            "sp_value": int,  # search params e.g. ef and nprobe
+                            "dim": int,  # vector dimension
+                            },
+                         "limit": int,  # topk
+                         "expression": str,  # search expression
+                        }
+    :param index_type: str
+    :param search_timeout: str
+    :param search_vector: search vectors
+    :param concurrent_number: int
+    :param during_time: concurrency lasts time / second
+    :param interval: interval for printing statistics / second
+    :param log_path: The log path to save the go print information
+    :param output_format: default json
+    :param partition_names: list
+    :param secure: bool
+    :param json_file_path: file path to save search vectors
+    :return:
+        "result": {
+            "response": bool,
+            "err_code": int,
+            "err_message": str
+        }
+    """
+    assert check_params_exist(search_params, ["anns_field", "metric_type", "params", "limit", "expression"])
+    query_json = {
+        "collection_name": collection_name,
+        "partition_names": partition_names,
+        "fieldName": search_params["anns_field"],
+        "index_type": GoBenchIndex[index_type],
+        "metric_type": search_params["metric_type"],
+        "params": search_params["params"],
+        "limit": search_params["limit"],
+        "expr": search_params["expression"],
+        "output_fields": [],
+        "timeout": search_timeout
+    }
+    search_vector_file = write_json_file(search_vector, json_file_path=json_file_path)
+
+    go_search_params = [go_benchmark,  # path to the go executable
+                        'locust',
+                        '-u', uri,  # host:port
+                        # '-n', user,  # root user name
+                        # '-w', password,  # root password
+                        '-q', search_vector_file,  # vector file path for searching
+                        '-s', json.dumps(query_json, indent=2),
+                        '-p', str(concurrent_number),  # concurrent number
+                        '-f', output_format,  # format of output
+                        '-t', str(during_time),  # total time of concurrent, second
+                        '-i', str(interval),  # log print interval, second
+                        '-l', str(log_path),  # log file path
+                        ]
+    if secure is True:
+        # connect used user and password
+        go_search_params.extend(['-n', user, '-w', password])
+        go_search_params.append('-v=true')
+
+    log.info("[go_bench] Params of go_benchmark: {}".format(go_search_params))
+    process_result = run_go_bench_process(params=go_search_params)
+    try:
+        result = json.loads(process_result)
+    except ValueError:
+        msg = "[go_bench] The type of go_benchmark response is not a json: {}".format(process_result)
+        raise ValueError(msg)
+
+    if isinstance(result, dict) and "response" in result and result["response"] is True:
+        log.info("[go_bench] Result of go_benchmark: {}".format(result))
+        return result
+    else:
+        raise Exception("[go_bench] Result of go_benchmark check failed:{0}".format(result))
+
+
+class GoSearchParams:
+    def __init__(self, data, anns_field: str, param: dict, dim: int, limit: int, expr=None,
+                 json_file_path="/root/query_vector.json"):
+        self.data = data
+        self.json_file_path = json_file_path
+        # self.search_vector_file = write_json_file(self.data, json_file_path=json_file_path)
+        if "ef" in param["params"]:
+            sp_value = param["params"]["ef"]
+        elif "nprobe" in param["params"]:
+            sp_value = param["params"]["nprobe"]
+        else:
+            raise Exception("[GoSearchParams] Can not get search params(ef or nprobe): {0}".format(param))
+        params = {"sp_value": sp_value}
+        params.update({"dim": dim})
+
+        self.search_parameters = {
+            "anns_field": anns_field,
+            "metric_type": param["metric_type"],
+            "params": params,
+            "limit": limit,
+            "expression": expr,
+        }

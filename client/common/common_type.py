@@ -51,7 +51,7 @@ class DefaultValue:
     value_content = "value_content"
 
     FILE_PREFIX = "binary"
-    Max_file_count = 100000
+    Max_file_count = 10000
 
 
 class SimilarityMetrics:

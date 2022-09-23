@@ -7,7 +7,7 @@ from client.check.func_check import ResponseChecker
 from client.util.api_request import api_request
 
 
-TIMEOUT = 20
+TIMEOUT = 600
 
 
 class ApiUtilityWrapper:

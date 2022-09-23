@@ -82,24 +82,32 @@ class BuildIndexParams(CommonParams):
 
 
 class LoadParams(CommonParams):
-    def params_load(self, dataset_name=pn.DatasetsName.LOCAL, dim=768, dataset_size="1m", ni_per=50000):
-        default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per)
+    def params_load(self, dataset_name=pn.DatasetsName.LOCAL, dim=768, dataset_size="1m", ni_per=50000,
+                    index_type=pn.IndexTypeName.FLAT, index_param={}, metric_type=pn.MetricsTypeName.L2):
+        default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
+                                   index_type=index_type, index_param=index_param, metric_type=metric_type)
         log.debug("[LoadParams] Default params of params_load: {0}".format(default_params))
         return default_params
 
 
 class QueryParams(CommonParams):
     def params_scene_query_ids_local(self, dataset_name=pn.DatasetsName.LOCAL, dim=512, dataset_size="50m",
-                                     ni_per=50000, ids=[1, 100, 10000], req_run_counts=10):
+                                     ni_per=50000, ids=[1, 100, 10000], req_run_counts=10,
+                                     index_type=pn.IndexTypeName.FLAT, index_param={},
+                                     metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
-                                   ids=ids, req_run_counts=req_run_counts)
+                                   ids=ids, req_run_counts=req_run_counts, index_type=index_type,
+                                   index_param=index_param, metric_type=metric_type)
         log.debug("[QueryByIdsParams] Default params of params_scene_query_ids_local: {0}".format(default_params))
         return default_params
 
     def params_scene_query_ids_sift(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="1m",
-                                    ni_per=50000, ids=[1, 100, 10000], req_run_counts=10):
+                                    ni_per=50000, ids=[1, 100, 10000], req_run_counts=10,
+                                    index_type=pn.IndexTypeName.FLAT, index_param={},
+                                    metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
-                                   ids=ids, req_run_counts=req_run_counts)
+                                   ids=ids, req_run_counts=req_run_counts, index_type=index_type,
+                                   index_param=index_param, metric_type=metric_type)
         log.debug("[QueryByIdsParams] Default params of params_scene_query_ids_sift: {0}".format(default_params))
         return default_params
 
@@ -113,7 +121,9 @@ class SearchParams(CommonParams):
         dataset_size = parser_data_size(dataset_size)
 
         _search_expr = []
-        if isinstance(search_expr, list):
+        if search_expr is None:
+            _search_expr = None
+        elif isinstance(search_expr, list):
             for s in search_expr:
                 _search_expr.append(eval(s))
         elif isinstance(search_expr, str):

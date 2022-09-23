@@ -10,7 +10,7 @@ from deploy.commons.common_params import Helm, Operator, STANDALONE
 
 
 def pytest_addoption(parser):
-    parser.addoption("--client_version", action="store", default="2.1", help="client version")
+    parser.addoption("--client_version", action="store", default="2.2", help="client version")
     parser.addoption("--host", action="store", default="localhost", help="service's ip")
     parser.addoption("--port", action="store", default=19530, help="service's port")
     parser.addoption("--tag", action="store", default="all", help="only run tests matching the tag.")
@@ -22,6 +22,8 @@ def pytest_addoption(parser):
     parser.addoption("--tag_repository", action="store", default=None, help="tag repository")
     parser.addoption("--update_helm_file", action="store_true", default=False, help="update helm file values.yaml")
     parser.addoption("--release_name_prefix", action="store", default="", help="release name prefix")
+    parser.addoption('--sync_report', action='store_true', default=False, help="sync report result")
+    parser.addoption('--async_report', action='store_true', default=False, help="async report result")
     # case input params
     parser.addoption("--deploy_skip", action="store_true", default=False,
                      help="skip deploy, use the incoming address or the default address")
@@ -74,6 +76,11 @@ def err_msg(request):
     return request.config.getoption("--err_msg")
 
 
+@pytest.fixture
+def deploy_mode(request):
+    return request.config.getoption("--deploy_mode")
+
+
 """ fixture func """
 
 
@@ -93,6 +100,8 @@ def initialize_env(request):
     deploy_retain = request.config.getoption("--deploy_retain")
     client_test_skip = request.config.getoption("--client_test_skip")
     release_name_prefix = request.config.getoption("--release_name_prefix")
+    sync_report = request.config.getoption("--sync_report")
+    async_report = request.config.getoption("--async_report")
     # release_name_prefix = getattr(request.config.option, "release_name_prefix")
 
     """ params check """
@@ -108,12 +117,16 @@ def initialize_env(request):
                                   milvus_tag_prefix=milvus_tag_prefix, tag_repository=tag_repository,
                                   deploy_skip=deploy_skip, deploy_retain=deploy_retain,
                                   client_test_skip=client_test_skip, update_helm_file=update_helm_file,
-                                  release_name_prefix=release_name_prefix)
+                                  release_name_prefix=release_name_prefix, sync_report=sync_report,
+                                  async_report=async_report)
     log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
     # yield
     # if param_info.test_status is False:
-    #     log.error("Test result is False, please check!!!")
+    #     msg = "Test result is False, please check!!!"
+    #     log.error(msg)
+    #     assert False
     #     sys.exit(-1)
+    #     pytest.exit(msg)
 
 
 @pytest.fixture(scope="session")

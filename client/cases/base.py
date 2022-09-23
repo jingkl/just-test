@@ -5,9 +5,11 @@ from client.client_base import ApiConnectionsWrapper, ApiCollectionWrapper, ApiI
 
 from parameters.input_params import param_info
 from client.common.common_func import gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, \
-    parser_data_size, loop_files, loop_ids, gen_vectors, gen_entities, run_gobench_process
+    parser_data_size, loop_files, loop_ids, gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, \
+    loop_gen_files
 from client.common.common_type import Precision
 from client.common.common_type import DefaultValue as dv
+from commons.common_params import EnvVariable
 from utils.util_log import log
 
 
@@ -54,6 +56,7 @@ class Base:
         """ Create a collection with default schema """
         schema = gen_collection_schema(vector_field_name=vector_field_name,
                                        other_fields=other_fields,
+                                       max_length=kwargs.get("max_length", dv.default_max_length),
                                        dim=kwargs.get("dim", dv.default_dim)) if schema is None else schema
         self.collection_name = gen_unique_str() if collection_name == "" else collection_name
         log.info("[Base] Create collection {}".format(self.collection_name))
@@ -80,6 +83,7 @@ class Base:
         if clean_collection:
             log.info("[Base] Start clear collections")
             self.collection_wrap.release()
+            log.info("[Base] Release collections done")
             self.clean_all_collection()
             log.info("[Base] Clear collections Done!")
         # log.info("[Base] Start disconnect connection.")
@@ -102,19 +106,19 @@ class Base:
         self.collection_schema = self.collection_wrap.schema.to_dict()
         log.info("[Base] Collection schema: {0}".format(self.collection_schema))
 
-    def insert_batch(self, vectors, ids, data_size):
+    def insert_batch(self, vectors, ids, data_size, varchar_filled=False):
         if self.collection_schema is None:
             self.get_collection_schema()
         if isinstance(vectors, list):
-            entities = gen_entities(self.collection_schema, vectors, ids)
+            entities = gen_entities(self.collection_schema, vectors, ids, varchar_filled)
         else:
-            entities = gen_entities(self.collection_schema, vectors.tolist(), ids)
+            entities = gen_entities(self.collection_schema, vectors.tolist(), ids, varchar_filled)
         log.info("[Base] Start inserting, ids: {0} - {1}, data size: {2}".format(ids[0], ids[-1], data_size))
         res = self.collection_wrap.insert(entities)[0][1]
         self.count_entities()
         return res
 
-    def insert(self, data_type, dim, size, ni):
+    def insert(self, data_type, dim, size, ni, varchar_filled=False):
         data_size = parser_data_size(size)
         data_size_format = str(format(data_size, ',d'))
         ni_cunt = int(data_size / int(ni))
@@ -130,18 +134,19 @@ class Base:
         if data_type == "local":
 
             for i in range(0, ni_cunt):
-                batch_rt += self.insert_batch(gen_vectors(ni, dim), next(_loop_ids), data_size_format)
+                batch_rt += self.insert_batch(gen_vectors(ni, dim), next(_loop_ids), data_size_format, varchar_filled)
 
             if last_insert > 0:
                 last_rt = self.insert_batch(gen_vectors(last_insert, dim), next(_loop_ids)[:last_insert],
-                                            data_size_format)
+                                            data_size_format, varchar_filled)
 
         else:
-            files = get_file_list(data_size, dim, data_type)
-            if len(files) == 0:
-                raise Exception("[insert] Can not get files, please check.")
-
-            _loop_file = loop_files(files)
+            # files = get_file_list(data_size, dim, data_type)
+            # if len(files) == 0:
+            #     raise Exception("[insert] Can not get files, please check.")
+            #
+            # _loop_file = loop_files(files)
+            _loop_file = loop_gen_files(dim, data_type)
             vectors = []
 
             for i in range(0, ni_cunt):
@@ -150,7 +155,7 @@ class Base:
                         vectors.extend(read_npy_file(next(_loop_file)))
                         if len(vectors) >= ni:
                             break
-                batch_rt += self.insert_batch(vectors[:ni], next(_loop_ids), data_size_format)
+                batch_rt += self.insert_batch(vectors[:ni], next(_loop_ids), data_size_format, varchar_filled)
                 vectors = vectors[ni:]
 
             if last_insert > 0:
@@ -159,7 +164,8 @@ class Base:
                         vectors.extend(read_npy_file(next(_loop_file)))
                         if len(vectors) >= last_insert:
                             break
-                last_rt = self.insert_batch(vectors[:last_insert], next(_loop_ids)[:last_insert], data_size_format)
+                last_rt = self.insert_batch(vectors[:last_insert], next(_loop_ids)[:last_insert], data_size_format,
+                                            varchar_filled)
 
         total_time = round((batch_rt + last_rt), Precision.COMMON_PRECISION)
         ips = round(int(data_size) / total_time, Precision.INSERT_PRECISION)
@@ -212,6 +218,10 @@ class Base:
         log.info("[Base] Start build index of {0}, params:{1}".format(index_type, index_params))
         return self.index_wrap.init_index(self.collection_wrap.collection, field_name, index_params)
 
+    def build_scalar_index(self, field_name):
+        log.info("[Base] Start build scalar index of {0}".format(field_name))
+        return self.index_wrap.init_index(self.collection_wrap.collection, field_name, index_params={})
+
     def show_index(self):
         if self.collection_wrap.has_index()[0][0]:
             index_params = self.collection_wrap.index()[0][0].params
@@ -258,11 +268,21 @@ class Base:
         log.info(msg.format(len(data), anns_field, param, limit, expr))
         return self.collection_wrap.search(data, anns_field, param, limit, expr=expr, timeout=timeout)
 
-    def go_search(self, data, anns_field, param, limit, expr=None, timeout=300):
+    def go_search(self, index_type: str, go_search_params: GoSearchParams, concurrent_number: int,
+                  during_time: int, interval: int, uri="", go_benchmark="", timeout=300, output_format="json",
+                  partition_names=[], secure=False) -> dict:
         """
-        :return: result
+        :return: dict
         """
-        msg = "[Base] Params of search: nq:{0}, anns_field:{1}, param:{2}, limit:{3}, expr:\"{4}\""
-        log.info(msg.format(len(data), anns_field, param, limit, expr))
+        go_benchmark = go_benchmark or EnvVariable.MILVUS_GOBENCH_PATH
+        uri = uri or "{0}:{1}".format(param_info.param_host, param_info.param_port)
+        secure = secure or param_info.param_secure
+        user = param_info.param_user
+        password = param_info.param_password
 
-        return run_gobench_process([])
+        return go_bench(go_benchmark=go_benchmark, uri=uri, collection_name=self.collection_name,
+                        index_type=index_type, search_params=go_search_params.search_parameters,
+                        search_timeout=timeout, search_vector=go_search_params.data,
+                        concurrent_number=concurrent_number, during_time=during_time, interval=interval,
+                        log_path=log.log_info, output_format=output_format, partition_names=partition_names,
+                        secure=secure, user=user, password=password, json_file_path=go_search_params.json_file_path)

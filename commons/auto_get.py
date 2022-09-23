@@ -43,7 +43,7 @@ class AutoGetTag:
                     return t
             return self.tag_name
         except Exception as e:
-            log.info("[AutoGetTag] Can not get the tag list: {}".format(e))
+            log.error("[AutoGetTag] Can not get the tag list: {}".format(e))
             return self.tag_name
 
     def get_latest_tag(self, limit=100):

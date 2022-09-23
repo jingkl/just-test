@@ -10,7 +10,7 @@ import json
 import copy
 import pytz
 from yaml import full_load, dump
-import tableprint as tp
+# import tableprint as tp
 from pprint import pprint
 
 from deploy.commons.common_params import CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, \

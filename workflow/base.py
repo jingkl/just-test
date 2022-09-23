@@ -31,8 +31,8 @@ class Base:
         log.info(" Start teardown class ".center(100, "~"))
 
     def setup_method(self, method):
-        log.info(" setup ".center(100, "*"))
         log.reset_log_file_path(subfolder=method.__name__)
+        log.info(" setup ".center(100, "*"))
         log.info(log.log_msg)
 
         log.info("[setup_method] Start setup test case {0}, test document:{1}".format(method.__name__, method.__doc__))
@@ -64,6 +64,12 @@ class Base:
         execute_funcs(self.teardown_funcs)
         log.info("[teardown_method] Teardown test case %s done." % method.__name__)
 
+        if param_info.test_status is False:
+            msg = "Test result is False, please check!!!"
+            log.error(msg)
+            param_info.test_status = True
+            assert False
+
     def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
         c = [callable_obj, ]
         c.extend(list(args))
@@ -93,7 +99,7 @@ class Base:
         endpoint = self.deploy_client.endpoint(release_name=self.deploy_release_name)
 
         # display server values
-        log.info(self.deploy_client.get_all_values(release_name=self.deploy_release_name))
+        log.debug(self.deploy_client.get_all_values(release_name=self.deploy_release_name))
         self.deploy_initial_state = self.deploy_client.get_pods(release_name=self.deploy_release_name)
 
         # set global host and port

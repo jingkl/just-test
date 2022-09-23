@@ -66,7 +66,7 @@ def modify_file(file_path_list, is_modify=False, input_content=""):
                 log.info("[modify_file] file(%s) modification is complete." % file_path)
 
 
-def read_json_file(file_path):
+def read_json_file(file_path, out_put=True):
     if not isinstance(file_path, str):
         log.error("[read_json_file] Param of file_path({}) is not a str.".format(type(file_path)))
         return {}
@@ -85,7 +85,8 @@ def read_json_file(file_path):
     finally:
         if f:
             f.close()
-    log.debug("[read_json_file] Read file:{0}, content:{1}".format(file_path, file_dict))
+    if out_put:
+        log.debug("[read_json_file] Read file:{0}, content:{1}".format(file_path, file_dict))
     return file_dict
 
 
@@ -181,3 +182,38 @@ def check_deploy_config(deploy_tool, configs):
     elif deploy_tool == Operator:
         configs = configs if isinstance(configs, dict) else {}
     return configs
+
+
+def get_sync_report_flag(case_flag, sync_report=False, async_report=False):
+    if sync_report is True:
+        return sync_report
+    elif async_report is True:
+        return not async_report
+    else:
+        return case_flag
+
+
+def dict_rm_point(_dict, _charts):
+    flag = 0
+    for key, value in _dict.items():
+        if isinstance(value, dict):
+            for k in value.keys():
+                for c in _charts:
+                    if c in k:
+                        _dict[key] = str(value)
+                        flag = 1
+                        break
+                if flag == 1:
+                    break
+        if isinstance(value, dict) and flag == 0:
+            dict_rm_point(value, _charts)
+    return _dict
+
+
+def dict2str(source_dict, _charts=['/', '.', '\\', '$']):
+    if not isinstance(source_dict, dict) or not isinstance(_charts, list):
+        return source_dict
+
+    s_dict = copy.deepcopy(source_dict)
+
+    return dict_rm_point(s_dict, _charts)
