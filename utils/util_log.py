@@ -2,6 +2,7 @@ import logging
 import sys
 import copy
 from collections import Counter
+import collections
 
 from configs.log_config import log_config
 from commons.common_type import LogLevel
@@ -19,7 +20,7 @@ class TestLogConfig:
 
         self.log = logging.getLogger(self.logger)
         self.log.setLevel(logging.DEBUG)
-        self.log.makeRecord = self.makeRecord
+        # self.log.makeRecord = self.makeRecord
         self.set_log_level(use_stream=use_stream)
 
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info,
@@ -42,6 +43,7 @@ class TestLogConfig:
     def set_log_level(self, use_stream=True):
         try:
             _format = "[%(asctime)s - %(levelname)5s - %(name)s]: %(message)s (%(filename)s:%(lineno)s)"
+            # _format = "[%(asctime)s - %(levelname)5s - %(name)s]: %(message)s "
             formatter = logging.Formatter(_format)
 
             dh = logging.FileHandler(self.log_debug)
@@ -91,27 +93,44 @@ class TestLog:
 
         self.log_handlers_parents.extend(self.test_log.handlers)
 
+        self.debug = self._debug()
+        self.info = self._info()
+        self.warning = self._warning()
+        self.error = self._error()
+
     @property
     def log_msg(self):
         return "[TestLog] Test log level:{0}, log file:{1},{2},{3}".format(self.log_level, self.log_debug,
                                                                            self.log_info, self.log_err)
 
-    def debug(self, msg, *args, **kwargs):
+    def _debug(self):
         # if self.log_level == LogLevel.DEBUG:
-        self.test_log.debug(msg, extra={"filename": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
-                                        "lineno": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+        # if self.extra:
+        #     msg = str(msg) + " (%(fn)s:%(ln)s)"
+        # self.test_log.debug(msg, {"fn": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
+        #                           "ln": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+        return self.test_log.debug
 
-    def info(self, msg, *args, **kwargs):
-        self.test_log.info(msg, extra={"filename": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
-                                       "lineno": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+    def _info(self):
+        # if self.extra:
+        #     msg = str(msg) + " (%(fn)s:%(ln)s)"
+        # self.test_log.info(msg, {"fn": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
+        #                          "ln": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+        return self.test_log.info
 
-    def warning(self, msg, *args, **kwargs):
-        self.test_log.warning(msg, extra={"filename": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
-                                          "lineno": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+    def _warning(self):
+        # if self.extra:
+        #     msg = str(msg) + " (%(fn)s:%(ln)s)"
+        # self.test_log.warning(msg, {"fn": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
+        #                             "ln": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+        return self.test_log.warning
 
-    def error(self, msg, *args, **kwargs):
-        self.test_log.error(msg, extra={"filename": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
-                                        "lineno": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+    def _error(self):
+        # if self.extra:
+        #     msg = str(msg) + " (%(fn)s:%(ln)s)"
+        # self.test_log.error(msg, {"fn": str(sys._getframe().f_back.f_code.co_filename).split('/')[-1],
+        #                           "ln": sys._getframe().f_back.f_lineno}, *args, **kwargs)
+        return self.test_log.error
 
     def print(self, *args, sep=' ', end='\n', file=None):
         print(*args, sep=sep, end=end, file=file)

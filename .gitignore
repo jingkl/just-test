@@ -1,3 +1,5 @@
 .pytest_cache
 ../../.idea/
 .idea
+../commons/__pycache__/
+../configs/__pycache__/

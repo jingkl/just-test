@@ -1,3 +1,4 @@
+import copy
 from client.common.common_type import NAS
 import client.parameters.params_name as pn
 
@@ -25,3 +26,11 @@ MetricsToIndexType = {
     "Superstructure": [pn.IndexTypeName.BIN_FLAT],
     "Substructure": [pn.IndexTypeName.BIN_FLAT],
 }
+
+GoBenchIndex = {
+    "FLAT": "",
+    "IVF_FLAT": "IVF_FLAT",
+    "IVF_SQ8": "IVF_SQ8",
+    "HNSW": "HNSW",
+}
+

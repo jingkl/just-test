@@ -2,6 +2,8 @@ import threading
 import time
 from functools import partial
 
+from utils.util_log import log
+
 
 class StreamRead:
     def __init__(self, file_path: str, interval: int = 600, stop_read_flag: bool = False):
@@ -39,13 +41,23 @@ class StreamRead:
         if self.stop_read_flag:
             return True
 
+        run_count = 1
+        while self.tick_read_flag is False:
+            log.warning("[StreamRead] The time interval({0}s) is too short to complete a stream read, count:{1}".format(
+                self.interval, run_count))
+            time.sleep(self.interval)
+            run_count += 1
+            if run_count > 10:
+                log.error("[StreamRead] The thread of streaming read may be stuck, please check")
+                return False
+
         self.tick_read_flag = False
         incremental_content = next(self.streaming_read_incremental_file())
         callable_object(incremental_content)
         self.tick_read_flag = True
 
         if not self.stop_read_flag:
-            t = threading.Timer(self.interval, self.tick_read_incremental_file)
+            t = threading.Timer(self.interval, self.tick_read_incremental_file, args=[callable_object])
             t.start()
 
     def final_read_incremental_file(self, callable_object: callable = print):
@@ -56,6 +68,8 @@ class StreamRead:
                 incremental_content = next(self.streaming_read_incremental_file())
                 callable_object(incremental_content)
                 break
+            log.debug("[StreamRead] Wait for the last read to complete.")
+            time.sleep(2)
 
     def streaming_read_file(self, file_path: str = "", block_size=65536):
         file_path = file_path or self.file_path

@@ -11,9 +11,9 @@ class AccParams:
              guarantee_timestamp=None, other_fields=[], replica_number=1, ni_per=10000, dim=dv.default_dim):
 
         dataset_params = {pn.dataset_name: dataset_name,
-                          pn.ni_per: ni_per}
-        collection_params = {pn.other_fields: other_fields,
-                             pn.dim: dim}
+                          pn.ni_per: ni_per,
+                          pn.dim: dim}
+        collection_params = {pn.other_fields: other_fields}
         load_params = {pn.replica_number: replica_number}
         index_params = {pn.index_type: index_type,
                         pn.index_param: index_param}
@@ -60,11 +60,9 @@ class AccParams:
         return default_params
 
     def sift_128_euclidean_flat(self, dataset_name=pn.AccDatasetsName.sift_128_euclidean,
-                                index_type=pn.IndexTypeName.FLAT, nlist=1024, nprobe=None):
-        index_param = {"nlist": nlist}
-
-        nprobe = [1] if nprobe is None else nprobe
-        search_param = {"nprobe": nprobe}
+                                index_type=pn.IndexTypeName.FLAT):
+        index_param = {}
+        search_param = {}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
                                    search_param=search_param)

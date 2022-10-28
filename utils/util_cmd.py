@@ -17,12 +17,15 @@ class CmdExe:
                                           encoding='utf-8')
             return res.rstrip('\n')
         except subprocess.CalledProcessError as e:
-            log.error("[Cmd Exe] Execute cmd:{0} raise error output:{1}, code:{2}".format(self._cmd,
-                                                                                          e.output, e.returncode))
-            return ''
+            msg = "[Cmd Exe] Execute cmd:{0} raise error output:{1}, code:{2}".format(self._cmd, e.output, e.returncode)
+            log.error(msg)
+            raise Exception(msg)
+            # return ''
         except subprocess.SubprocessError as e:
-            log.error("[Cmd Exe] Execute cmd:{0} raise error:{1}".format(self._cmd, e))
-            return ''
+            msg = "[Cmd Exe] Execute cmd:{0} raise error:{1}".format(self._cmd, e)
+            log.error(msg)
+            raise Exception(msg)
+            # return ''
 
     def run_cmd_bg(self, env=None):
         if env is None:

@@ -23,7 +23,7 @@ class LogConfig:
         self.log_info = "{0}/{1}.log".format(log_dir, self.log_name)
         self.log_err = "{0}/{1}.err".format(log_dir, self.log_name)
 
-    def gen_log_path(self, subfolder="", retry_counts=10):
+    def gen_log_path(self, subfolder="", retry_counts=1000):
         count = 0
         random_count = 1
         while True:

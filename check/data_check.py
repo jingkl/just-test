@@ -1,0 +1,99 @@
+import re
+
+
+from commons.streming_read import StreamRead
+from db_client.client_db import DBClient
+from utils.util_log import log
+
+
+class DataCheck:
+    def __init__(self, file_path="", interval=600, tags: dict = {}):
+        """
+        sync_report = False : report data after finished test
+        """
+        self._format = self.data_parser_format()
+        self.default_tags = tags
+        self.sync_report = True
+        self.db_client = DBClient(db_name="fouram")
+        self.read_client = StreamRead(file_path=file_path, interval=interval)
+
+    @staticmethod
+    def report_data_format(method, api, reqs, fails, _avg, _min, _max, _median, req, failures):
+        """
+        :param method: locust or go
+        :param api: report API
+        :param reqs: the total number of api requests
+        :param fails: the total number of api failed requests
+        :param _avg: average response time of interface within statistical interval
+        :param _min: minimum response time of interface within statistical interval
+        :param _max: maximum response time of interface within statistical interval
+        :param _median: median response time of interface within statistical interval
+        :param req: the total number of api requests within statistical interval
+        :param failures: the total number of api failed requests within statistical interval
+
+        :return: tag, fields
+        """
+        return {'method': method, 'api_name': api}, {'reqs': reqs, 'fails': fails, 'rt_avg_ms': _avg, 'rt_min_ms': _min,
+                                                     'rt_max_ms': _max, 'rt_median_ms': _median, 'req_s': req,
+                                                     'failures_s': failures}
+
+    @staticmethod
+    def data_parser_format():
+        _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\]'
+        _log_level = r'\[\s+INFO\]\s+-\s+'
+        _name = r'[a-z]+\s+[a-z0-9]+\s+'
+        _int = r'\d+'
+        _int_percentage = r'\d+\(\d+\.\d+\%\)'
+        _float = r'\d+\.\d+'
+        _space = r'\s+'
+        _vertical_bar = r'\|'
+
+        _format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
+        _format += _float + _space + _float + _space + _float + _space + _float + _space + _vertical_bar + _space
+        _format += _float + _space + _float + _space
+        return _format
+
+    def data_read(self, content: str) -> list:
+        return re.findall(re.compile(self._format, re.I), content)
+
+    def data_parser(self, content: str):
+        _contents = self.data_read(content)
+        for _c in _contents:
+            dt = _c.split(']')[0].split('[')[-1]
+            k = _c.split('-')[-1].split()
+
+            if len(k) == 12:
+                _time_ = dt.split(' ')
+                _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
+
+                try:
+                    tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
+                                                           float(k[5]), float(k[6]), float(k[7]), float(k[8]),
+                                                           float(k[10]), float(k[11]))
+                except Exception as e:
+                    raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
+
+                # update tag
+                tags.update(self.default_tags)
+                self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
+
+    def start_stream_read(self, sync_report=True):
+        self.sync_report = sync_report
+        if self.sync_report:
+            log.info("[DataCheck] Starting sync read data and report.")
+            self.read_client.tick_read_incremental_file(callable_object=self.data_parser)
+
+    def finish_stream_read(self, block_size=65536):
+        if self.sync_report:
+            self.read_client.final_read_incremental_file(callable_object=self.data_parser)
+            log.info("[DataCheck] Finished sync read data and report.")
+        else:
+            log.info("[DataCheck] Starting async read data and report.")
+            loop_contents = self.read_client.streaming_read_file(block_size=block_size)
+            while True:
+                _content = next(loop_contents)
+                if _content == "":
+                    break
+                for _c in _content:
+                    self.data_parser(_c)
+            log.info("[DataCheck] Finished async read data and report.")

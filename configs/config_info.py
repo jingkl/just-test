@@ -22,7 +22,7 @@ class ConfigInfo:
         self.parser_vdc_config(self.vdc_config_file)
 
     def parser_config(self, config_file):
-        config_dict = read_json_file(config_file)
+        config_dict = read_json_file(config_file, out_put=False)
         for k, v in config_dict.items():
             if str(k).startswith("influx_db_v2"):
                 self.influx_db_params.update({k: v})
@@ -34,7 +34,7 @@ class ConfigInfo:
                 self.mongo_db_servers.update({k: v})
 
     def parser_vdc_config(self, config_file):
-        config_dict = read_json_file(config_file)
+        config_dict = read_json_file(config_file, out_put=False)
 
         if "SIT" in config_dict:
             self.sit = config_dict["SIT"]

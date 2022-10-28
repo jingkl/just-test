@@ -59,7 +59,8 @@ class CommonCases(Base):
 
             # create collection
             _collection_params = update_dict_value({
-                pn.vector_field_name: vector_default_field_name
+                pn.vector_field_name: vector_default_field_name,
+                pn.dim: self.params_obj.dataset_params[pn.dim]
             }, self.params_obj.collection_params)
             self.create_collection(**_collection_params)
             self.get_collection_schema()
@@ -175,6 +176,17 @@ class CommonCases(Base):
 
 class AccCases(CommonCases):
 
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. insert training dataset
+        3. flush collection
+        4. clean index and build new index
+        5. load collection
+        6. search with different parameters
+        7. clean all collections or not
+        """
+
     @check_params(ParamsFormat.acc_scene_recall)
     def scene_recall(self, **kwargs):
         """
@@ -192,6 +204,7 @@ class AccCases(CommonCases):
         prepare_clean = kwargs.get("prepare_clean", True)
         rebuild_index = kwargs.get("rebuild_index", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[AccCases] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # file parsing
         self.parsing_params(params)

@@ -8,12 +8,16 @@ load_params = "load_params"
 index_params = "index_params"
 search_params = "search_params"
 query_params = "query_params"
+go_search_params = "go_search_params"
 concurrent_params = "concurrent_params"
 
 # dataset
 dataset_name = "dataset_name"
 dim = "dim"
 dataset_size = "dataset_size"
+max_length = "max_length"
+varchar_filled = "varchar_filled"
+scalars_index = "scalars_index"
 
 # collection
 other_fields = "other_fields"
@@ -35,6 +39,11 @@ nq = "nq"
 search_param = "search_param"
 expr = "expr"
 guarantee_timestamp = "guarantee_timestamp"
+
+# go search
+concurrent_number = "concurrent_number"
+during_time = "during_time"
+interval = "interval"
 
 # common
 metric_type = "metric_type"
@@ -106,5 +115,7 @@ class IndexTypeName:
     RHNSW_PQ = "RHNSW_PQ"
     RHNSW_SQ = "RHNSW_SQ"
     IVF_HNSW = "IVF_HNSW"
+    DISKANN = "DISKANN"
+    AUTOINDEX = "AUTOINDEX"  # level
 
 

@@ -7,6 +7,7 @@ from client.cases.case_report import CasesReport
 from client.parameters.params import ParamsFormat, ParamsBase
 from client.parameters import params_name as pn
 from client.common.common_type import Precision, CaseIterParams
+from client.common.common_type import DefaultValue as dv
 from client.common.common_func import get_source_file, read_ann_hdf5_file, normalize_data, get_acc_metric_type, \
     gen_combinations, update_dict_value, get_vector_type, get_default_field_name, get_search_ids, get_recall_value, \
     get_vectors_from_binary, parser_search_params_expr
@@ -34,7 +35,8 @@ class CommonCases(Base):
             # create collection
             _collection_params = update_dict_value({
                 pn.vector_field_name: vector_field_name,
-                pn.dim: self.params_obj.dataset_params[pn.dim]
+                pn.dim: self.params_obj.dataset_params[pn.dim],
+                pn.max_length: self.params_obj.dataset_params.get(pn.max_length, dv.default_max_length)
             }, self.params_obj.collection_params)
             self.create_collection(**_collection_params)
 
@@ -49,8 +51,9 @@ class CommonCases(Base):
         self.get_collection_schema()
         log.info("[CommonCases] Prepare collection {0} done.".format(self.collection_wrap.name))
 
-    def prepare_insert(self, data_type, dim, size, ni):
-        res_insert = self.insert(data_type=data_type, dim=dim, size=size, ni=ni)
+    def prepare_insert(self, data_type, dim, size, ni, varchar_filled=False):
+        varchar_filled = self.params_obj.dataset_params.get(pn.varchar_filled, varchar_filled)
+        res_insert = self.insert(data_type=data_type, dim=dim, size=size, ni=ni, varchar_filled=varchar_filled)
         self.case_report.add_attr(**res_insert)
 
     def prepare_load(self, **kwargs):
@@ -81,6 +84,29 @@ class CommonCases(Base):
                 "[CommonCases] RT of build index {1}: {0}s".format(rt, self.params_obj.index_params[pn.index_type]))
             self.show_index()
             log.info("[CommonCases] Prepare index {0} done.".format(self.params_obj.index_params[pn.index_type]))
+
+    def prepare_scalars_index(self):
+        scalars = self.params_obj.dataset_params.get(pn.scalars_index, [])
+        if len(scalars) == 0:
+            log.info("[CommonCases] No scalars need to be indexed.")
+            return True
+
+        other_fields = self.params_obj.collection_params.get(pn.other_fields, [])
+        for scalar in scalars:
+            if scalar not in other_fields:
+                log.error("[CommonCases] The scalar {0} is not in the collection {1}.".format(scalar, other_fields))
+                return False
+
+        self.show_index()
+
+        for scalar in scalars:
+            result, check_result = self.build_scalar_index(scalar)
+            rt = round(result[1], Precision.INDEX_PRECISION)
+            # set report data
+            self.case_report.add_attr(**{"index": {scalar: {"RT": rt}}})
+            log.info("[CommonCases] RT of build scalar index {1}: {0}s".format(rt, scalar))
+        self.show_index()
+        log.info("[CommonCases] Prepare scalars {0} index done.".format(scalars))
 
     def prepare_query(self, req_run_counts, **kwargs):
         query_rt = []
@@ -118,7 +144,7 @@ class CommonCases(Base):
         nq = _params.pop(pn.nq)
         top_k = _params.pop(pn.top_k)
         search_param = _params.pop(pn.search_param)
-        expr = _params.pop(pn.expr)
+        expr = parser_search_params_expr(_params.pop(pn.expr)) if pn.expr in _params else None
 
         data = get_vectors_from_binary(nq=nq, dimension=self.params_obj.dataset_params[pn.dim],
                                        dataset_name=self.params_obj.dataset_params[pn.dataset_name])
@@ -129,12 +155,20 @@ class CommonCases(Base):
             "anns_field": default_field_name,
             "param": update_dict_value({"params": search_param}, {"metric_type": metric_type}),
             "limit": limit,
-            "expr": parser_search_params_expr(expr),
+            "expr": expr,
         }, _params)
         return result, nq, top_k, expr
 
 
 class InsertBatch(CommonCases):
+
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. insert a certain amount of data in batches
+        3. count the total number of rows
+        4. clean all collections or not
+        """
 
     @check_params(ParamsFormat.common_scene_insert_batch)
     def scene_insert_batch(self, **kwargs):
@@ -151,6 +185,7 @@ class InsertBatch(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[InsertBatch] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # params parsing
         self.parsing_params(params)
@@ -185,6 +220,17 @@ class InsertBatch(CommonCases):
 
 class BuildIndex(CommonCases):
 
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. insert a certain number of vectors
+        3. flush collection
+        4. count the total number of rows
+        5. build index on vector column
+        6. build index on on scalars column or not
+        7. clean all collections or not
+        """
+
     @check_params(ParamsFormat.common_scene_build_index)
     def scene_build_index(self, **kwargs):
         """
@@ -200,6 +246,7 @@ class BuildIndex(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[BuildIndex] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # params parsing
         self.parsing_params(params)
@@ -222,6 +269,7 @@ class BuildIndex(CommonCases):
                 self.prepare_index(vector_field_name=vector_default_field_name,
                                    metric_type=self.params_obj.dataset_params[pn.metric_type],
                                    clean_index_before=True)
+                self.prepare_scalars_index()
                 return self.case_report.to_dict(), True
             except Exception as e:
                 log.error("[BuildIndex] Build index raise error: {}".format(e))
@@ -239,6 +287,18 @@ class BuildIndex(CommonCases):
 
 class Load(CommonCases):
 
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. insert a certain number of vectors
+        3. flush collection
+        4. build index on vector column
+        5. build index on on scalars column or not
+        6. count the total number of rows
+        7. load collection
+        8. clean all collections or not
+        """
+
     @check_params(ParamsFormat.common_scene_load)
     def scene_load(self, **kwargs):
         """
@@ -254,6 +314,7 @@ class Load(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[Load] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # params parsing
         self.parsing_params(params)
@@ -270,6 +331,9 @@ class Load(CommonCases):
         else:
             self.release_collection()
         self.prepare_flush()
+        self.prepare_index(vector_field_name=vector_default_field_name,
+                           metric_type=self.params_obj.dataset_params[pn.metric_type])
+        self.prepare_scalars_index()
         self.count_entities()
 
         # load collection
@@ -293,6 +357,19 @@ class Load(CommonCases):
 
 class Query(CommonCases):
 
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. insert a certain number of vectors
+        3. flush collection
+        4. build index on vector column
+        5. build index on on scalars column or not
+        6. count the total number of rows
+        7. load collection
+        8. query collection
+        9. clean all collections or not
+        """
+
     @check_params(ParamsFormat.common_scene_query_ids)
     def scene_query_ids(self, **kwargs):
         """
@@ -308,6 +385,7 @@ class Query(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[Query] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # params parsing
         self.parsing_params(params)
@@ -324,6 +402,9 @@ class Query(CommonCases):
         else:
             self.release_collection()
         self.prepare_flush()
+        self.prepare_index(vector_field_name=vector_default_field_name,
+                           metric_type=self.params_obj.dataset_params[pn.metric_type])
+        self.prepare_scalars_index()
         self.count_entities()
 
         # load collection
@@ -350,6 +431,20 @@ class Query(CommonCases):
 
 class Search(CommonCases):
 
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. build index on vector column
+        3. insert a certain number of vectors
+        4. flush collection
+        5. build index on vector column with the same parameters
+        6. build index on on scalars column or not
+        7. count the total number of rows
+        8. load collection
+        9. search collection with different parameters
+        10. clean all collections or not
+        """
+
     @check_params(ParamsFormat.common_scene_search)
     def scene_search(self, **kwargs):
         """
@@ -366,6 +461,7 @@ class Search(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
+        log.info("[Search] The detailed test steps are as follows: {}".format(self.__doc__))
 
         # params parsing
         self.parsing_params(params)
@@ -383,9 +479,10 @@ class Search(CommonCases):
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
             self.prepare_flush()
-            self.count_entities()
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
+            self.prepare_scalars_index()
+            self.count_entities()
         else:
             self.release_collection()
 
@@ -393,6 +490,14 @@ class Search(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         # search
+        def run(run_s_p: dict):
+            try:
+                self.prepare_search(self.params_obj.dataset_params[pn.req_run_counts], **run_s_p)
+                return self.case_report.to_dict(), True
+            except Exception as e:
+                log.error("[Search] Search raise error: {}".format(e))
+                return {}, False
+
         s_params = self.parser_search_params()
         params_list = []
         for s_p in s_params:
@@ -406,9 +511,7 @@ class Search(CommonCases):
                 pn.top_k: top_k,
                 pn.expr: expr
             }
-            p = CaseIterParams(callable_object=self.prepare_search,
-                               object_args=[self.params_obj.dataset_params[pn.req_run_counts]],
-                               object_kwargs=search_params,
+            p = CaseIterParams(callable_object=run, object_args=[search_params],
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
         yield params_list
