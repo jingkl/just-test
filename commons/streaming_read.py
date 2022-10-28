@@ -63,7 +63,7 @@ class StreamRead:
     def final_read_incremental_file(self, callable_object: callable = print):
         self.set_stop_read_flag()
         start = time.time()
-        while time.time() - start > self.interval:
+        while time.time() - start < self.interval:
             if self.tick_read_flag:
                 incremental_content = next(self.streaming_read_incremental_file())
                 callable_object(incremental_content)

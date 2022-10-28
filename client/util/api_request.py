@@ -8,33 +8,46 @@ from commons.common_type import PRECISION
 from commons.common_func import truncated_output
 from utils.util_log import log
 
-log_row_length = 3000
-info_logout = ["Collection.insert", "Index", "Collection.load", "Collection.search", "Collection.query"]
+
+class InfoLogout:
+    log_output = ["Collection.insert", "Index", "Collection.load", "Collection.search", "Collection.query"]
+    log_row_length = 3000
+
+    def reset_output(self, output: list = []):
+        self.log_output = output
+
+    def reset_log_row_length(self, log_row_length: int = 3000):
+        self.log_row_length = log_row_length
+
+
+info_logout = InfoLogout()
 
 
 def time_catch():
     def wrapper(func):
         # @functools.wraps(func)
         def inner_wrapper(*args, **kwargs) -> Tuple[tuple, bool]:
+            start = time.perf_counter()
             try:
-                start = time.perf_counter()
+                # start = time.perf_counter()
                 res = func(*args, **kwargs)
                 rt = time.perf_counter() - start
 
-                log.debug("(api_response) : %s " % truncated_output(res, log_row_length))
+                log.debug("(api_response) : %s " % truncated_output(res, info_logout.log_row_length))
 
                 func_name = args[0][0].__qualname__
                 msg = "[Time] {0} run in {1}s".format(func_name, round(rt, PRECISION.COMMON_PRECISION))
-                if callable(args[0][0]) and func_name in info_logout:
+                if callable(args[0][0]) and func_name in info_logout.log_output:
                     log.info(msg)
                 else:
                     log.debug(msg)
 
                 return (res, rt), True
             except Exception as e:
+                rt = time.perf_counter() - start
                 log.error(traceback.format_exc())
-                log.error("(api_response) : %s" % truncated_output(e, log_row_length))
-                return (e, 0), False
+                log.error("(api_response) : %s" % truncated_output(e, info_logout.log_row_length))
+                return (e, rt), False
 
         return inner_wrapper
     return wrapper
@@ -51,7 +64,7 @@ def api_request(_list, **kwargs):
                     arg.append(a)
 
             log.debug("(api_request)  : [%s] args: %s, kwargs: %s" % (func.__qualname__,
-                                                                      truncated_output(arg, log_row_length),
+                                                                      truncated_output(arg, info_logout.log_row_length),
                                                                       str(kwargs)))
 
             return func(*arg, **kwargs)
@@ -83,3 +96,23 @@ def time_wrapper(func):
 
     return wrapper
 
+
+def func_time_catch():
+    def wrapper(func):
+        def inner_wrapper(*args, **kwargs) -> Tuple[tuple, bool]:
+            start = time.perf_counter()
+            try:
+                res = func(*args, **kwargs)
+                rt = time.perf_counter() - start
+
+                msg = "[Time] {0} run in {1}s, response: {2}".format(func.__name__,
+                                                                     round(rt, PRECISION.COMMON_PRECISION), res)
+                log.debug(msg)
+                return (res, rt), True
+            except Exception as e:
+                rt = time.perf_counter() - start
+                log.error(traceback.format_exc())
+                log.error("[func_time_catch] : %s" % truncated_output(e, info_logout.log_row_length))
+                return (e, rt), False
+        return inner_wrapper
+    return wrapper

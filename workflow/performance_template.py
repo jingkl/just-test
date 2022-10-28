@@ -77,7 +77,7 @@ class PerfTemplate(Base):
 
     def concurrency_template(self, input_params: InputParamsBase, case_callable_obj: callable,
                              default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE, interval=30,
-                             sync_report=False):
+                             sync_report=False, old_version_format=True):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -104,7 +104,7 @@ class PerfTemplate(Base):
         # init report
         report_client = DataCheck(tags={"case_name": Report_Metric_Object.client.test_case_name,
                                         "run_id": Report_Metric_Object.client.run_id}, file_path=log.log_info,
-                                  interval=interval)
+                                  interval=interval, old_version_format=old_version_format)
         report_client.start_stream_read(sync_report=get_sync_report_flag(sync_report,
                                                                          sync_report=param_info.sync_report,
                                                                          async_report=param_info.async_report))

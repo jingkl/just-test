@@ -1,3 +1,4 @@
+import queue
 from dataclasses import dataclass
 from typing import Optional, Union, Callable, List, Dict, AnyStr
 
@@ -17,6 +18,7 @@ class CheckTasks:
     check_nothing = "check_nothing"
     err_res = "error_response"
     ccr = "check_connection_result"
+    assert_result = "assert_result"
 
 
 class CaseLabel:
@@ -53,6 +55,8 @@ class DefaultValue:
     FILE_PREFIX = "binary"
     Max_file_count = 10000
 
+    default_timeout = 60
+
 
 class SimilarityMetrics:
     L2 = "L2"
@@ -86,6 +90,7 @@ class Precision:
     INSERT_PRECISION = 4
     QUERY_PRECISION = 4
     COMMON_PRECISION = 4
+    CONCURRENT_PRECISION = 2
 
 
 class CaseIterParams:
@@ -96,3 +101,40 @@ class CaseIterParams:
         self.CallableObject = callable_object
         self.ObjectArgs = object_args
         self.ObjectKwargs = object_kwargs
+
+
+class ConcurrentGlobalParams:
+    def __init__(self, request_type="grpc", queue_length=500000):
+        self.request_type = request_type
+
+        # statistics inserted ids
+        self.queue_length = queue_length
+        self.concurrent_insert_ids = queue.Queue(self.queue_length)
+        self.concurrent_insert_delete_flush = queue.Queue(self.queue_length)
+
+    def put_data_to_insert_queue(self, queue_obj: queue.Queue, _list: list, queue_length=None):
+        queue_length = queue_length or self.queue_length
+        if queue_obj.full() or len(_list) == 0:
+            return True
+
+        empty_size = queue_length - queue_obj.qsize()
+        _size = empty_size if empty_size <= len(_list) else len(_list)
+        for i in _list[:_size]:
+            queue_obj.put(i)
+
+    @staticmethod
+    def get_data_from_insert_queue(queue_obj: queue.Queue, length: int):
+        id_list = []
+        q_size = queue_obj.qsize()
+
+        q_ids = length if q_size >= length else q_size
+        for i in range(q_ids):
+            id_list.append(queue_obj.get())
+
+        for i in range(length - q_ids):
+            id_list.append(i)
+        return id_list
+
+
+concurrent_global_params = ConcurrentGlobalParams()
+

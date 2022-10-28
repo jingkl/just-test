@@ -16,9 +16,11 @@ def pytest_addoption(parser):
     parser.addoption("--tag", action="store", default="all", help="only run tests matching the tag.")
     parser.addoption('--clean_log', action='store_true', default=False, help="clean log before testing")
     parser.addoption('--secure', action='store_true', default=False, help="using secure when connection server")
+    parser.addoption("--user", action="store", default="", help="enable secure and set user name")
+    parser.addoption("--password", action="store", default="", help="enable secure and set user password")
     parser.addoption('--err_msg', action='store', default="err_msg", help="error message of test")
-    parser.addoption("--milvus_tag", action="store", default=None, help="milvus container tag")
-    parser.addoption("--milvus_tag_prefix", action="store", default="", help="milvus container tag prefix")
+    parser.addoption("--milvus_tag", action="store", default=None, help="Milvus container tag")
+    parser.addoption("--milvus_tag_prefix", action="store", default="", help="Milvus container tag prefix")
     parser.addoption("--tag_repository", action="store", default=None, help="tag repository")
     parser.addoption("--update_helm_file", action="store_true", default=False, help="update helm file values.yaml")
     parser.addoption("--release_name_prefix", action="store", default="", help="release name prefix")
@@ -32,18 +34,13 @@ def pytest_addoption(parser):
     parser.addoption("--deploy_tool", action="store", default=Helm, help="helm or operator")
     parser.addoption("--deploy_mode", action="store", default="", help="standalone or cluster")
     parser.addoption("--deploy_config", action="store", default="", help="str or dict")
-    parser.addoption('--deploy_retain', action='store_true', default=False, help="delete milvus")
+    parser.addoption('--deploy_retain', action='store_true', default=False, help="retain Milvus")
     parser.addoption("--case_params", action="store", default="", help="str or dict")
     parser.addoption('--case_skip_prepare', action='store_true', default=False, help="skip prepare collection")
     parser.addoption('--case_skip_prepare_clean', action='store_true', default=False,
                      help="skip clean collection before test")
     parser.addoption('--case_skip_build_index', action='store_true', default=False, help="skip rebuild index")
     parser.addoption('--case_skip_clean_collection', action='store_true', default=False, help="skip remove collection")
-
-
-@pytest.fixture
-def client_version(request):
-    return request.config.getoption("--client_version")
 
 
 @pytest.fixture
@@ -54,31 +51,6 @@ def host(request):
 @pytest.fixture
 def port(request):
     return request.config.getoption("--port")
-
-
-@pytest.fixture
-def tag(request):
-    return request.config.getoption("--tag")
-
-
-@pytest.fixture
-def clean_log(request):
-    return request.config.getoption("--clean_log")
-
-
-@pytest.fixture
-def secure(request):
-    return request.config.getoption("--secure")
-
-
-@pytest.fixture
-def err_msg(request):
-    return request.config.getoption("--err_msg")
-
-
-@pytest.fixture
-def deploy_mode(request):
-    return request.config.getoption("--deploy_mode")
 
 
 """ fixture func """
@@ -92,6 +64,8 @@ def initialize_env(request):
     port = request.config.getoption("--port")
     clean_log = request.config.getoption("--clean_log")
     secure = request.config.getoption("--secure")
+    user = request.config.getoption("--user")
+    password = request.config.getoption("--password")
     milvus_tag = request.config.getoption("--milvus_tag")
     milvus_tag_prefix = request.config.getoption("--milvus_tag_prefix")
     tag_repository = request.config.getoption("--tag_repository")
@@ -107,6 +81,9 @@ def initialize_env(request):
     """ params check """
     # assert ip_check(host) and number_check(port)
 
+    # increase the capacity of the stack
+    # sys.setrecursionlimit(10000)
+
     """ modify log files """
     file_path_list = [log_config.log_debug, log_config.log_info, log_config.log_err]
     modify_file(file_path_list=file_path_list, is_modify=clean_log)
@@ -118,7 +95,7 @@ def initialize_env(request):
                                   deploy_skip=deploy_skip, deploy_retain=deploy_retain,
                                   client_test_skip=client_test_skip, update_helm_file=update_helm_file,
                                   release_name_prefix=release_name_prefix, sync_report=sync_report,
-                                  async_report=async_report)
+                                  async_report=async_report, param_user=user, param_password=password)
     log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
     # yield
     # if param_info.test_status is False:
@@ -132,8 +109,8 @@ def initialize_env(request):
 @pytest.fixture(scope="session")
 def input_params(request) -> InputParamsBase:
     return InputParamsBase(**{
-        "deploy_tool": request.config.getoption("--deploy_tool"),
-        "deploy_mode": request.config.getoption("--deploy_mode"),
+        "deploy_tool": str(request.config.getoption("--deploy_tool")).lower(),
+        "deploy_mode": str(request.config.getoption("--deploy_mode")).lower(),
         "deploy_config": request.config.getoption("--deploy_config"),
         "case_params": request.config.getoption("--case_params"),
         "case_skip_prepare": request.config.getoption("--case_skip_prepare"),
@@ -145,11 +122,11 @@ def input_params(request) -> InputParamsBase:
 
 @pytest.fixture(scope="function")
 def clear_env(request):
-    log.info("init clear env")
+    log.info("[clear_env] init clear env")
 
     def fin():
         try:
-            log.info("clear env")
+            log.info("[clear_env] clear env")
             pass
         except Exception as e:
             log.error(e)

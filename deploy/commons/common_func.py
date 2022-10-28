@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
 import datetime
-import logging
 import string
 import random
 import os

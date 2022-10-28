@@ -1,17 +1,17 @@
 import re
 
-
-from commons.streming_read import StreamRead
+from commons.streaming_read import StreamRead
 from db_client.client_db import DBClient
 from utils.util_log import log
 
 
 class DataCheck:
-    def __init__(self, file_path="", interval=600, tags: dict = {}):
+    def __init__(self, file_path="", interval=600, tags: dict = {}, old_version_format=True):
         """
         sync_report = False : report data after finished test
         """
-        self._format = self.data_parser_format()
+        self.old_version_format = old_version_format
+        self._format = self.data_parser_format(old_version_format=old_version_format)
         self.default_tags = tags
         self.sync_report = True
         self.db_client = DBClient(db_name="fouram")
@@ -38,7 +38,7 @@ class DataCheck:
                                                      'failures_s': failures}
 
     @staticmethod
-    def data_parser_format():
+    def data_parser_format(old_version_format=True):
         _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\]'
         _log_level = r'\[\s+INFO\]\s+-\s+'
         _name = r'[a-z]+\s+[a-z0-9]+\s+'
@@ -48,10 +48,18 @@ class DataCheck:
         _space = r'\s+'
         _vertical_bar = r'\|'
 
-        _format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
-        _format += _float + _space + _float + _space + _float + _space + _float + _space + _vertical_bar + _space
-        _format += _float + _space + _float + _space
-        return _format
+        # old version
+        old_format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
+        old_format += _float + _space + _float + _space + _float + _space + _float + _space + _vertical_bar + _space
+        old_format += _float + _space + _float + _space
+
+        # new version
+        _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\s+-\s+'
+        _log_level = r'INFO\s+-\s+[a-z0-9]+\]:\s+'
+        new_format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
+        new_format += _int + _space + _int + _space + _int + _space + _int + _space + _vertical_bar + _space
+        new_format += _float + _space + _float + _space
+        return old_format if old_version_format else new_format
 
     def data_read(self, content: str) -> list:
         return re.findall(re.compile(self._format, re.I), content)
@@ -59,8 +67,13 @@ class DataCheck:
     def data_parser(self, content: str):
         _contents = self.data_read(content)
         for _c in _contents:
-            dt = _c.split(']')[0].split('[')[-1]
-            k = _c.split('-')[-1].split()
+            if self.old_version_format:
+                dt = _c.split(']')[0].split('[')[-1]
+                k = _c.split('-')[-1].split()
+            else:
+                _dt = _c.split('[')[-1].split()
+                dt = _dt[0] + " " + _dt[1]
+                k = _c.split(':')[-1].split()
 
             if len(k) == 12:
                 _time_ = dt.split(' ')

@@ -10,6 +10,18 @@ search_params = "search_params"
 query_params = "query_params"
 go_search_params = "go_search_params"
 concurrent_params = "concurrent_params"
+concurrent_tasks = "concurrent_tasks"
+
+# request type
+search = "search"
+query = "query"
+flush = "flush"
+load = "load"
+release = "release"
+insert = "insert"
+delete = "delete"
+scene_test = "scene_test"
+scene_insert_delete_flush = "scene_insert_delete_flush"
 
 # dataset
 dataset_name = "dataset_name"
@@ -29,6 +41,8 @@ replica_number = "replica_number"
 index_type = "index_type"
 index_param = "index_param"
 
+nlist = "nlist"
+
 # query
 ids = "ids"
 expression = "expression"
@@ -44,6 +58,9 @@ guarantee_timestamp = "guarantee_timestamp"
 concurrent_number = "concurrent_number"
 during_time = "during_time"
 interval = "interval"
+
+# concurrent
+spawn_rate = "spawn_rate"
 
 # common
 metric_type = "metric_type"
@@ -78,6 +95,7 @@ class DatasetsName:
     STRUCTURE = "structure"
     BINARY = "binary"
     LOCAL = "local"  # random
+    GIST = "gist"
 
 
 class MetricsTypeName:

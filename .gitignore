@@ -1,5 +1,6 @@
 .pytest_cache
+**/.pytest_cache
 ../../.idea/
 .idea
-../commons/__pycache__/
-../configs/__pycache__/
+**/__pycache__/
+__pycache__/

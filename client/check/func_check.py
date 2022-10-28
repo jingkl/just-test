@@ -22,6 +22,9 @@ class ResponseChecker:
             # Interface normal return check
             result = self.assert_succ(self.succ, True)
 
+        elif self.check_task is CheckTasks.assert_result:
+            result = self.assert_result(self.succ, True)
+
         elif self.check_task == CheckTasks.err_res:
             # Interface return error code and error message check
             result = self.assert_exception(self.response, self.succ, self.check_items)
@@ -33,6 +36,11 @@ class ResponseChecker:
         # Add check_items here if something new need verify
 
         return result
+
+    def assert_result(self, actual, expect):
+        if actual is not expect:
+            log.error("[CheckFunc] {0} request check failed, response:{1}".format(self.func_name, self.response))
+        return actual is expect
 
     # @staticmethod
     def assert_succ(self, actual, expect):

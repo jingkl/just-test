@@ -9,7 +9,6 @@ class AccParams:
     @staticmethod
     def base(dataset_name, index_type, index_param, search_param, expr=None, top_k=[10], nq=[10000],
              guarantee_timestamp=None, other_fields=[], replica_number=1, ni_per=10000, dim=dv.default_dim):
-
         dataset_params = {pn.dataset_name: dataset_name,
                           pn.ni_per: ni_per,
                           pn.dim: dim}
@@ -45,6 +44,18 @@ class AccParams:
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
                                    search_param=search_param)
         log.debug("[AccParams] Default params of sift_128_euclidean_hnsw: {0}".format(default_params))
+        return default_params
+
+    def sift_128_euclidean_diskann(self, dataset_name=pn.AccDatasetsName.sift_128_euclidean,
+                                   index_type=pn.IndexTypeName.DISKANN, search_list=None):
+        index_param = {}
+
+        search_list = [20, 30, 40, 50, 60, 70] if search_list is None else search_list
+        search_param = {"search_list": search_list}
+
+        default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
+                                   search_param=search_param)
+        log.debug("[AccParams] Default params of sift_128_euclidean_diskann: {0}".format(default_params))
         return default_params
 
     def sift_128_euclidean_annoy(self, dataset_name=pn.AccDatasetsName.sift_128_euclidean,
@@ -105,6 +116,16 @@ class AccParams:
         log.debug("[AccParams] Default params of sift_128_euclidean_ivf_pq: {0}".format(default_params))
         return default_params
 
+    def sift_128_euclidean_auto_index(self, dataset_name=pn.AccDatasetsName.sift_128_euclidean,
+                                      index_type=pn.IndexTypeName.AUTOINDEX, level=None):
+        level = [1, 2, 3] if level is None else level
+        search_param = {"level": level}
+
+        default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param={},
+                                   search_param=search_param)
+        log.debug("[AccParams] Default params of sift_128_euclidean_auto_index: {0}".format(default_params))
+        return default_params
+
     def glove_200_angular_hnsw(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
                                index_type=pn.IndexTypeName.HNSW, m=36, ef_construction=500, ef=None):
         index_param = {"M": m,
@@ -128,6 +149,16 @@ class AccParams:
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
                                    search_param=search_param, dim=200)
         log.debug("[AccParams] Default params of glove_200_angular_ivf_flat: {0}".format(default_params))
+        return default_params
+
+    def glove_200_angular_auto_index(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
+                                     index_type=pn.IndexTypeName.AUTOINDEX, level=None):
+        level = [1, 2, 3] if level is None else level
+        search_param = {"level": level}
+
+        default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param={},
+                                   search_param=search_param, dim=200)
+        log.debug("[AccParams] Default params of glove_200_angular_auto_index: {0}".format(default_params))
         return default_params
 
     def kosarak_27983_jaccard_bin_ivf_flat(self, dataset_name=pn.AccDatasetsName.kosarak_27983_jaccard,
