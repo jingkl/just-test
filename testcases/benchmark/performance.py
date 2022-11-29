@@ -1,15 +1,11 @@
-import sys
 import pytest
 
 from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, GoBenchCases
 from client.parameters.input_params import AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, \
     SearchParams, GoBenchParams
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
-from workflow.base import Base
 from workflow.performance_template import PerfTemplate
-from utils.util_log import log
 from parameters.input_params import param_info, InputParamsBase
-from commons.common_func import update_dict_value
 from commons.common_type import DefaultParams as dp
 
 
@@ -68,6 +64,28 @@ class TestRecallCases(PerfTemplate):
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_hnsw())
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_recall_sift_diskann_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().sift_128_euclidean_diskann())
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_recall_sift_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().sift_128_euclidean_diskann())
 
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -179,6 +197,14 @@ class TestRecallCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_pq())
 
+    def test_recall_sift_auto_index(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().sift_128_euclidean_auto_index())
+
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_recall_glove_hnsw_standalone(self, input_params: InputParamsBase, deploy_mode):
@@ -222,6 +248,14 @@ class TestRecallCases(PerfTemplate):
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_ivf_flat())
+
+    def test_recall_glove_auto_index(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_auto_index())
 
     # @pytest.mark.skip("https://github.com/milvus-io/milvus/issues/19321")
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -397,8 +431,8 @@ class TestPerformanceCases(PerfTemplate):
             1. insert and calculation of query time
         """
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
-                             case_callable_obj=Query().scene_query_ids,
-                             default_case_params=QueryParams().params_scene_query_ids_sift())
+                             case_callable_obj=Query().scene_query_expr,
+                             default_case_params=QueryParams().params_scene_query_expr_sift())
 
     @pytest.mark.query
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
@@ -432,49 +466,69 @@ class TestPerformanceCases(PerfTemplate):
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
-    def test_search_filter_standalone(self, input_params: InputParamsBase, deploy_mode):
+    def test_ivf_flat_search_filter_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. insert and calculation of search time
         """
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search())
+                             default_case_params=SearchParams().params_scene_search_ivf_flat())
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
-    def test_search_filter_cluster(self, input_params: InputParamsBase, deploy_mode):
+    def test_ivf_flat_search_filter_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. insert and calculation of search time
         """
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search())
+                             default_case_params=SearchParams().params_scene_search_ivf_flat())
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
-    def test_search_standalone(self, input_params: InputParamsBase, deploy_mode):
+    def test_ivf_flat_search_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. insert and calculation of search time
         """
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search(other_fields=[], search_expr=None,
-                                                                                    req_run_counts=30))
+                             default_case_params=SearchParams().params_scene_search_ivf_flat(other_fields=[],
+                                                                                             search_expr=None,
+                                                                                             req_run_counts=30))
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
-    def test_search_cluster(self, input_params: InputParamsBase, deploy_mode):
+    def test_ivf_flat_search_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. insert and calculation of search time
         """
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search(other_fields=[], search_expr=None,
-                                                                                    req_run_counts=30))
+                             default_case_params=SearchParams().params_scene_search_ivf_flat(other_fields=[],
+                                                                                             search_expr=None,
+                                                                                             req_run_counts=30))
+
+    def test_auto_index_search_filter(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. insert and calculation of search time
+        """
+        self.serial_template(input_params=input_params, case_callable_obj=Search().scene_search,
+                             default_case_params=SearchParams().params_scene_search_auto_index())
+
+    def test_auto_index_search_without_expr(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. insert and calculation of search time
+        """
+        self.serial_template(input_params=input_params, case_callable_obj=Search().scene_search,
+                             default_case_params=SearchParams().params_scene_search_auto_index(other_fields=[],
+                                                                                               search_expr=None,
+                                                                                               req_run_counts=30))
 
 
 class TestGoBenchCases(PerfTemplate):
@@ -510,24 +564,32 @@ class TestGoBenchCases(PerfTemplate):
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=STANDALONE, case_callable_obj=GoBenchCases().scene_go_search)
 
-    @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
-    def test_scene_go_bench_standalone(self, input_params: InputParamsBase, deploy_mode):
+    def test_scene_go_bench_hnsw_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. concurrent search and calculation of RT and QPS
         """
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, case_callable_obj=GoBenchCases().scene_go_search,
-                                  default_case_params=GoBenchParams().params_scene_go_search())
+                                  default_case_params=GoBenchParams().params_scene_go_search_hnsw())
 
-    @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
-    def test_scene_go_bench_cluster(self, input_params: InputParamsBase, deploy_mode):
+    def test_scene_go_bench_hnsw_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. concurrent search and calculation of RT and QPS
         """
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, case_callable_obj=GoBenchCases().scene_go_search,
-                                  default_case_params=GoBenchParams().params_scene_go_search(), sync_report=True)
+                                  default_case_params=GoBenchParams().params_scene_go_search_hnsw(), sync_report=True)
+
+    def test_scene_go_bench_auto_index(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. concurrent search and calculation of RT and QPS
+        """
+        self.concurrency_template(input_params=input_params, case_callable_obj=GoBenchCases().scene_go_search,
+                                  default_case_params=GoBenchParams().params_scene_go_search_auto_index(),
+                                  sync_report=True)
+

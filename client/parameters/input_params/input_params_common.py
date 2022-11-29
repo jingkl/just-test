@@ -111,13 +111,23 @@ class QueryParams(CommonParams):
         log.debug("[QueryByIdsParams] Default params of params_scene_query_ids_sift: {0}".format(default_params))
         return default_params
 
+    def params_scene_query_expr_sift(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="1m",
+                                     ni_per=50000, query_expr="id in [1, 100, 1000, 10000]", req_run_counts=10,
+                                     index_type=pn.IndexTypeName.FLAT, index_param={},
+                                     metric_type=pn.MetricsTypeName.L2):
+        default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
+                                   query_expr=query_expr, req_run_counts=req_run_counts, index_type=index_type,
+                                   index_param=index_param, metric_type=metric_type)
+        log.debug("[QueryByIdsParams] Default params of params_scene_query_expr_sift: {0}".format(default_params))
+        return default_params
+
 
 class SearchParams(CommonParams):
-    def params_scene_search(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="50m", ni_per=50000,
-                            other_fields=dp.other_fields, metric_type=pn.MetricsTypeName.L2,
-                            index_type=pn.IndexTypeName.IVF_FLAT, index_param={"nlist": 2048},
-                            top_k=[1, 10, 100, 1000], nq=[1, 10, 100, 200, 500, 1000, 1200],
-                            search_param={"nprobe": [8, 32]}, search_expr=dp.search_expr, req_run_counts=10):
+    def params_scene_search_ivf_flat(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="50m", ni_per=50000,
+                                     other_fields=dp.other_fields, metric_type=pn.MetricsTypeName.L2,
+                                     index_type=pn.IndexTypeName.IVF_FLAT, index_param={"nlist": 2048},
+                                     top_k=[1, 10, 100, 1000], nq=[1, 10, 100, 200, 500, 1000, 1200],
+                                     search_param={"nprobe": [8, 32]}, search_expr=dp.search_expr, req_run_counts=10):
         dataset_size = parser_data_size(dataset_size)
 
         _search_expr = []
@@ -135,5 +145,30 @@ class SearchParams(CommonParams):
                                    other_fields=other_fields, metric_type=metric_type, index_type=index_type,
                                    index_param=index_param, top_k=top_k, nq=nq, search_param=search_param,
                                    search_expr=_search_expr, req_run_counts=req_run_counts)
-        log.debug("[SearchParams] Default params of params_scene_search: {0}".format(default_params))
+        log.debug("[SearchParams] Default params of params_scene_search_ivf_flat: {0}".format(default_params))
+        return default_params
+
+    def params_scene_search_auto_index(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="6m",
+                                       ni_per=50000, other_fields=dp.other_fields, metric_type=pn.MetricsTypeName.L2,
+                                       index_type=pn.IndexTypeName.AUTOINDEX, index_param={}, top_k=[1, 10, 100, 1000],
+                                       nq=[1, 10, 100, 200, 500, 1000, 1200], search_param={"level": [1, 2, 3]},
+                                       search_expr=dp.search_expr, req_run_counts=10):
+        dataset_size = parser_data_size(dataset_size)
+
+        _search_expr = []
+        if search_expr is None:
+            _search_expr = None
+        elif isinstance(search_expr, list):
+            for s in search_expr:
+                _search_expr.append(eval(s))
+        elif isinstance(search_expr, str):
+            _search_expr.append(eval(search_expr))
+        else:
+            raise Exception("[SearchParams] search_expr is not: List[str], check search_expr: {0}".format(search_expr))
+
+        default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
+                                   other_fields=other_fields, metric_type=metric_type, index_type=index_type,
+                                   index_param=index_param, top_k=top_k, nq=nq, search_param=search_param,
+                                   search_expr=_search_expr, req_run_counts=req_run_counts)
+        log.debug("[SearchParams] Default params of params_scene_search_auto_index: {0}".format(default_params))
         return default_params

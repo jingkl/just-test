@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 import copy
 
@@ -8,8 +7,7 @@ from client.parameters.params import ParamsFormat, ParamsBase
 from client.parameters import params_name as pn
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_type import DefaultValue as dv
-from client.common.common_func import get_source_file, read_ann_hdf5_file, normalize_data, get_acc_metric_type, \
-    gen_combinations, update_dict_value, get_vector_type, get_default_field_name, get_search_ids, get_recall_value, \
+from client.common.common_func import gen_combinations, update_dict_value, get_vector_type, get_default_field_name, \
     get_vectors_from_binary, parser_search_params_expr
 from utils.util_log import log
 from client.util.params_check import check_params
@@ -24,7 +22,7 @@ class CommonCases(Base):
     def parsing_params(self, params):
         if not isinstance(params, dict):
             log.error("[CommonCases] Params({}) do not match to dict.".format(type(params)))
-        self.params_obj = ParamsBase(**params)
+        self.params_obj = ParamsBase(**copy.deepcopy(params))
 
     def prepare_collection(self, vector_field_name, prepare, prepare_clean=True):
         self.connect()
@@ -159,6 +157,26 @@ class CommonCases(Base):
         }, _params)
         return result, nq, top_k, expr
 
+    @staticmethod
+    def query_param_analysis(**kwargs):
+        """
+        :return: params for query
+        """
+        ids = kwargs.pop("ids")
+        expr = kwargs.pop("expr")
+
+        _expr = ""
+        if ids is None and expr is None:
+            raise Exception("[CommonCases] Params of query are needed.")
+
+        elif ids is not None:
+            _expr = "id in %s" % str(ids)
+
+        elif expr is not None:
+            _expr = expr
+        kwargs.update(expr=_expr)
+        return kwargs
+
 
 class InsertBatch(CommonCases):
 
@@ -185,7 +203,7 @@ class InsertBatch(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[InsertBatch] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[InsertBatch] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
@@ -246,7 +264,7 @@ class BuildIndex(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[BuildIndex] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[BuildIndex] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
@@ -314,7 +332,7 @@ class Load(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[Load] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[Load] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
@@ -370,8 +388,7 @@ class Query(CommonCases):
         9. clean all collections or not
         """
 
-    @check_params(ParamsFormat.common_scene_query_ids)
-    def scene_query_ids(self, **kwargs):
+    def scene_query(self, **kwargs):
         """
         :param kwargs:
             params: dict
@@ -385,7 +402,7 @@ class Query(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[Query] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[Query] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
@@ -428,6 +445,14 @@ class Query(CommonCases):
         self.clear_collections(clean_collection=clean_collection)
         yield True
 
+    @check_params(ParamsFormat.common_scene_query_expr)
+    def scene_query_expr(self, **kwargs):
+        return self.scene_query(**kwargs)
+
+    @check_params(ParamsFormat.common_scene_query_ids)
+    def scene_query_ids(self, **kwargs):
+        return self.scene_query(**kwargs)
+
 
 class Search(CommonCases):
 
@@ -461,7 +486,7 @@ class Search(CommonCases):
         prepare = kwargs.get("prepare", True)
         prepare_clean = kwargs.get("prepare_clean", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[Search] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[Search] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)

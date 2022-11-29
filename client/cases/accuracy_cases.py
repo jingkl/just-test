@@ -106,7 +106,8 @@ class CommonCases(Base):
                 self.clean_index()
 
                 res_index = self.build_index(**_index_params)
-                self.case_report.add_attr(**{"index": {"build_time": round(res_index[0][1], Precision.INDEX_PRECISION)}})
+                self.case_report.add_attr(
+                    **{"index": {"build_time": round(res_index[0][1], Precision.INDEX_PRECISION)}})
 
                 self.show_index()
 
@@ -163,7 +164,10 @@ class CommonCases(Base):
 
             search_res = {"Recall": acc_value,
                           "RT": round(float(np.mean(search_rt)), Precision.SEARCH_PRECISION),
-                          "LastRT": round(rt, Precision.SEARCH_PRECISION)}
+                          "LastRT": round(rt, Precision.SEARCH_PRECISION),
+                          "MinRT": round(float(np.min(search_rt)), Precision.SEARCH_PRECISION),
+                          "MaxRT": round(float(np.max(search_rt)), Precision.SEARCH_PRECISION)
+                          }
             self.case_report.add_attr(**{"search": search_res})
 
             log.info("[AccCases] Search result:{0}".format(search_res))
@@ -204,7 +208,7 @@ class AccCases(CommonCases):
         prepare_clean = kwargs.get("prepare_clean", True)
         rebuild_index = kwargs.get("rebuild_index", True)
         clean_collection = kwargs.get("clean_collection", True)
-        log.info("[AccCases] The detailed test steps are as follows: {}".format(self.__doc__))
+        log.info("[AccCases] The detailed test steps are as follows: {}".format(self))
 
         # file parsing
         self.parsing_params(params)

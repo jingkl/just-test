@@ -128,7 +128,7 @@ def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
 
 
 def get_vector_type(data_type):
-    if data_type in ["random", "sift", "deep", "glove", "local"]:
+    if data_type in ["random", "sift", "deep", "glove", "local", "gist"]:
         vector_type = DataType.FLOAT_VECTOR
     elif data_type in ["binary", "kosarak"]:
         vector_type = DataType.BINARY_VECTOR
@@ -147,7 +147,12 @@ def gen_file_name(file_id, dim, data_type):
 
 
 def parser_data_size(data_size):
-    return eval(str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b", "*1000000000"))
+    return eval(str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
+                                                                                                             "*1000000000"))
+
+
+def parser_time(_time):
+    return eval(str(_time).replace("s", "*1").replace("m", "*60").replace("h", "*3600").replace("d", "*3600*24"))
 
 
 def get_file_list(data_size, dim, data_type):
@@ -178,7 +183,7 @@ def get_file_list(data_size, dim, data_type):
 
 
 def gen_vectors(nb, dim):
-    return [[random.random() for _ in range(dim)] for _ in range(nb)]
+    return [[random.random() for _ in range(int(dim))] for _ in range(int(nb))]
 
 
 def gen_ids(start_id, end_id):
@@ -202,7 +207,7 @@ def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
         else:
             _len = int(field["params"]["max_length"])
             _str = string.ascii_letters + string.digits
-            for i in range(int(_len/len(_str))):
+            for i in range(int(_len / len(_str))):
                 _str += _str
             values = [''.join(random.sample(_str, _len - 1)) for i in ids]
     return values
@@ -306,6 +311,9 @@ def parser_search_params_expr(expr):
         GT: greater than
     :return: expression of search
     """
+    if expr is None:
+        return expr
+
     expression = ""
     if isinstance(expr, str):
         return expr
@@ -325,7 +333,7 @@ def parser_search_params_expr(expr):
 
 
 def get_vectors_from_binary(nq, dimension, dataset_name):
-    if dataset_name in ["sift", "deep", "binary"]:
+    if dataset_name in ["sift", "deep", "binary", "gist"]:
         # dataset_name: local, sift, deep, binary
         file_name = DatasetPath[dataset_name] + "query.npy"
 
@@ -490,6 +498,8 @@ def loop_ids(step=50000, start_id=0):
     while True:
         ids = [k for k in range(start_id, start_id + int(step))]
         start_id = start_id + int(step)
+        if start_id + int(step) > 2 ** 63 - 1:
+            start_id = 0
         yield ids
 
 
@@ -737,8 +747,13 @@ class GoSearchParams:
             sp_value = param["params"]["ef"]
         elif "nprobe" in param["params"]:
             sp_value = param["params"]["nprobe"]
+        elif "level" in param["params"]:
+            sp_value = param["params"]["level"]
+        elif "search_list" in param["params"]:
+            sp_value = param["params"]["search_list"]
         else:
-            raise Exception("[GoSearchParams] Can not get search params(ef or nprobe): {0}".format(param))
+            raise Exception(
+                "[GoSearchParams] Can not get search params(ef or nprobe or level or search_list): {0}".format(param))
         params = {"sp_value": sp_value}
         params.update({"dim": dim})
 
@@ -749,3 +764,8 @@ class GoSearchParams:
             "limit": limit,
             "expression": expr,
         }
+
+
+def get_spawn_rate(total_num: int, default_max_step: int = 5, default_max_spawn_rate: int = 100):
+    _spawn_rate = math.ceil(total_num / default_max_step)
+    return _spawn_rate if _spawn_rate <= default_max_spawn_rate else default_max_spawn_rate

@@ -1,4 +1,5 @@
 import sys
+
 from pymilvus import Connections, DefaultConfig
 
 from client.check.func_check import ResponseChecker
@@ -6,6 +7,7 @@ from client.util.api_request import api_request
 
 
 class ApiConnectionsWrapper:
+
     def __init__(self):
         self.connection = Connections()
 

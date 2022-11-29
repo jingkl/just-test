@@ -18,7 +18,8 @@ class TestLogConfig:
         self.log_level = eval("logging.{0}".format(log_level)) if hasattr(LogLevel, log_level) else logging.DEBUG
         self.handlers = []
 
-        self.log = logging.getLogger(self.logger)
+        # self.log = logging.getLogger(self.logger)
+        self.log = logging.getLogger()
         self.log.setLevel(logging.DEBUG)
         # self.log.makeRecord = self.makeRecord
         self.set_log_level(use_stream=use_stream)
@@ -42,8 +43,9 @@ class TestLogConfig:
 
     def set_log_level(self, use_stream=True):
         try:
-            _format = "[%(asctime)s - %(levelname)5s - %(name)s]: %(message)s (%(filename)s:%(lineno)s)"
-            # _format = "[%(asctime)s - %(levelname)5s - %(name)s]: %(message)s "
+            # _format = "[%(asctime)s - %(levelname)5s - %(name)s]: %(message)s (%(filename)s:%(lineno)s)"
+            # _format = "[%(asctime)-15s][%(levelname)8s] - %(message)s (%(filename)s:%(lineno)s)"
+            _format = "[%(asctime)s - %(levelname)5s - {0}]: %(message)s (%(filename)s:%(lineno)s)".format(self.logger)
             formatter = logging.Formatter(_format)
 
             dh = logging.FileHandler(self.log_debug)
@@ -76,7 +78,7 @@ class TestLogConfig:
 
 
 class TestLog:
-    log_level = EnvVariable.LOG_LEVEL
+    log_level = str(EnvVariable.LOG_LEVEL).upper()
 
     def __init__(self, logger="fouram", log_debug=log_config.log_debug, log_info=log_config.log_info,
                  log_err=log_config.log_err):
@@ -102,6 +104,19 @@ class TestLog:
     def log_msg(self):
         return "[TestLog] Test log level:{0}, log file:{1},{2},{3}".format(self.log_level, self.log_debug,
                                                                            self.log_info, self.log_err)
+
+    def customize(self, log_level=LogLevel.DEBUG):
+        if log_level == LogLevel.DEBUG:
+            return self.debug
+        elif log_level == LogLevel.INFO:
+            return self.info
+        elif log_level == LogLevel.WARNING:
+            return self.warning
+        elif log_level == LogLevel.ERROR:
+            return self.error
+        else:
+            print("[TestLog] Error: Unable to get custom log levels, please check!!!")
+            return self.debug
 
     def _debug(self):
         # if self.log_level == LogLevel.DEBUG:
