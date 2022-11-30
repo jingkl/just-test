@@ -1,4 +1,3 @@
-import sys
 from deploy.vdc_rest_api.request_handler import Request
 from parameters.input_params import param_info
 from utils.util_log import log
@@ -49,7 +48,6 @@ class AutoGetTag:
 
     def get_latest_tag(self, limit=100):
         service = "registry.docker.io"
-        log.error("sys.getrecursionlimit: {}".format(sys.getrecursionlimit()))
         auth_url = "https://auth.docker.io/token?service=%s&scope=repository:%s:pull" % (service, self.repository)
         tags_url = "https://index.docker.io/v2/%s/tags/list" % self.repository
         manifests_url = "https://index.docker.io/v2/%s/manifests/" % self.repository
