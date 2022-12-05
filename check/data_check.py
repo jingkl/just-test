@@ -9,6 +9,7 @@ class DataCheck:
     def __init__(self, file_path="", interval=600, tags: dict = {}, old_version_format=True):
         """
         sync_report = False : report data after finished test
+        old_version_format: True for go bench
         """
         self.old_version_format = old_version_format
         self._format = self.data_parser_format(old_version_format=old_version_format)
@@ -18,7 +19,7 @@ class DataCheck:
         self.read_client = StreamRead(file_path=file_path, interval=interval)
 
     @staticmethod
-    def report_data_format(method, api, reqs, fails, _avg, _min, _max, _median, req, failures):
+    def report_data_format(method, api, reqs, fails, _avg, _min, _max, _median, req, failures, tp_99: float = None):
         """
         :param method: locust or go
         :param api: report API
@@ -30,12 +31,16 @@ class DataCheck:
         :param _median: median response time of interface within statistical interval
         :param req: the total number of api requests within statistical interval
         :param failures: the total number of api failed requests within statistical interval
+        :param tp_99: TP99 response time of interface within statistical interval
 
         :return: tag, fields
         """
-        return {'method': method, 'api_name': api}, {'reqs': reqs, 'fails': fails, 'rt_avg_ms': _avg, 'rt_min_ms': _min,
-                                                     'rt_max_ms': _max, 'rt_median_ms': _median, 'req_s': req,
-                                                     'failures_s': failures}
+        _f = {'reqs': reqs, 'fails': fails, 'rt_avg_ms': _avg, 'rt_min_ms': _min, 'rt_max_ms': _max,
+              'rt_median_ms': _median, 'req_s': req, 'failures_s': failures}
+        if tp_99 is not None:
+            _f.update({'TP99': tp_99})
+
+        return {'method': method, 'api_name': api}, _f
 
     @staticmethod
     def data_parser_format(old_version_format=True):
@@ -50,8 +55,8 @@ class DataCheck:
 
         # old version
         old_format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
-        old_format += _float + _space + _float + _space + _float + _space + _float + _space + _vertical_bar + _space
-        old_format += _float + _space + _float + _space
+        old_format += _float + _space + _float + _space + _float + _space + _float + _space + _float + _space
+        old_format += _vertical_bar + _space + _float + _space + _float + _space
 
         # new version
         _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\s+-\s+'
@@ -64,31 +69,74 @@ class DataCheck:
     def data_read(self, content: str) -> list:
         return re.findall(re.compile(self._format, re.I), content)
 
+    def parser_content(self, str_content: str):
+        if self.old_version_format:
+            dt = str_content.split(']')[0].split('[')[-1]
+            k = str_content.split('-')[-1].split()
+            if len(k) == 13:
+                _params = [k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]), float(k[5]), float(k[6]), float(k[7]),
+                           float(k[8]), float(k[11]), float(k[12]), float(k[9])]
+                return dt, k, _params
+        else:
+            _dt = str_content.split('[')[-1].split()
+            dt = _dt[0] + " " + _dt[1]
+            k = str_content.split(':')[-1].split()
+            if len(k) == 12:
+                _params = [k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]), float(k[5]), float(k[6]), float(k[7]),
+                           float(k[8]), float(k[10]), float(k[11])]
+                return dt, k, _params
+        return None, None, None
+
     def data_parser(self, content: str):
         _contents = self.data_read(content)
         for _c in _contents:
-            if self.old_version_format:
-                dt = _c.split(']')[0].split('[')[-1]
-                k = _c.split('-')[-1].split()
-            else:
-                _dt = _c.split('[')[-1].split()
-                dt = _dt[0] + " " + _dt[1]
-                k = _c.split(':')[-1].split()
-
-            if len(k) == 12:
+            dt, k, _p = self.parser_content(_c)
+            if dt is None:
+                continue
+            try:
                 _time_ = dt.split(' ')
                 _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
 
-                try:
-                    tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
-                                                           float(k[5]), float(k[6]), float(k[7]), float(k[8]),
-                                                           float(k[10]), float(k[11]))
-                except Exception as e:
-                    raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
-
+                tags, fields = self.report_data_format(*_p)
                 # update tag
                 tags.update(self.default_tags)
                 self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
+            except Exception as e:
+                raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
+
+            # if self.old_version_format:
+            #     dt = _c.split(']')[0].split('[')[-1]
+            #     k = _c.split('-')[-1].split()
+            #
+            #     try:
+            #         _time_ = dt.split(' ')
+            #         _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
+            #         if len(k) == 13:
+            #             tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
+            #                                                    float(k[5]), float(k[6]), float(k[7]), float(k[8]),
+            #                                                    float(k[11]), float(k[12]), float(k[9]))
+            #             # update tag
+            #             tags.update(self.default_tags)
+            #             self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
+            #     except Exception as e:
+            #         raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
+            # else:
+            #     _dt = _c.split('[')[-1].split()
+            #     dt = _dt[0] + " " + _dt[1]
+            #     k = _c.split(':')[-1].split()
+            #
+            #     try:
+            #         _time_ = dt.split(' ')
+            #         _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
+            #         if len(k) == 12 and not self.old_version_format:
+            #             tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
+            #                                                    float(k[5]), float(k[6]), float(k[7]), float(k[8]),
+            #                                                    float(k[10]), float(k[11]))
+            #             # update tag
+            #             tags.update(self.default_tags)
+            #             self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
+            #     except Exception as e:
+            #         raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
 
     def start_stream_read(self, sync_report=True):
         self.sync_report = sync_report

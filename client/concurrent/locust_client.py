@@ -1,8 +1,6 @@
-
 from locust import User, TaskSet, events
 
 from client.common.common_type import concurrent_global_params
-from client.parameters.params import ConcurrentTasksParams
 
 
 def event_catch():
@@ -18,9 +16,8 @@ def event_catch():
 
 
 class ClientTask:
-    def __init__(self, obj: callable, tasks_params: ConcurrentTasksParams, request_type: str = "grpc"):
+    def __init__(self, obj: callable, request_type: str = "grpc"):
         self.obj = obj
-        self.tasks_params = tasks_params
         concurrent_global_params.request_type = request_type
 
     def __getattr__(self, name):
@@ -34,46 +31,6 @@ class ClientTask:
                                 response_time=rt, response_length=0, exception=exception, context=User.context)
 
         return wrapper
-
-    # @event_catch()
-    # def debug(self):
-    #     return self.obj.concurrent_debug(self.tasks_params.debug.params)
-    #
-    # @event_catch()
-    # def search(self):
-    #     return self.obj.concurrent_search(self.tasks_params.search.params)
-    #
-    # @event_catch()
-    # def query(self):
-    #     return self.obj.concurrent_query(self.tasks_params.query.params)
-    #
-    # @event_catch()
-    # def flush(self):
-    #     return self.obj.concurrent_flush(self.tasks_params.flush.params)
-    #
-    # @event_catch()
-    # def load(self):
-    #     return self.obj.concurrent_load(self.tasks_params.load.params)
-    #
-    # @event_catch()
-    # def release(self):
-    #     return self.obj.concurrent_release(self.tasks_params.release.params)
-    #
-    # @event_catch()
-    # def insert(self):
-    #     return self.obj.concurrent_insert(self.tasks_params.insert.params)
-    #
-    # @event_catch()
-    # def delete(self):
-    #     return self.obj.concurrent_delete(self.tasks_params.delete.params)
-    #
-    # @event_catch()
-    # def scene_test(self):
-    #     return self.obj.concurrent_scene_test(self.tasks_params.scene_test.params)
-    #
-    # @event_catch()
-    # def scene_insert_delete_flush(self):
-    #     return self.obj.concurrent_scene_insert_delete_flush(self.tasks_params.scene_insert_delete_flush.params)
 
 
 class MyTaskSet(TaskSet):

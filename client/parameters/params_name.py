@@ -84,6 +84,7 @@ class AccDatasetsName:
     glove_100_angular = "glove-100-angular"
     glove_25_angular = "glove-25-angular"
     kosarak_27983_jaccard = "kosarak-27983-jaccard"
+    gist_960_euclidea = "gist-960-euclidea"
 
 
 class DatasetsName:

@@ -8,10 +8,9 @@ from locust.env import Environment
 
 from client.common.common_func import get_spawn_rate
 from client.common.common_type import Precision
-from client.parameters.params import ConcurrentTasksParams, ConcurrentObjParams
+from client.parameters.params import ConcurrentTasksParams, ConcurrentObjParams, DataClassBase
 from utils.util_log import log
 from client.concurrent.locust_client import ClientTask, MyTaskSet
-from client.util.api_request import func_time_catch
 
 
 class TickStatsPrinter:
@@ -121,9 +120,6 @@ class LocustRunner:
         # Stop printing interface results and runner
         runner.stop()
         tick_stats.stop_print_stats()
-
-        log.info("Start sleep 600s")
-        time.sleep(600)
 
         result = True if api_result["Fails"] == float(0) else False
         return api_result, result

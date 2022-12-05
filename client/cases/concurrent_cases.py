@@ -9,7 +9,6 @@ from client.common.common_func import gen_combinations, get_vector_type, get_def
 from utils.util_log import log
 from client.util.params_check import check_params
 from client.cases.common_cases import CommonCases
-# from client.concurrent.locust_runner import LocustRunner
 from client.parameters.params import ConcurrentObjParams, ConcurrentTasksParams, ConcurrentTaskSearch, \
     ConcurrentTaskQuery, ConcurrentInputParamsQuery, ConcurrentInputParamsSearch, ConcurrentInputParamsFlush, \
     ConcurrentTaskFlush, ConcurrentInputParamsLoad, ConcurrentTaskLoad, ConcurrentInputParamsRelease, \
@@ -202,6 +201,12 @@ class ConcurrentClientBase(CommonCases):
             clean_collection: bool
         :return:
         """
+        from gevent import monkey
+        monkey.patch_all()
+        # from requests.packages.urllib3.util.ssl_ import create_urllib3_context; create_urllib3_context()
+        import grpc.experimental.gevent as grpc_gevent
+        grpc_gevent.init_gevent()
+        from client.concurrent.locust_runner import LocustRunner
 
         # params prepare
         params = kwargs.get("params", None)
@@ -245,22 +250,22 @@ class ConcurrentClientBase(CommonCases):
         # concurrent test
         c_params = self.parser_concurrent_params()
         params_list = []
-        # for c_p in c_params:
-        #     spawn_rate = c_p[pn.spawn_rate] if pn.spawn_rate in c_p else None
-        #     con_client = LocustRunner(obj=self, obj_params=obj_params,
-        #                               interval=c_p[pn.interval], during_time=parser_time(c_p[pn.during_time]),
-        #                               concurrent_number=c_p[pn.concurrent_number], spawn_rate=spawn_rate)
-        #
-        #     actual_params_used = copy.deepcopy(params)
-        #     actual_params_used[pn.concurrent_params] = {
-        #         pn.concurrent_number: c_p[pn.concurrent_number],
-        #         pn.during_time: c_p[pn.during_time],
-        #         pn.interval: c_p[pn.interval],
-        #         pn.spawn_rate: spawn_rate
-        #     }
-        #     p = CaseIterParams(callable_object=con_client.start_runner,
-        #                        actual_params_used=actual_params_used, case_type=self.__class__.__name__)
-        #     params_list.append(p)
+        for c_p in c_params:
+            spawn_rate = c_p[pn.spawn_rate] if pn.spawn_rate in c_p else None
+            con_client = LocustRunner(obj=self, obj_params=obj_params,
+                                      interval=c_p[pn.interval], during_time=parser_time(c_p[pn.during_time]),
+                                      concurrent_number=c_p[pn.concurrent_number], spawn_rate=spawn_rate)
+
+            actual_params_used = copy.deepcopy(params)
+            actual_params_used[pn.concurrent_params] = {
+                pn.concurrent_number: c_p[pn.concurrent_number],
+                pn.during_time: c_p[pn.during_time],
+                pn.interval: c_p[pn.interval],
+                pn.spawn_rate: spawn_rate
+            }
+            p = CaseIterParams(callable_object=con_client.start_runner,
+                               actual_params_used=actual_params_used, case_type=self.__class__.__name__)
+            params_list.append(p)
         yield params_list
 
         # clear env
