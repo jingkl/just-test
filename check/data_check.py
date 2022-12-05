@@ -104,40 +104,6 @@ class DataCheck:
             except Exception as e:
                 raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
 
-            # if self.old_version_format:
-            #     dt = _c.split(']')[0].split('[')[-1]
-            #     k = _c.split('-')[-1].split()
-            #
-            #     try:
-            #         _time_ = dt.split(' ')
-            #         _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
-            #         if len(k) == 13:
-            #             tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
-            #                                                    float(k[5]), float(k[6]), float(k[7]), float(k[8]),
-            #                                                    float(k[11]), float(k[12]), float(k[9]))
-            #             # update tag
-            #             tags.update(self.default_tags)
-            #             self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
-            #     except Exception as e:
-            #         raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
-            # else:
-            #     _dt = _c.split('[')[-1].split()
-            #     dt = _dt[0] + " " + _dt[1]
-            #     k = _c.split(':')[-1].split()
-            #
-            #     try:
-            #         _time_ = dt.split(' ')
-            #         _time = _time_[0] + 'T' + _time_[-1].split('.')[0].split(',')[0] + 'Z'
-            #         if len(k) == 12 and not self.old_version_format:
-            #             tags, fields = self.report_data_format(k[0], k[1], int(k[2]), int(str(k[3]).split('(')[0]),
-            #                                                    float(k[5]), float(k[6]), float(k[7]), float(k[8]),
-            #                                                    float(k[10]), float(k[11]))
-            #             # update tag
-            #             tags.update(self.default_tags)
-            #             self.db_client.influx_insert(tags=tags, fields=fields, time=_time)
-            #     except Exception as e:
-            #         raise Exception("[DataCheck] Parser report data raise error: {0}, content:{1}".format(e, _c))
-
     def start_stream_read(self, sync_report=True):
         self.sync_report = sync_report
         if self.sync_report:

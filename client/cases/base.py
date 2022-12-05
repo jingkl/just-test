@@ -261,6 +261,11 @@ class Base:
         log.info("[Base] Collection:{0} is not building index".format(self.collection_wrap.name))
         return {}
 
+    def describe_collection_index(self):
+        indexes = self.collection_wrap.indexes
+        log.info("[Base] Collection:{0} indexes".format(self.collection_wrap.name, indexes))
+        return indexes
+
     def clean_index(self):
         if self.collection_wrap.has_index()[0][0]:
             self.collection_wrap.drop_index()

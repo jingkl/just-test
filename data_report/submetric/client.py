@@ -14,7 +14,7 @@ class ClientMetric:
         self.test_case_name = test_case_name
         self.test_case_params = test_case_params
 
-        self.run_id = self.gen_id()
+        self.run_id = param_info.run_id or self.gen_id()
         self.datetime = str(datetime.now())
         self.client_version = client_version or param_info.client_version
 
@@ -30,7 +30,7 @@ class ClientMetric:
         self.test_case_name = ""
         self.test_case_params = {}
 
-        self.run_id = self.gen_id()
+        self.run_id = param_info.run_id or self.gen_id()
         self.datetime = str(datetime.now())
 
     @staticmethod

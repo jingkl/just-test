@@ -35,7 +35,6 @@ class CliClient(BaseClient):
             self.kubeconfig = " --kubeconfig=%s " % kubeconfig if kubeconfig != "" else ""
             self.ns = self.kubeconfig + self.namespace
 
-    # @func_catch()
     def install(self, set_params="", release_name="", chart="", default_params=" --wait --timeout 30m ", params="",
                 return_release_name=True, **kwargs):
         """
@@ -61,12 +60,10 @@ class CliClient(BaseClient):
         res_cmd = CmdExe(_cmd).run_cmd()
         return self.release_name if return_release_name else res_cmd
 
-    # @func_catch()
     def upgrade(self, set_params="", release_name="", chart="", default_params=" --wait --timeout 30m ", params="",
                 return_release_name=True, **kwargs):
         return self.install(set_params, release_name, chart, default_params, params)
 
-    # @func_catch()
     def uninstall(self, release_name: str, delete_pvc=False):
         release_name = release_name or self.release_name
         _cmd = " helm %s uninstall %s " % (self.ns, release_name)
@@ -75,7 +72,6 @@ class CliClient(BaseClient):
             self.delete_pvc(release_name=release_name)
         return uninstall_instance
 
-    # @func_catch()
     def endpoint(self, release_name: str, _domain=True):
         release_name = release_name or self.release_name
         if _domain is True:
@@ -91,7 +87,6 @@ class CliClient(BaseClient):
             _cmd = _cmd + "| awk '{print $4\":\"$5}' | awk -F '/' '{print $1}' | awk -F ':' '{print $1}' "
         return CmdExe(_cmd).run_cmd()
 
-    # @func_catch()
     def delete_pvc(self, release_name: str):
         release_name = release_name or self.release_name
         # _cmd = " kubectl get pvc %s | grep %s | awk '{print $1}' | xargs kubectl delete pvc %s " % \
@@ -102,20 +97,17 @@ class CliClient(BaseClient):
             release_name, self.ns)
         return CmdExe(_cmd).run_cmd()
 
-    # @func_catch()
     def get_helm_repo(self, repo_name=""):
         _cmd = " helm repo list %s " % self.ns
         if repo_name != "":
             _cmd += " | grep -E 'NAME|%s' " % repo_name
         return CmdExe(_cmd).run_cmd()
 
-    # @func_catch()
     def get_all_values(self, release_name: str):
         release_name = release_name or self.release_name
         _cmd = " helm %s get values %s --all" % (self.ns, release_name)
         return CmdExe(_cmd).run_cmd()
 
-    # @func_catch()
     def get_pods(self, release_name: str):
         release_name = release_name or self.release_name
         _cmd = " kubectl get pods %s -o wide | grep -E 'STATUS|%s' " % (self.ns, release_name)
@@ -123,7 +115,6 @@ class CliClient(BaseClient):
         log.info("[CliClient] pod details of release({0}): \n {1}".format(release_name, res_cmd))
         return res_cmd
 
-    # @func_catch()
     def get_pvc(self, release_name: str):
         release_name = release_name or self.release_name
         _cmd = " kubectl get pvc %s | grep -E 'STATUS|%s' " % (self.ns, release_name)
@@ -131,7 +122,6 @@ class CliClient(BaseClient):
         log.info("[CliClient] pvc storage class of release({0}): \n {1}".format(release_name, res_cmd))
         return res_cmd
 
-    # @func_catch()
     def get_pvc_storage_class(self, release_name: str):
         release_name = release_name or self.release_name
         check_list = "NAME|{0}-milvus|{0}-minio|{0}-etcd|{0}-pulsar|{0}-kafka".format(release_name)

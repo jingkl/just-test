@@ -8,8 +8,10 @@ DatasetPath = {
     "jaccard": NAS.RAW_DATA_DIR + 'jaccard/',
     "hamming": NAS.RAW_DATA_DIR + 'hamming/',
     "sift": NAS.RAW_DATA_DIR + 'sift1b/',
-    "gist": NAS.RAW_DATA_DIR + 'gist1m/',
     "sift_ground_truth": NAS.RAW_DATA_DIR + 'sift1b/gnd',
+    "text2img": NAS.RAW_DATA_DIR + 'text2img1b/',
+    "text2img_ground_truth": NAS.RAW_DATA_DIR + 'text2img1b/gnd',
+    "gist": NAS.RAW_DATA_DIR + 'gist1m/',
     "structure": NAS.RAW_DATA_DIR + 'structure/',
     "binary": NAS.RAW_DATA_DIR + 'binary/',
 }

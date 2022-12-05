@@ -32,9 +32,6 @@ class LogConfig:
                 self.log_folder = "/{:%Y_%m_%d}/{}".format(datetime.now(),
                                                            sub_folder_prefix + "_" + str(random.randint(10000, 99999)))
             _sub_folder = subfolder
-            # if subfolder != "":
-            #     _sub_folder += "_" + str(random_count)
-            #     random_count += 1
 
             log_folder = self.log_folder if subfolder == "" else "{0}/{1}".format(self.log_folder, _sub_folder)
             log_dir = str(EnvVariable.FOURAM_LOG_PATH).rstrip('/') + log_folder
