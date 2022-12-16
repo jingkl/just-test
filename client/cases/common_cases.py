@@ -83,7 +83,7 @@ class CommonCases(Base):
             self.show_index()
             log.info("[CommonCases] Prepare index {0} done.".format(self.params_obj.index_params[pn.index_type]))
 
-    def prepare_scalars_index(self):
+    def prepare_scalars_index(self, update_report_data=True):
         scalars = self.params_obj.dataset_params.get(pn.scalars_index, [])
         if len(scalars) == 0:
             log.info("[CommonCases] No scalars need to be indexed.")
@@ -101,9 +101,9 @@ class CommonCases(Base):
             result, check_result = self.build_scalar_index(scalar)
             rt = round(result[1], Precision.INDEX_PRECISION)
             # set report data
-            self.case_report.add_attr(**{"index": {scalar: {"RT": rt}}})
+            self.case_report.add_attr(update_report_data, **{"index": {scalar: {"RT": rt}}})
             log.info("[CommonCases] RT of build scalar index {1}: {0}s".format(rt, scalar))
-        self.show_index()
+        self.describe_collection_index()
         log.info("[CommonCases] Prepare scalars {0} index done.".format(scalars))
 
     def prepare_query(self, req_run_counts, **kwargs):
@@ -280,6 +280,7 @@ class BuildIndex(CommonCases):
                                 ni=self.params_obj.dataset_params[pn.ni_per])
         self.prepare_flush()
         self.count_entities()
+        self.release_collection()
 
         # build index
         def run():

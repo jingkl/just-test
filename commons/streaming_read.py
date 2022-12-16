@@ -13,6 +13,9 @@ class StreamRead:
         self.read_finished = False
         self.tick_read_flag = True
 
+        self._streaming_read_incremental_file = self.streaming_read_incremental_file()
+        self.t = None  # threading object
+
     def set_stop_read_flag(self, stop_flag: bool = True):
         """ Set the flag to True to stop streaming reading """
         self.stop_read_flag = stop_flag
@@ -52,20 +55,22 @@ class StreamRead:
                 return False
 
         self.tick_read_flag = False
-        incremental_content = next(self.streaming_read_incremental_file())
+        incremental_content = next(self._streaming_read_incremental_file)
         callable_object(incremental_content)
         self.tick_read_flag = True
 
         if not self.stop_read_flag:
-            t = threading.Timer(self.interval, self.tick_read_incremental_file, args=[callable_object])
-            t.start()
+            self.t = threading.Timer(self.interval, self.tick_read_incremental_file, args=[callable_object])
+            self.t.start()
 
     def final_read_incremental_file(self, callable_object: callable = print):
         self.set_stop_read_flag()
         start = time.time()
         while time.time() - start < self.interval:
             if self.tick_read_flag:
-                incremental_content = next(self.streaming_read_incremental_file())
+                if self.t:
+                    self.t.cancel()
+                incremental_content = next(self._streaming_read_incremental_file)
                 callable_object(incremental_content)
                 break
             log.debug("[StreamRead] Wait for the last read to complete.")

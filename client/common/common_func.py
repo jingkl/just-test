@@ -128,7 +128,7 @@ def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
 
 
 def get_vector_type(data_type):
-    if data_type in ["random", "sift", "deep", "glove", "local", "gist"]:
+    if data_type in ["random", "sift", "deep", "glove", "local", "gist", "text2img"]:
         vector_type = DataType.FLOAT_VECTOR
     elif data_type in ["binary", "kosarak"]:
         vector_type = DataType.BINARY_VECTOR
@@ -207,9 +207,10 @@ def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
         else:
             _len = int(field["params"]["max_length"])
             _str = string.ascii_letters + string.digits
+            _s = _str
             for i in range(int(_len / len(_str))):
-                _str += _str
-            values = [''.join(random.sample(_str, _len - 1)) for i in ids]
+                _s += _str
+            values = [''.join(random.sample(_s, _len - 1)) for i in ids]
     return values
 
 
@@ -333,7 +334,7 @@ def parser_search_params_expr(expr):
 
 
 def get_vectors_from_binary(nq, dimension, dataset_name):
-    if dataset_name in ["sift", "deep", "binary", "gist"]:
+    if dataset_name in ["sift", "deep", "binary", "gist", "text2img"]:
         # dataset_name: local, sift, deep, binary
         file_name = DatasetPath[dataset_name] + "query.npy"
 

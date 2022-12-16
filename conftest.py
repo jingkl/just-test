@@ -1,8 +1,5 @@
 import pytest
-import sys
-from pprint import pformat
 from utils.util_log import log
-from client.check.param_check import ip_check, number_check
 from configs.log_config import log_config
 from commons.common_func import modify_file
 from parameters.input_params import param_info, InputParamsBase
@@ -18,6 +15,7 @@ def pytest_addoption(parser):
     parser.addoption('--secure', action='store_true', default=False, help="using secure when connection server")
     parser.addoption("--user", action="store", default="", help="enable secure and set user name")
     parser.addoption("--password", action="store", default="", help="enable secure and set user password")
+    parser.addoption("--run_id", action="store", default=None, help="run id for client test")
     parser.addoption('--err_msg', action='store', default="err_msg", help="error message of test")
     parser.addoption("--milvus_tag", action="store", default=None, help="Milvus container tag")
     parser.addoption("--milvus_tag_prefix", action="store", default="", help="Milvus container tag prefix")
@@ -66,6 +64,7 @@ def initialize_env(request):
     secure = request.config.getoption("--secure")
     user = request.config.getoption("--user")
     password = request.config.getoption("--password")
+    run_id = request.config.getoption("--run_id")
     milvus_tag = request.config.getoption("--milvus_tag")
     milvus_tag_prefix = request.config.getoption("--milvus_tag_prefix")
     tag_repository = request.config.getoption("--tag_repository")
@@ -92,7 +91,7 @@ def initialize_env(request):
     log.info("[initialize_milvus] Log cleaned up, start testing...")
     param_info.prepare_param_info(client_version, host, port, secure=secure, milvus_tag=milvus_tag,
                                   milvus_tag_prefix=milvus_tag_prefix, tag_repository=tag_repository,
-                                  deploy_skip=deploy_skip, deploy_retain=deploy_retain,
+                                  deploy_skip=deploy_skip, deploy_retain=deploy_retain, run_id=run_id,
                                   client_test_skip=client_test_skip, update_helm_file=update_helm_file,
                                   release_name_prefix=release_name_prefix, sync_report=sync_report,
                                   async_report=async_report, param_user=user, param_password=password)

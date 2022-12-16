@@ -45,6 +45,7 @@ class TestConcurrentCases(PerfTemplate):
                                   old_version_format=False, sync_report=True,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_ivf_sq8_search_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -54,13 +55,14 @@ class TestConcurrentCases(PerfTemplate):
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(search_param={"nprobe": 16})],
             concurrent_number=[100],
-            during_time=600, interval=20,
+            during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_ivf_sq8_search_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -70,13 +72,14 @@ class TestConcurrentCases(PerfTemplate):
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(search_param={"nprobe": 16})],
             concurrent_number=[100],
-            during_time=600, interval=20,
+            during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_ivf_sq8_search_high_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -93,6 +96,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_ivf_sq8_search_high_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -109,6 +113,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_flat_random_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -128,6 +133,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_flat_random_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -147,6 +153,47 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_diskann_dql_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10,
+                                                           search_param={"search_list": 30}),
+                            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
+                            ConcurrentParams.params_load(weight=1)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
+                                                                         during_time="1h", interval=20,
+                                                                         dataset_size="10m",
+                                                                         **cdp.DefaultIndexParams.DISKANN)
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_diskann_dql_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10,
+                                                           search_param={"search_list": 30}),
+                            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
+                            ConcurrentParams.params_load(weight=1)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
+                                                                         during_time="1h", interval=20,
+                                                                         dataset_size="10m",
+                                                                         **cdp.DefaultIndexParams.DISKANN)
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_hnsw_dml_dql_filter_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -168,6 +215,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_hnsw_dml_dql_filter_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -189,6 +237,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_diskann_dml_dql_filter_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -210,6 +259,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_diskann_dml_dql_filter_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -231,6 +281,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_hnsw_compaction_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -253,6 +304,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_hnsw_compaction_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -275,6 +327,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_concurrent_locust_diskann_compaction_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -297,6 +350,7 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_diskann_compaction_cluster(self, input_params: InputParamsBase, deploy_mode):
         """

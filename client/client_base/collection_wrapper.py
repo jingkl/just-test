@@ -208,9 +208,9 @@ class ApiCollectionWrapper:
                                        field_name=field_name, index_params=index_params, **kwargs).run()
         return res, check_result
 
-    def has_index(self, check_task=None, check_items=None):
+    def has_index(self, check_task=None, check_items=None, **kwargs):
         func_name = sys._getframe().f_code.co_name
-        res, check = api_request([self.collection.has_index])
+        res, check = api_request([self.collection.has_index], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task, check_items, check).run()
         return res, check_result
 

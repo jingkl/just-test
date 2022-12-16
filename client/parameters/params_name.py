@@ -53,6 +53,7 @@ nq = "nq"
 search_param = "search_param"
 expr = "expr"
 guarantee_timestamp = "guarantee_timestamp"
+output_fields = "output_fields"
 
 # go search
 concurrent_number = "concurrent_number"
@@ -97,6 +98,7 @@ class DatasetsName:
     BINARY = "binary"
     LOCAL = "local"  # random
     GIST = "gist"
+    TEXT2IMG = "text2img"
 
 
 class MetricsTypeName:

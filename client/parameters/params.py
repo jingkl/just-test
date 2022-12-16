@@ -40,6 +40,7 @@ class ParamsFormat:
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int()), type(list())], OPTION),
+            output_fields: ([type(list()), type(None)], OPTION),
         }
     }
 
