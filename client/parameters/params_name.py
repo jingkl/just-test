@@ -23,7 +23,11 @@ delete = "delete"
 scene_test = "scene_test"
 scene_insert_delete_flush = "scene_insert_delete_flush"
 
+# all used
+timeout = "timeout"
+
 # dataset
+collection_name = "collection_name"
 dataset_name = "dataset_name"
 dim = "dim"
 dataset_size = "dataset_size"
