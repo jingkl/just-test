@@ -71,6 +71,7 @@ class InputParamsBase:
     deploy_mode: Optional[str] = ""
     # deploy_config: Optional[str] = str
     deploy_config: Union[str, dict] = str
+    upgrade_config: Optional[Union[str, dict]] = str
     # case_params: Optional[str] = str
     case_params: Union[str, dict] = str
     case_skip_prepare: Optional[bool] = False
