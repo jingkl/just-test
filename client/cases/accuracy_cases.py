@@ -88,7 +88,8 @@ class CommonCases(Base):
             # load collection
             self.load_collection(**self.params_obj.load_params)
         else:
-            collection_names = self.utility_wrap.list_collections()[0][0]
+            collection_names = self.utility_wrap.list_collections()[0][0] if not self.params_obj.dataset_params.get(
+                pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[AccCases] There can only be one collection in the database: {}".format(collection_names)
                 log.error(msg)

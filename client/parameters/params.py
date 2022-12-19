@@ -30,7 +30,8 @@ class ParamsBase:
 
 class ParamsFormat:
     base = {
-        dataset_params: {dim: ([type(int())], OPTION),
+        dataset_params: {collection_name: ([type(str())], OPTION),
+                         dim: ([type(int())], OPTION),
                          max_length: ([type(int())], OPTION),
                          varchar_filled: ([type(bool())], OPTION),
                          scalars_index: ([type(list())], OPTION)},
@@ -41,6 +42,7 @@ class ParamsFormat:
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int()), type(list())], OPTION),
             output_fields: ([type(list()), type(None)], OPTION),
+            timeout: ([type(int())], OPTION),
         }
     }
 
@@ -94,6 +96,15 @@ class ParamsFormat:
 
     common_scene_search = update_dict_value({
         dataset_params: {req_run_counts: ([type((int()))], MUST)},
+        search_params: {top_k: ([type(int()), type(list())], MUST),
+                        nq: ([type(int()), type(list())], MUST),
+                        search_param: ([type(dict())], MUST),
+                        },
+        index_params: {index_type: ([type(str())], OPTION),
+                       index_param: ([type(dict())], OPTION)},
+    }, common_scene_build_index)
+
+    common_scene_search_recall = update_dict_value({
         search_params: {top_k: ([type(int()), type(list())], MUST),
                         nq: ([type(int()), type(list())], MUST),
                         search_param: ([type(dict())], MUST),

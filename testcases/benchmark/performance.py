@@ -1,6 +1,6 @@
 import pytest
 
-from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, GoBenchCases
+from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, SearchRecall, GoBenchCases
 from client.parameters.input_params import AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, \
     SearchParams, GoBenchParams
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
@@ -530,6 +530,38 @@ class TestPerformanceCases(PerfTemplate):
                                                                                                search_expr=None,
                                                                                                req_run_counts=30))
 
+    def test_search_recall_custom_parameters(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. insert and calculation of search time and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=CLUSTER,
+                             case_callable_obj=SearchRecall().scene_search_recall)
+
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_ivf_flat_search_recall_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. insert and calculation of search time and recall
+        """
+        case_params = SearchParams().params_scene_search_ivf_flat(dataset_size="1m", top_k=[10, 100], nq=10000,
+                                                                  search_param={"nprobe": [8, 32, 64]}, other_fields=[],
+                                                                  search_expr=None, req_run_counts=None)
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=SearchRecall().scene_search_recall, default_case_params=case_params)
+
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_ivf_flat_search_recall_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. insert and calculation of search time and recall
+        """
+        case_params = SearchParams().params_scene_search_ivf_flat(dataset_size="1m", top_k=[10, 100], nq=10000,
+                                                                  search_param={"nprobe": [8, 32, 64]}, other_fields=[],
+                                                                  search_expr=None, req_run_counts=None)
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=SearchRecall().scene_search_recall, default_case_params=case_params)
+
 
 class TestGoBenchCases(PerfTemplate):
     """
@@ -592,4 +624,3 @@ class TestGoBenchCases(PerfTemplate):
         self.concurrency_template(input_params=input_params, case_callable_obj=GoBenchCases().scene_go_search,
                                   default_case_params=GoBenchParams().params_scene_go_search_auto_index(),
                                   sync_report=True)
-

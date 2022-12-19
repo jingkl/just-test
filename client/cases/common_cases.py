@@ -8,7 +8,7 @@ from client.parameters import params_name as pn
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_type import DefaultValue as dv
 from client.common.common_func import gen_combinations, update_dict_value, get_vector_type, get_default_field_name, \
-    get_vectors_from_binary, parser_search_params_expr
+    get_vectors_from_binary, parser_search_params_expr, get_ground_truth_ids, get_search_ids, get_recall_value
 from utils.util_log import log
 from client.util.params_check import check_params
 
@@ -39,7 +39,8 @@ class CommonCases(Base):
             self.create_collection(**_collection_params)
 
         else:
-            collection_names = self.utility_wrap.list_collections()[0][0]
+            collection_names = self.utility_wrap.list_collections()[0][0] if not self.params_obj.dataset_params.get(
+                pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[CommonCases] There can only be one collection in the database: {}".format(collection_names)
                 log.error(msg)
@@ -132,6 +133,17 @@ class CommonCases(Base):
             "MaxRT": round(float(np.max(search_rt)), Precision.SEARCH_PRECISION),
             "TP99": round(np.percentile(search_rt, 99), Precision.SEARCH_PRECISION),
             "TP95": round(np.percentile(search_rt, 95), Precision.SEARCH_PRECISION)}})
+        return self.case_report.to_dict(), True
+
+    def prepare_search_recall(self, **kwargs):
+        res_search = self.search(**kwargs)
+        true_ids = get_ground_truth_ids(data_size=self.params_obj.dataset_params[pn.dataset_size],
+                                        data_type=self.params_obj.dataset_params[pn.dataset_name])
+        result_ids = get_search_ids(res_search[0][0])
+        acc_value = get_recall_value(true_ids, result_ids)
+
+        self.case_report.add_attr(**{"search": {"Recall": acc_value,
+                                                "RT": round(res_search[0][1], Precision.SEARCH_PRECISION)}})
         return self.case_report.to_dict(), True
 
     def parser_search_params(self):
@@ -509,8 +521,8 @@ class Search(CommonCases):
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
             self.prepare_scalars_index()
             self.count_entities()
-        else:
-            self.release_collection()
+        # else:
+        #     self.release_collection()
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)
@@ -522,6 +534,98 @@ class Search(CommonCases):
                 return self.case_report.to_dict(), True
             except Exception as e:
                 log.error("[Search] Search raise error: {}".format(e))
+                return {}, False
+
+        s_params = self.parser_search_params()
+        params_list = []
+        for s_p in s_params:
+            search_params, nq, top_k, expr = self.search_param_analysis(s_p, vector_default_field_name,
+                                                                        self.params_obj.dataset_params[pn.metric_type])
+
+            actual_params_used = copy.deepcopy(params)
+            actual_params_used[pn.search_params] = {
+                pn.nq: nq,
+                "param": search_params["param"],
+                pn.top_k: top_k,
+                pn.expr: expr
+            }
+            p = CaseIterParams(callable_object=run, object_args=[search_params],
+                               actual_params_used=actual_params_used, case_type=self.__class__.__name__)
+            params_list.append(p)
+        yield params_list
+
+        # clear env
+        self.clear_collections(clean_collection=clean_collection)
+        yield True
+
+
+class SearchRecall(CommonCases):
+
+    def __str__(self):
+        return """
+        1. create a collection or use an existing collection
+        2. build index on vector column
+        3. insert a certain number of vectors
+        4. flush collection
+        5. build index on vector column with the same parameters
+        6. build index on on scalars column or not
+        7. count the total number of rows
+        8. load collection
+        9. search collection with different parameters and calculate recall
+        10. clean all collections or not
+        """
+
+    @check_params(ParamsFormat.common_scene_search_recall)
+    def scene_search_recall(self, **kwargs):
+        """
+        :param kwargs:
+            params: dict
+            prepare: bool
+            prepare_clean: bool
+            clean_collection: bool
+        :return:
+        """
+
+        # params prepare
+        params = kwargs.get("params", None)
+        prepare = kwargs.get("prepare", True)
+        prepare_clean = kwargs.get("prepare_clean", True)
+        clean_collection = kwargs.get("clean_collection", True)
+        log.info("[SearchRecall] The detailed test steps are as follows: {}".format(self))
+
+        # params parsing
+        self.parsing_params(params)
+        vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
+        vector_default_field_name = get_default_field_name(vector_type)
+
+        # prepare data
+        self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
+        if prepare is True:
+            self.prepare_index(vector_field_name=vector_default_field_name,
+                               metric_type=self.params_obj.dataset_params[pn.metric_type],
+                               clean_index_before=True)
+            self.prepare_insert(data_type=self.params_obj.dataset_params[pn.dataset_name],
+                                dim=self.params_obj.dataset_params[pn.dim],
+                                size=self.params_obj.dataset_params[pn.dataset_size],
+                                ni=self.params_obj.dataset_params[pn.ni_per])
+            self.prepare_flush()
+            self.prepare_index(vector_field_name=vector_default_field_name,
+                               metric_type=self.params_obj.dataset_params[pn.metric_type])
+            self.prepare_scalars_index()
+            self.count_entities()
+        # else:
+        #     self.release_collection()
+
+        # load collection
+        self.prepare_load(**self.params_obj.load_params)
+
+        # search
+        def run(run_s_p: dict):
+            try:
+                self.prepare_search_recall(**run_s_p)
+                return self.case_report.to_dict(), True
+            except Exception as e:
+                log.error("[SearchRecall] Search raise error: {}".format(e))
                 return {}, False
 
         s_params = self.parser_search_params()

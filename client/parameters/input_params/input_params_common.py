@@ -48,7 +48,9 @@ class CommonParams:
 class InsertBatchParams(CommonParams):
     def params_insert_batch(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="1m", ni_per=None):
         if not isinstance(ni_per, list) or ni_per is None:
-            ni_per = [500, 1000, 2000, 5000, 10000, 20000, 25000, 40000, 50000, 100000, 125000, 200000, 250000, 500000]
+            ni_per = [500, 1000, 2000, 5000, 10000, 20000, 25000, 40000, 50000, 100000, 125000,
+                      # 200000, 250000, 500000
+                      ]
 
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per)
         log.debug("[InsertBatchParams] Default params of params_insert_batch: {0}".format(default_params))
@@ -92,7 +94,7 @@ class LoadParams(CommonParams):
 
 class QueryParams(CommonParams):
     def params_scene_query_ids_local(self, dataset_name=pn.DatasetsName.LOCAL, dim=512, dataset_size="50m",
-                                     ni_per=50000, ids=[1, 100, 10000], req_run_counts=10,
+                                     ni_per=30000, ids=[1, 100, 10000], req_run_counts=10,
                                      index_type=pn.IndexTypeName.FLAT, index_param={},
                                      metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,

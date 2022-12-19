@@ -90,7 +90,6 @@ def get_recall_value(true_ids, result_ids):
     sum_radio = 0.0
     topk_check = True
     for index, item in enumerate(result_ids):
-        # tmp = set(item).intersection(set(flat_id_list[index]))
         tmp = set(true_ids[index]).intersection(set(item))
         if len(item) != 0:
             sum_radio += len(tmp) / len(item)
@@ -107,6 +106,18 @@ def get_search_ids(result):
     for res in result:
         ids.append(res.ids)
     return ids
+
+
+def get_ground_truth_ids(data_size, data_type: str):
+    size = str(int(parser_data_size(data_size)/1000000)) + "M"
+    gnd_file_name = DatasetPath.get(data_type + "_ground_truth", "") + f"/idx_{size}.ivecs"
+
+    if check_file_exist(gnd_file_name):
+        a = np.fromfile(gnd_file_name, dtype='int32')
+        d = a[0]
+        true_ids = a.reshape(-1, d + 1)[:, 1:].copy()
+        return true_ids
+    return []
 
 
 def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
