@@ -92,6 +92,7 @@ def get_recall_value(true_ids, result_ids):
     for index, item in enumerate(result_ids):
         tmp = set(true_ids[index]).intersection(set(item))
         if len(item) != 0:
+            # tmp = set(list(true_ids[index])[:len(item)]).intersection(set(item))
             sum_radio += len(tmp) / len(item)
         else:
             topk_check = False

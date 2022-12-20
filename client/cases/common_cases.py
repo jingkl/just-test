@@ -135,12 +135,13 @@ class CommonCases(Base):
             "TP95": round(np.percentile(search_rt, 95), Precision.SEARCH_PRECISION)}})
         return self.case_report.to_dict(), True
 
-    def prepare_search_recall(self, **kwargs):
+    def prepare_search_recall(self, _nq, _top_k, **kwargs):
         res_search = self.search(**kwargs)
         true_ids = get_ground_truth_ids(data_size=self.params_obj.dataset_params[pn.dataset_size],
                                         data_type=self.params_obj.dataset_params[pn.dataset_name])
         result_ids = get_search_ids(res_search[0][0])
-        acc_value = get_recall_value(true_ids, result_ids)
+        # acc_value = get_recall_value(true_ids, result_ids)
+        acc_value = get_recall_value(true_ids[:_nq, :_top_k].tolist(), result_ids)
 
         self.case_report.add_attr(**{"search": {"Recall": acc_value,
                                                 "RT": round(res_search[0][1], Precision.SEARCH_PRECISION)}})
@@ -620,9 +621,9 @@ class SearchRecall(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         # search
-        def run(run_s_p: dict):
+        def run(_nq, _top_k, run_s_p: dict):
             try:
-                self.prepare_search_recall(**run_s_p)
+                self.prepare_search_recall(_nq, _top_k, **run_s_p)
                 return self.case_report.to_dict(), True
             except Exception as e:
                 log.error("[SearchRecall] Search raise error: {}".format(e))
@@ -641,7 +642,7 @@ class SearchRecall(CommonCases):
                 pn.top_k: top_k,
                 pn.expr: expr
             }
-            p = CaseIterParams(callable_object=run, object_args=[search_params],
+            p = CaseIterParams(callable_object=run, object_args=[nq, top_k, search_params],
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
         yield params_list
