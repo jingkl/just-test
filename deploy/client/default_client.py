@@ -44,6 +44,8 @@ class DefaultClient:
         self.obj = get_client_obj(self.deploy_tool, **client_params)
 
     def gen_default_release_name(self):
+        if param_info.release_name != "":
+            return param_info.release_name
         prefix = str(param_info.release_name_prefix) or "fouram"
         return gen_release_name(prefix) if self.deploy_tool == Helm else gen_release_name(prefix + "-op")
 
