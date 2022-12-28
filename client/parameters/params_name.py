@@ -36,7 +36,9 @@ varchar_filled = "varchar_filled"
 scalars_index = "scalars_index"
 
 # collection
+shards_num = "shards_num"
 other_fields = "other_fields"
+varchar_id = "varchar_id"
 
 # load
 replica_number = "replica_number"
@@ -71,7 +73,6 @@ spawn_rate = "spawn_rate"
 metric_type = "metric_type"
 field_name = "field_name"
 vector_field_name = "vector_field_name"
-shards_num = "shards_num"
 ni_per = "ni_per"
 req_run_counts = "req_run_counts"
 

@@ -69,8 +69,13 @@ def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_prim
 
 
 def gen_collection_schema(vector_field_name="", description=dv.default_desc, default_fields=True, auto_id=False,
-                          other_fields=[], primary_field=None, **kwargs):
-    fields = [gen_field_schema("id", dtype=DataType.INT64, is_primary=True),
+                          other_fields=[], primary_field=None, varchar_id=False, **kwargs):
+    id_type = DataType.INT64
+    _k = {}
+    if varchar_id:
+        id_type = DataType.VARCHAR
+        _k.update({"max_length": kwargs.get("max_length", dv.default_max_length)})
+    fields = [gen_field_schema("id", dtype=id_type, is_primary=True, **_k),
               gen_field_schema(vector_field_name, dim=kwargs.get("dim", dv.default_dim))] if default_fields else []
 
     for _field in other_fields:

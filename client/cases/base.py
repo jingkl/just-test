@@ -59,12 +59,12 @@ class Base:
             self.connection_wrap.remove_connection(alias=alias)
 
     def create_collection(self, collection_name="", vector_field_name="", schema=None, other_fields=[], shards_num=2,
-                          collection_obj: callable = None, log_level=LogLevel.INFO, **kwargs):
+                          collection_obj: callable = None, log_level=LogLevel.INFO, varchar_id=False, **kwargs):
         """ Create a collection with default schema """
-        schema = gen_collection_schema(vector_field_name=vector_field_name,
-                                       other_fields=other_fields,
-                                       max_length=kwargs.get("max_length", dv.default_max_length),
-                                       dim=kwargs.get("dim", dv.default_dim)) if schema is None else schema
+        schema = gen_collection_schema(vector_field_name=vector_field_name, other_fields=other_fields,
+                                       varchar_id=varchar_id,
+                                       max_length=kwargs.pop("max_length", dv.default_max_length),
+                                       dim=kwargs.pop("dim", dv.default_dim)) if schema is None else schema
         collection_name = collection_name or gen_unique_str()
         self.collection_name = self.collection_name or collection_name
 
@@ -302,8 +302,8 @@ class Base:
         """
         :return: (result, rt), check_result
         """
-        msg = "[Base] Params of search: nq:{0}, anns_field:{1}, param:{2}, limit:{3}, expr:\"{4}\""
-        log.info(msg.format(len(data), anns_field, param, limit, expr))
+        msg = "[Base] Params of search: nq:{0}, anns_field:{1}, param:{2}, limit:{3}, expr:\"{4}\", kwargs:{5}"
+        log.info(msg.format(len(data), anns_field, param, limit, expr, kwargs))
         return self.collection_wrap.search(data, anns_field, param, limit, expr=expr, timeout=timeout, **kwargs)
 
     def go_search(self, index_type: str, go_search_params: GoSearchParams, concurrent_number: int,
@@ -404,6 +404,6 @@ class Base:
     def concurrent_debug(self, params: DataClassBase):
         # time.sleep(random.randint(1, 6))
         # time.sleep(round(random.random(), 4))
-        time.sleep(float(random.randint(1, 20)/1000.0))
+        time.sleep(float(random.randint(1, 20) / 1000.0))
         log.debug("[Base] DataClassBase.obj_params: {}".format(params.obj_params))
         return "[Base] concurrent_debug finished."
