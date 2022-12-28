@@ -140,7 +140,6 @@ class CommonCases(Base):
         true_ids = get_ground_truth_ids(data_size=self.params_obj.dataset_params[pn.dataset_size],
                                         data_type=self.params_obj.dataset_params[pn.dataset_name])
         result_ids = get_search_ids(res_search[0][0])
-        # acc_value = get_recall_value(true_ids, result_ids)
         acc_value = get_recall_value(true_ids[:_nq, :_top_k].tolist(), result_ids)
 
         self.case_report.add_attr(**{"search": {"Recall": acc_value,
@@ -148,7 +147,16 @@ class CommonCases(Base):
         return self.case_report.to_dict(), True
 
     def parser_search_params(self):
-        return gen_combinations(self.params_obj.search_params_parser(self.params_obj.search_params))
+        search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))
+        s_p = gen_combinations({pn.top_k: search_params.pop(pn.top_k, 0),
+                                pn.nq: search_params.pop(pn.nq, 0),
+                                pn.search_param: search_params.pop(pn.search_param, {}),
+                                pn.expr: search_params.pop(pn.expr, None)})
+        search_params_list = []
+        for s in s_p:
+            s.update(search_params)
+            search_params_list.append(s)
+        return search_params_list
 
     def search_param_analysis(self, _search_params: dict, default_field_name: str, metric_type: str):
         _params = copy.deepcopy(_search_params)
@@ -168,7 +176,7 @@ class CommonCases(Base):
             "limit": limit,
             "expr": expr,
         }, _params)
-        return result, nq, top_k, expr
+        return result, nq, top_k, expr, _params
 
     @staticmethod
     def query_param_analysis(**kwargs):
@@ -540,16 +548,17 @@ class Search(CommonCases):
         s_params = self.parser_search_params()
         params_list = []
         for s_p in s_params:
-            search_params, nq, top_k, expr = self.search_param_analysis(s_p, vector_default_field_name,
-                                                                        self.params_obj.dataset_params[pn.metric_type])
+            search_params, nq, top_k, expr, other_params = self.search_param_analysis(s_p, vector_default_field_name,
+                                                                                      self.params_obj.dataset_params[
+                                                                                          pn.metric_type])
 
             actual_params_used = copy.deepcopy(params)
-            actual_params_used[pn.search_params] = {
+            actual_params_used[pn.search_params] = update_dict_value({
                 pn.nq: nq,
                 "param": search_params["param"],
                 pn.top_k: top_k,
                 pn.expr: expr
-            }
+            }, other_params)
             p = CaseIterParams(callable_object=run, object_args=[search_params],
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
@@ -632,16 +641,17 @@ class SearchRecall(CommonCases):
         s_params = self.parser_search_params()
         params_list = []
         for s_p in s_params:
-            search_params, nq, top_k, expr = self.search_param_analysis(s_p, vector_default_field_name,
-                                                                        self.params_obj.dataset_params[pn.metric_type])
+            search_params, nq, top_k, expr, other_params = self.search_param_analysis(s_p, vector_default_field_name,
+                                                                                      self.params_obj.dataset_params[
+                                                                                          pn.metric_type])
 
             actual_params_used = copy.deepcopy(params)
-            actual_params_used[pn.search_params] = {
+            actual_params_used[pn.search_params] = update_dict_value({
                 pn.nq: nq,
                 "param": search_params["param"],
                 pn.top_k: top_k,
                 pn.expr: expr
-            }
+            }, other_params)
             p = CaseIterParams(callable_object=run, object_args=[nq, top_k, search_params],
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)

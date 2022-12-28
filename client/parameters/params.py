@@ -36,11 +36,12 @@ class ParamsFormat:
                          varchar_filled: ([type(bool())], OPTION),
                          scalars_index: ([type(list())], OPTION)},
         collection_params: {other_fields: ([type(list())], OPTION),
-                            shards_num: ([type(int())], OPTION)},
+                            shards_num: ([type(int())], OPTION),
+                            varchar_id: ([type(bool())], OPTION)},
         load_params: {replica_number: ([type(int())], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
-            guarantee_timestamp: ([type(int()), type(list())], OPTION),
+            guarantee_timestamp: ([type(int())], OPTION),
             output_fields: ([type(list()), type(None)], OPTION),
             timeout: ([type(int())], OPTION),
         }

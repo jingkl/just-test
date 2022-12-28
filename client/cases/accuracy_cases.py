@@ -119,7 +119,17 @@ class CommonCases(Base):
         log.info("[AccCases] Number of vectors in the collection({0}): {1}".format(self.collection_wrap.name, counts))
 
     def parser_search_params(self):
-        return gen_combinations(self.params_obj.search_params_parser(self.params_obj.search_params))
+        search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))
+        s_p = gen_combinations({pn.top_k: search_params.pop(pn.top_k, 0),
+                                pn.nq: search_params.pop(pn.nq, 0),
+                                pn.search_param: search_params.pop(pn.search_param, {}),
+                                pn.expr: search_params.pop(pn.expr, None)})
+        search_params_list = []
+        for s in s_p:
+            s.update(search_params)
+            search_params_list.append(s)
+        return search_params_list
+        # return gen_combinations(self.params_obj.search_params_parser(self.params_obj.search_params))
 
     def search_param_analysis(self, _search_params: dict, vector_type, metric_type: str):
         _params = copy.deepcopy(_search_params)
