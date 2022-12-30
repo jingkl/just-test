@@ -12,10 +12,10 @@ from client.cases.common_cases import CommonCases
 from client.parameters.params import ConcurrentObjParams, ConcurrentTasksParams, ConcurrentTaskSearch, \
     ConcurrentTaskQuery, ConcurrentInputParamsQuery, ConcurrentInputParamsSearch, ConcurrentInputParamsFlush, \
     ConcurrentTaskFlush, ConcurrentInputParamsLoad, ConcurrentTaskLoad, ConcurrentInputParamsRelease, \
-    ConcurrentTaskRelease, ConcurrentInputParamsInsert, ConcurrentTaskInsert, ConcurrentInputParamsDelete, \
-    ConcurrentTaskDelete, ConcurrentInputParamsSceneTest, ConcurrentTaskSceneTest, DataClassBase, \
-    ConcurrentInputParamsSceneInsertDeleteFlush, ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsDebug, \
-    ConcurrentTaskDebug
+    ConcurrentTaskRelease, ConcurrentInputParamsLoadRelease, ConcurrentTaskLoadRelease,  ConcurrentInputParamsInsert,\
+    ConcurrentTaskInsert, ConcurrentInputParamsDelete, ConcurrentTaskDelete, ConcurrentInputParamsSceneTest, \
+    ConcurrentTaskSceneTest, DataClassBase, ConcurrentInputParamsSceneInsertDeleteFlush, \
+    ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsDebug, ConcurrentTaskDebug
 from client.util.api_request import info_logout
 
 
@@ -179,6 +179,9 @@ class ConcurrentClientBase(CommonCases):
             _p = ConcurrentTaskSceneInsertDeleteFlush(**params)
             _p.set_params()
             return _p
+
+        elif req_type == pn.load_release:
+            return ConcurrentTaskLoadRelease(**ConcurrentInputParamsLoadRelease(**req_params).to_dict)
 
         return DataClassBase()
 
