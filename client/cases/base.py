@@ -11,9 +11,9 @@ from client.common.common_func import gen_collection_schema, gen_unique_str, get
     loop_gen_files
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
-from client.parameters.params import ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, \
-    ConcurrentTaskRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest, \
-    ConcurrentTaskSceneInsertDeleteFlush, DataClassBase
+from client.parameters.params import ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, \
+    ConcurrentTaskLoad, ConcurrentTaskRelease, ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, \
+    ConcurrentTaskSceneTest, ConcurrentTaskSceneInsertDeleteFlush, DataClassBase
 from client.util.api_request import func_time_catch
 from commons.common_params import EnvVariable
 from commons.common_type import LogLevel
@@ -341,6 +341,13 @@ class Base:
 
     def concurrent_release(self, params: ConcurrentTaskRelease):
         return self.collection_wrap.release(check_task=CheckTasks.assert_result, **params.obj_params)
+
+    @func_time_catch()
+    def concurrent_load_release(self, params: ConcurrentTaskLoadRelease):
+        self.collection_wrap.load(check_task=CheckTasks.assert_result, replica_number=params.replica_number,
+                                  timeout=params.timeout)
+        self.collection_wrap.release(check_task=CheckTasks.assert_result, timeout=params.timeout)
+        return "[Base] concurrent_load_release finished."
 
     def concurrent_insert(self, params: ConcurrentTaskInsert):
         entities = gen_entities(self.collection_schema, params.get_vectors, params.get_ids, params.varchar_filled)

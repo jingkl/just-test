@@ -53,6 +53,9 @@ class MyTaskSet(TaskSet):
     def release(self):
         self.client.release(self.tasks_params.release.params)
 
+    def load_release(self):
+        self.client.load_release(self.tasks_params.load_release.params)
+
     def insert(self):
         self.client.insert(self.tasks_params.insert.params)
 

@@ -237,6 +237,18 @@ class ConcurrentTaskRelease(DataClassBase):
 
 
 @dataclass
+class ConcurrentInputParamsLoadRelease(DataClassBase):
+    replica_number: Optional[int] = 1
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
+class ConcurrentTaskLoadRelease(DataClassBase):
+    replica_number: Optional[int] = 1
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
 class ConcurrentInputParamsInsert(DataClassBase):
     nb: Optional[int] = 1  # number of batch insert
     timeout: Optional[int] = DefaultValue.default_timeout
@@ -399,6 +411,7 @@ class ConcurrentTasksParams:
     flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskFlush})
     load: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskLoad})
     release: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskRelease})
+    load_release: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskLoadRelease})
     insert: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskInsert})
     delete: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskDelete})
     scene_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneTest})
