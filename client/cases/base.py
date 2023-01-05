@@ -81,9 +81,9 @@ class Base:
 
     def clean_all_collection(self, clean=True):
         """ Drop all collections in the database """
-        if not clean:
-            self.remove_connect()
-            return
+        # if not clean:
+        #     self.remove_connect()
+        #     return
         collections = self.utility_wrap.list_collections()[0][0]
         log.info("[Base] Start clean all collections {}".format(collections))
         for i in collections:
@@ -96,8 +96,8 @@ class Base:
             log.info("[Base] Release collections done")
             self.clean_all_collection()
             log.info("[Base] Clear collections Done!")
-        # log.info("[Base] Start disconnect connection.")
-        # self.remove_connect()
+        log.info("[Base] Start disconnect connection.")
+        self.remove_connect()
 
     def flush_collection(self, collection_obj: callable = None, log_level=LogLevel.INFO):
         collection_obj = collection_obj or self.collection_wrap
