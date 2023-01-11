@@ -229,7 +229,8 @@ class InsertBatch(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
         ni_per = self.params_obj.dataset_params[pn.ni_per]
 
         def run(ni):
@@ -290,7 +291,8 @@ class BuildIndex(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -359,7 +361,8 @@ class Load(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -429,7 +432,8 @@ class Query(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -513,7 +517,8 @@ class Search(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -606,7 +611,8 @@ class SearchRecall(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)

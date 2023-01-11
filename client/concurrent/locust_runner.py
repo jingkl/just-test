@@ -3,7 +3,7 @@ import gevent
 import threading
 import random
 from locust import User, events
-from locust.stats import print_stats, print_percentile_stats
+from locust.stats import print_stats, print_percentile_stats, StatsEntry
 from locust.env import Environment
 
 from client.common.common_func import get_spawn_rate
@@ -50,7 +50,25 @@ class TickStatsPrinter:
         time.sleep(1)
         # print final stats
         log.info("Print locust final stats.")
-        print_stats(self.env_stats)
+        print_stats(self.env_stats, current=False)
+
+    def final_result_status(self):
+        api_result = {self.env_stats.total.name: self.get_result_values(self.env_stats.total)}
+        for key in sorted(self.env_stats.entries.keys()):
+            r = self.env_stats.entries[key]
+            api_result[r.name] = self.get_result_values(r)
+        return api_result
+
+    @staticmethod
+    def get_result_values(obj: StatsEntry):
+        return {"Requests": round(obj.num_requests, Precision.CONCURRENT_PRECISION),
+                "Fails": round(obj.num_failures, Precision.CONCURRENT_PRECISION),
+                "RPS": round(obj.total_rps, Precision.CONCURRENT_PRECISION),
+                "fail_s": round(obj.fail_ratio, Precision.CONCURRENT_PRECISION),
+                "RT_max": round(obj.max_response_time, Precision.CONCURRENT_PRECISION),
+                "RT_avg": round(obj.avg_response_time, Precision.CONCURRENT_PRECISION),
+                "TP50": round(obj.get_response_time_percentile(0.5), Precision.CONCURRENT_PRECISION),
+                "TP99": round(obj.get_response_time_percentile(0.99), Precision.CONCURRENT_PRECISION),}
 
 
 class MyUser(User):
@@ -110,16 +128,11 @@ class LocustRunner:
         # runner.stop()
 
         # Statistics for all interfaces
-        api_result = {
-            "Requests": round(env.stats.total.current_rps, Precision.CONCURRENT_PRECISION),
-            "Fails": round(env.stats.total.fail_ratio, Precision.CONCURRENT_PRECISION),
-            "RT_max": round(env.stats.total.max_response_time, Precision.CONCURRENT_PRECISION),
-            "RT_avg": round(env.stats.total.avg_response_time, Precision.CONCURRENT_PRECISION)
-        }
+        api_result = tick_stats.final_result_status()
 
         # Stop printing interface results and runner
         runner.stop()
         tick_stats.stop_print_stats()
 
-        result = True if api_result["Fails"] == float(0) else False
+        result = True if api_result[env.stats.total.name]["Fails"] == float(0) else False
         return api_result, result
