@@ -12,7 +12,7 @@ from client.cases.common_cases import CommonCases
 from client.parameters.params import ConcurrentObjParams, ConcurrentTasksParams, ConcurrentTaskSearch, \
     ConcurrentTaskQuery, ConcurrentInputParamsQuery, ConcurrentInputParamsSearch, ConcurrentInputParamsFlush, \
     ConcurrentTaskFlush, ConcurrentInputParamsLoad, ConcurrentTaskLoad, ConcurrentInputParamsRelease, \
-    ConcurrentTaskRelease, ConcurrentInputParamsLoadRelease, ConcurrentTaskLoadRelease,  ConcurrentInputParamsInsert,\
+    ConcurrentTaskRelease, ConcurrentInputParamsLoadRelease, ConcurrentTaskLoadRelease, ConcurrentInputParamsInsert, \
     ConcurrentTaskInsert, ConcurrentInputParamsDelete, ConcurrentTaskDelete, ConcurrentInputParamsSceneTest, \
     ConcurrentTaskSceneTest, DataClassBase, ConcurrentInputParamsSceneInsertDeleteFlush, \
     ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsDebug, ConcurrentTaskDebug
@@ -68,7 +68,8 @@ class GoBenchCases(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -85,8 +86,8 @@ class GoBenchCases(CommonCases):
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
             self.prepare_scalars_index()
-        else:
-            self.release_collection()
+        # else:
+        #     self.release_collection()
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)
@@ -222,7 +223,8 @@ class ConcurrentClientBase(CommonCases):
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         obj_params = self.parser_concurrent_tasks(self.params_obj.concurrent_tasks, vector_default_field_name,
                                                   self.params_obj.dataset_params[pn.metric_type])
@@ -242,8 +244,8 @@ class ConcurrentClientBase(CommonCases):
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
             self.prepare_scalars_index()
-        else:
-            self.release_collection()
+        # else:
+        #     self.release_collection()
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)

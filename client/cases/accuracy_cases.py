@@ -51,7 +51,8 @@ class CommonCases(Base):
         self.params_obj = ParamsBase(**params)
 
     def prepare_collection(self, metric_type, vector_type, prepare, rebuild_index=False, prepare_clean=True):
-        vector_default_field_name = get_default_field_name(vector_type)
+        vector_default_field_name = get_default_field_name(vector_type,
+                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
         self.connect()
 
         if prepare:
@@ -144,7 +145,8 @@ class CommonCases(Base):
 
         result = update_dict_value({
             "data": data,
-            "anns_field": get_default_field_name(vector_type),
+            "anns_field": get_default_field_name(vector_type,
+                                                 self.params_obj.dataset_params.get(pn.vector_field_name, "")),
             "param": update_dict_value({"params": search_param}, {"metric_type": metric_type}),
             "limit": limit,
         }, _params)

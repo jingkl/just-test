@@ -29,6 +29,7 @@ timeout = "timeout"
 
 # dataset
 collection_name = "collection_name"
+vector_field_name = "vector_field_name"
 dataset_name = "dataset_name"
 dim = "dim"
 dataset_size = "dataset_size"
@@ -105,6 +106,7 @@ class DatasetsName:
     LOCAL = "local"  # random
     GIST = "gist"
     TEXT2IMG = "text2img"
+    LAION = "laion"
 
 
 class MetricsTypeName:

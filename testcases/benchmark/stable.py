@@ -53,7 +53,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
-            [ConcurrentParams.params_search(search_param={"nprobe": 16})],
+            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
             concurrent_number=[100],
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
@@ -70,7 +70,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
-            [ConcurrentParams.params_search(search_param={"nprobe": 16})],
+            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
             concurrent_number=[100],
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
@@ -87,7 +87,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
-            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
+            [ConcurrentParams.params_search(nq=100, top_k=10, search_param={"nprobe": 16})],
             concurrent_number=[1000],
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
@@ -104,7 +104,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
-            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
+            [ConcurrentParams.params_search(nq=100, top_k=10, search_param={"nprobe": 16})],
             concurrent_number=[1000],
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
@@ -201,7 +201,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=2),
                             ConcurrentParams.params_delete(weight=1, delete_length=1),
@@ -223,7 +223,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=2),
                             ConcurrentParams.params_delete(weight=1, delete_length=1),
@@ -245,7 +245,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=2),
                             ConcurrentParams.params_delete(weight=1, delete_length=1),
@@ -267,7 +267,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=2),
                             ConcurrentParams.params_delete(weight=1, delete_length=1),
@@ -289,7 +289,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
@@ -312,7 +312,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
@@ -335,7 +335,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
@@ -358,7 +358,7 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr="{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}"),
+                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
                             ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,

@@ -95,6 +95,8 @@ def get_recall_value(true_ids, result_ids):
     sum_radio = 0.0
     topk_check = True
     for index, item in enumerate(result_ids):
+        log.debug("[get_recall_value] true_ids: {}".format(true_ids[index]))
+        log.debug("[get_recall_value] result_ids: {}".format(item))
         tmp = set(true_ids[index]).intersection(set(item))
         if len(item) != 0:
             # tmp = set(list(true_ids[index])[:len(item)]).intersection(set(item))
@@ -119,14 +121,16 @@ def get_ground_truth_ids(data_size, data_type: str):
     gnd_file_name = DatasetPath.get(data_type + "_ground_truth", "") + f"/idx_{size}.ivecs"
 
     if check_file_exist(gnd_file_name):
-        a = np.fromfile(gnd_file_name, dtype='int32')
+        a = np.fromfile(gnd_file_name, dtype='int64')
         d = a[0]
         true_ids = a.reshape(-1, d + 1)[:, 1:].copy()
         return true_ids
     return []
 
 
-def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
+def get_default_field_name(data_type=DataType.FLOAT_VECTOR, default_field_name: str = ""):
+    if default_field_name:
+        return default_field_name
     if data_type == DataType.FLOAT_VECTOR:
         field_name = dv.default_float_vec_field_name
     elif data_type == DataType.BINARY_VECTOR:
@@ -145,7 +149,7 @@ def get_default_field_name(data_type=DataType.FLOAT_VECTOR):
 
 
 def get_vector_type(data_type):
-    if data_type in ["random", "sift", "deep", "glove", "local", "gist", "text2img"]:
+    if data_type in ["random", "sift", "deep", "glove", "local", "gist", "text2img", "laion"]:
         vector_type = DataType.FLOAT_VECTOR
     elif data_type in ["binary", "kosarak"]:
         vector_type = DataType.BINARY_VECTOR
@@ -351,7 +355,7 @@ def parser_search_params_expr(expr):
 
 
 def get_vectors_from_binary(nq, dimension, dataset_name):
-    if dataset_name in ["sift", "deep", "binary", "gist", "text2img"]:
+    if dataset_name in ["sift", "deep", "binary", "gist", "text2img", "laion"]:
         # dataset_name: local, sift, deep, binary
         file_name = DatasetPath[dataset_name] + "query.npy"
 
