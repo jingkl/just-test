@@ -73,17 +73,27 @@ class DefaultConfigs:
         _configs = update_dict_value(_other_configs, _configs_dict)
 
         log.debug("[DefaultConfigs] server resource: \n {}".format(_configs))
+        return self.config_conversion(_configs, update_helm_file, update_helm_file), config_name, _configs
 
+        # if self.deploy_tool == Helm:
+        #     if update_helm_file:
+        #         self.obj.update_values_file(values_file_path, _configs)
+        #         return _configs, config_name, _configs
+        #
+        #     else:
+        #         return self.obj.config_to_set_params(_configs), config_name, _configs
+        #
+        # if self.deploy_tool == Operator:
+        #     return _configs, config_name, _configs
+
+    def config_conversion(self, config, update_helm_file=False, values_file_path=''):
         if self.deploy_tool == Helm:
             if update_helm_file:
-                self.obj.update_values_file(values_file_path, _configs)
-                return _configs, config_name, _configs
-
+                self.obj.update_values_file(values_file_path, config)
+                return config
             else:
-                return self.obj.config_to_set_params(_configs), config_name, _configs
-
-        if self.deploy_tool == Operator:
-            return _configs, config_name, _configs
-
-    def config_conversion(self, config):
-        pass
+                return self.obj.config_to_set_params(config)
+        elif self.deploy_tool == Operator:
+            return config
+        log.warning("[DefaultConfigs] Deployment tool may not be supported:{}, please check.".format(self.deploy_tool))
+        return config
