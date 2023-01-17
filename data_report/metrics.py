@@ -1,10 +1,8 @@
-
 from data_report.submetric import ServerMetric, ClientMetric, ResultMetric
 from utils.util_log import log
 
 
 class ReportMetrics(object):
-
     __slots__ = ("server", "client", "result")
 
     def __init__(self, server: ServerMetric = None, client: ClientMetric = None, result: ResultMetric = None):
@@ -26,6 +24,12 @@ class ReportMetrics(object):
 
     def update_result(self, test_result: dict = {}):
         self.result.update(test_result)
+
+    def gen_id(self):
+        return self.client.gen_id()
+
+    def get_run_id(self):
+        return self.client.run_id
 
     def to_dict(self):
         return {
@@ -49,4 +53,3 @@ class ReportMetrics(object):
 
 
 Report_Metric_Object = ReportMetrics()
-

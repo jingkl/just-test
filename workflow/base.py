@@ -1,5 +1,4 @@
-from pymilvus import DefaultConfig
-import random
+import time
 
 from deploy.configs.default_configs import DefaultConfigs
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository
@@ -18,6 +17,7 @@ class Base:
 
     deploy_client = None
     deploy_config = {}
+    upgrade_config = {}
     deploy_release_name = ""
     deploy_initial_state = ""
     deploy_end_state = ""
@@ -41,6 +41,7 @@ class Base:
 
         self.deploy_client = None
         self.deploy_config = {}
+        self.upgrade_config = {}
         self.deploy_release_name = ""
         # record deploy status
         self.deploy_initial_state = ""
@@ -75,6 +76,17 @@ class Base:
         c.extend(list(args))
         self.teardown_funcs.append((c, kwargs))
 
+    def parser_endpoint_to_global(self, endpoint):
+        _e = str(endpoint).split(":")
+        if len(_e) == 2:
+            param_info.param_host = _e[0]
+            param_info.param_port = int(_e[1])
+        elif len(_e) == 1:
+            param_info.param_host = _e[0]
+        else:
+            raise Exception("[Base] Can not parser endpoint: {0}, type: {1}, please check.".format(endpoint,
+                                                                                                   type(endpoint)))
+
     def deploy_default(self, deploy_tool=Operator, deploy_mode=STANDALONE, cpu=8, mem=16, other_config=None,
                        tag=None, repository=None):
         tag = tag or param_info.milvus_tag or AutoGetTag().auto_tag()
@@ -103,18 +115,46 @@ class Base:
         self.deploy_initial_state = self.deploy_client.get_pods(release_name=self.deploy_release_name)
 
         # set global host and port
-        _e = str(endpoint).split(":")
-        if len(_e) == 2:
-            param_info.param_host = _e[0]
-            param_info.param_port = int(_e[1])
-        elif len(_e) == 1:
-            param_info.param_host = _e[0]
-        else:
-            raise Exception("[Base] Can not parser endpoint: {0}, type: {1}, please check.".format(endpoint,
-                                                                                                   type(endpoint)))
+        self.parser_endpoint_to_global(endpoint)
 
         log.info("[Base] Service deployed successfully:{0}".format(self.deploy_release_name))
         return self.deploy_release_name, endpoint
+
+    def upgrade_service(self, release_name=None, deploy_tool=Operator, deploy_mode=STANDALONE, upgrade_config=None):
+        release_name = release_name or param_info.release_name
+        if release_name in ["", None]:
+            raise Exception("[Base] Can not upgrade empty release name, please check.")
+
+        # init server client and default config
+        self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode, release_name=release_name)
+        config_obj = DefaultConfigs(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
+
+        # parser configs and install server
+        upgrade_configs = parser_input_config(input_content=upgrade_config)
+
+        # format upgrade_config helm -> str, operator -> dict
+        format_upgrade_config = config_obj.config_conversion(upgrade_configs, update_helm_file=False)
+        self.upgrade_config = [format_upgrade_config, upgrade_configs]
+
+        # check upgrade config and upgrade service
+        server_upgrade_params = check_deploy_config(deploy_tool=deploy_tool, configs=self.upgrade_config[0])
+        log.info("[Base] upgrade configs: {}".format(server_upgrade_params))
+        self.deploy_client.upgrade(server_upgrade_params)
+
+        # wait healthy and get endpoint
+        wait_time_after_scale = 10
+        time.sleep(wait_time_after_scale)
+        self.deploy_client.wait_for_healthy(release_name=release_name)
+        endpoint = self.deploy_client.endpoint(release_name=release_name)
+
+        # display server values
+        log.debug(self.deploy_client.get_all_values(release_name=release_name))
+        self.deploy_initial_state = self.deploy_client.get_pods(release_name=release_name)
+
+        # set global host and port
+        self.parser_endpoint_to_global(endpoint)
+        log.info("[Base] Service upgraded successfully:{0}".format(self.deploy_release_name))
+        return server_upgrade_params
 
     def deploy_delete(self, deploy_client=None, deploy_release_name=""):
         deploy_client = deploy_client or self.deploy_client

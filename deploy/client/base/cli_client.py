@@ -60,9 +60,24 @@ class CliClient(BaseClient):
         res_cmd = CmdExe(_cmd).run_cmd()
         return self.release_name if return_release_name else res_cmd
 
-    def upgrade(self, set_params="", release_name="", chart="", default_params=" --wait --timeout 30m ", params="",
-                return_release_name=True, **kwargs):
-        return self.install(set_params, release_name, chart, default_params, params)
+    def upgrade(self, set_params="", release_name="", chart="", default_params=" --wait --timeout 30m ",
+                params=" --reuse-values ", return_release_name=True, **kwargs):
+        """
+        :param set_params: image.all.pullPolicy=IfNotPresent,image.all.tag=v2.0.2
+        :param release_name: less than 63 characters
+        :param chart: name of helm chart or use local path of helm chart
+        :param default_params: --wait --timeout 30m
+        :param params: --reuse-values
+        :param return_release_name: bool
+        :return: None
+        """
+        release_name = release_name or self.release_name
+        chart = chart if chart != "" else self.chart
+        set_params = set_params if set_params == "" else " --set %s " % set_params
+
+        _cmd = f" helm upgrade -n {self.ns} {release_name} {set_params} {chart} {params}"
+        res_cmd = CmdExe(_cmd).run_cmd()
+        return self.release_name if return_release_name else res_cmd
 
     def uninstall(self, release_name: str, delete_pvc=False):
         release_name = release_name or self.release_name

@@ -33,6 +33,7 @@ def pytest_addoption(parser):
     parser.addoption("--deploy_tool", action="store", default=Helm, help="helm or operator")
     parser.addoption("--deploy_mode", action="store", default="", help="standalone or cluster")
     parser.addoption("--deploy_config", action="store", default="", help="str or dict")
+    parser.addoption("--upgrade_config", action="store", default="", help="str or dict")
     parser.addoption('--deploy_retain', action='store_true', default=False, help="retain Milvus")
     parser.addoption("--case_params", action="store", default="", help="str or dict")
     parser.addoption('--case_skip_prepare', action='store_true', default=False, help="skip prepare collection")
@@ -114,6 +115,7 @@ def input_params(request) -> InputParamsBase:
         "deploy_tool": str(request.config.getoption("--deploy_tool")).lower(),
         "deploy_mode": str(request.config.getoption("--deploy_mode")).lower(),
         "deploy_config": request.config.getoption("--deploy_config"),
+        "upgrade_config": request.config.getoption("--upgrade_config"),
         "case_params": request.config.getoption("--case_params"),
         "case_skip_prepare": request.config.getoption("--case_skip_prepare"),
         "case_skip_prepare_clean": request.config.getoption("--case_skip_prepare_clean"),
