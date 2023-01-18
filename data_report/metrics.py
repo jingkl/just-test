@@ -1,5 +1,6 @@
 from data_report.submetric import ServerMetric, ClientMetric, ResultMetric
 from utils.util_log import log
+from typing import Union
 
 
 class ReportMetrics(object):
@@ -25,11 +26,14 @@ class ReportMetrics(object):
     def update_result(self, test_result: dict = {}):
         self.result.update(test_result)
 
-    def gen_id(self):
-        return self.client.gen_id()
+    def get_metric(self, slot: Union[__slots__], metric: str, default_value=None):
+        return getattr(eval(f"self.{slot}"), metric, default_value)
 
-    def get_run_id(self):
-        return self.client.run_id
+    def set_metric(self, slot: Union[__slots__], metric: str, default_value=None):
+        return setattr(eval(f"self.{slot}"), metric, default_value)
+
+    def del_metric(self, slot: Union[__slots__], metric: str):
+        return delattr(eval(f"self.{slot}"), metric)
 
     def to_dict(self):
         return {

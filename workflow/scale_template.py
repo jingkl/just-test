@@ -3,6 +3,7 @@ from pprint import pformat
 from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 import time
 
+from commons.common_type import ReportMetric
 from commons.common_func import check_deploy_config
 from data_report.metrics import Report_Metric_Object
 from db_client.client_db import Database_Client
@@ -22,7 +23,8 @@ class ScaleTemplate(PerfTemplate):
             2. client test after scale
         """
         # set the global run_id: share run_id with deploy-test
-        param_info.run_id = Report_Metric_Object.get_run_id()
+        # param_info.run_id = Report_Metric_Object.get_run_id()
+        param_info.run_id = Report_Metric_Object.get_metric(ReportMetric.Client, ReportMetric.run_id)
 
         release_name = param_info.release_name or self.deploy_release_name
         input_params.deploy_mode = input_params.deploy_mode or deploy_mode
@@ -36,7 +38,8 @@ class ScaleTemplate(PerfTemplate):
         Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                            deploy_mode=input_params.deploy_mode,
                                            host=param_info.param_host)
-        Report_Metric_Object.server.add_server_metrics(upgrade_config=self.upgrade_config[-1])
+        # Report_Metric_Object.server.add_server_metrics(upgrade_config=self.upgrade_config[-1])
+        Report_Metric_Object.set_metric(ReportMetric.Server, ReportMetric.upgrade_config, self.upgrade_config[-1])
 
         # client test after scale
         self.run_client_case(input_params=input_params, case_callable_obj=case_callable_after_scale,
@@ -49,7 +52,8 @@ class ScaleTemplate(PerfTemplate):
             1. scale and client test in parallel
         """
         # set the global run_id: share run_id with deploy-test
-        param_info.run_id = Report_Metric_Object.get_run_id()
+        # param_info.run_id = Report_Metric_Object.get_run_id()
+        param_info.run_id = Report_Metric_Object.get_metric(ReportMetric.Client, ReportMetric.run_id)
 
         release_name = param_info.release_name or self.deploy_release_name
         input_params.deploy_mode = input_params.deploy_mode or deploy_mode
@@ -78,7 +82,8 @@ class ScaleTemplate(PerfTemplate):
         Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                            deploy_mode=input_params.deploy_mode,
                                            host=param_info.param_host)
-        Report_Metric_Object.server.add_server_metrics(upgrade_config=self.upgrade_config[-1])
+        # Report_Metric_Object.server.add_server_metrics(upgrade_config=self.upgrade_config[-1])
+        Report_Metric_Object.set_metric(ReportMetric.Server, ReportMetric.upgrade_config, self.upgrade_config[-1])
 
     def run_client_case(self, input_params: InputParamsBase, case_callable_obj: callable,
                         default_case_params: dict = {}):

@@ -14,3 +14,16 @@ class DefaultParams:
 class PRECISION:
     COMMON_PRECISION = 4
     INSERT_PRECISION = 4
+
+
+class ReportMetric:
+    # base slots
+    Server = "server"
+    Client = "client"
+    Result = "result"
+
+    # server params
+    upgrade_config = "upgrade_config"
+
+    # Client params
+    run_id = "run_id"
