@@ -76,7 +76,8 @@ class Base:
         c.extend(list(args))
         self.teardown_funcs.append((c, kwargs))
 
-    def parser_endpoint_to_global(self, endpoint):
+    @staticmethod
+    def parser_endpoint_to_global(endpoint):
         _e = str(endpoint).split(":")
         if len(_e) == 2:
             param_info.param_host = _e[0]
