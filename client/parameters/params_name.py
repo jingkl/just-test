@@ -11,6 +11,7 @@ query_params = "query_params"
 go_search_params = "go_search_params"
 concurrent_params = "concurrent_params"
 concurrent_tasks = "concurrent_tasks"
+resource_groups_params = "resource_groups_params"
 
 # request type
 search = "search"
@@ -37,6 +38,12 @@ max_length = "max_length"
 varchar_filled = "varchar_filled"
 scalars_index = "scalars_index"
 
+# common
+metric_type = "metric_type"
+field_name = "field_name"
+ni_per = "ni_per"
+req_run_counts = "req_run_counts"
+
 # collection
 shards_num = "shards_num"
 other_fields = "other_fields"
@@ -44,6 +51,8 @@ varchar_id = "varchar_id"
 
 # load
 replica_number = "replica_number"
+refresh = "_refresh"
+resource_groups = "_resource_groups"
 
 # index
 index_type = "index_type"
@@ -71,12 +80,12 @@ interval = "interval"
 # concurrent
 spawn_rate = "spawn_rate"
 
-# common
-metric_type = "metric_type"
-field_name = "field_name"
-vector_field_name = "vector_field_name"
-ni_per = "ni_per"
-req_run_counts = "req_run_counts"
+
+# resource groups
+groups = "groups"
+reset = "reset"
+transfer_replicas = "transfer_replicas"
+transfer_nodes = "transfer_nodes"
 
 # hdf5
 neighbors = "neighbors"

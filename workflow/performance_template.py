@@ -137,3 +137,23 @@ class PerfTemplate(Base):
             return next(run_perf_case)
 
         # todo server status check
+
+    def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE):
+        log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
+        input_params = copy.deepcopy(input_params)
+
+        # server
+        if not param_info.deploy_skip:
+            input_params.deploy_mode = input_params.deploy_mode or deploy_mode
+            self.deploy_default(deploy_tool=input_params.deploy_tool,
+                                deploy_mode=input_params.deploy_mode,
+                                other_config=input_params.deploy_config, cpu=cpu,
+                                mem=mem)
+        else:
+            self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+
+        if not param_info.deploy_retain:
+            self.deploy_delete()
+
+        # clear self.teardown_funcs
+        self.teardown_funcs = []

@@ -54,6 +54,7 @@ class CommonCases(Base):
         vector_default_field_name = get_default_field_name(vector_type,
                                                            self.params_obj.dataset_params.get(pn.vector_field_name, ""))
         self.connect()
+        self.set_resource_groups(**self.params_obj.resource_groups_params)
 
         if prepare:
             self.clean_all_collection(clean=prepare_clean)
@@ -118,6 +119,7 @@ class CommonCases(Base):
 
         counts = self.collection_wrap.num_entities
         log.info("[AccCases] Number of vectors in the collection({0}): {1}".format(self.collection_wrap.name, counts))
+        self.show_resource_groups()
 
     def parser_search_params(self):
         search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))

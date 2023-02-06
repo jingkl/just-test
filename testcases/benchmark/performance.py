@@ -9,6 +9,35 @@ from parameters.input_params import param_info, InputParamsBase
 from commons.common_type import DefaultParams as dp
 
 
+class TestServerDeploy(PerfTemplate):
+    """
+    For server deployment
+    Author: ting.wang@zilliz.com
+    """
+
+    def __str__(self):
+        return """
+        :param input_params: Input parameters
+            deploy_tool: Optional[str]
+            deploy_mode: Optional[str]
+            deploy_config: Union[str, dict]
+        :type input_params: InputParamsBase
+
+        :roughly follow the steps:
+            1. deployment service or use an already deployed service
+            2. delete service or not"""
+
+    def test_server_custom_parameters(self, input_params: InputParamsBase):
+        """
+        :steps:
+            1. deploy_skip: skip deploy server and delete the instance you pass from the cmd
+            2. deploy_retain: deploy server and retain the server
+            3. both: do nothing
+            4. not both: deploy server and delete the server
+        """
+        self.server_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=CLUSTER)
+
+
 class TestRecallCases(PerfTemplate):
     """
     Performance test cases

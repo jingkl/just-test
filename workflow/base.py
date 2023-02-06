@@ -88,6 +88,9 @@ class Base:
             raise Exception("[Base] Can not parser endpoint: {0}, type: {1}, please check.".format(endpoint,
                                                                                                    type(endpoint)))
 
+    def init_server_client(self, deploy_tool=Operator, deploy_mode=STANDALONE):
+        self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
+
     def deploy_default(self, deploy_tool=Operator, deploy_mode=STANDALONE, cpu=8, mem=16, other_config=None,
                        tag=None, repository=None):
         tag = tag or param_info.milvus_tag or AutoGetTag().auto_tag()
@@ -159,7 +162,7 @@ class Base:
 
     def deploy_delete(self, deploy_client=None, deploy_release_name=""):
         deploy_client = deploy_client or self.deploy_client
-        deploy_release_name = deploy_release_name or self.deploy_release_name
+        deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
 
         if deploy_client:
             # display server values before delete

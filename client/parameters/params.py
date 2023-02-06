@@ -19,6 +19,7 @@ class ParamsBase:
     go_search_params: Optional[dict] = field(default_factory=lambda: {})
     concurrent_params: Optional[dict] = field(default_factory=lambda: {})
     concurrent_tasks: Optional[list] = field(default_factory=lambda: [])
+    resource_groups_params: Optional[dict] = field(default_factory=lambda: {})
 
     @staticmethod
     def search_params_parser(_params):
@@ -39,13 +40,17 @@ class ParamsFormat:
         collection_params: {other_fields: ([type(list())], OPTION),
                             shards_num: ([type(int())], OPTION),
                             varchar_id: ([type(bool())], OPTION)},
-        load_params: {replica_number: ([type(int())], OPTION)},
+        load_params: {replica_number: ([type(int())], OPTION),
+                      refresh: ([type(bool())], OPTION),
+                      resource_groups: ([type(int()), type(list())], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int())], OPTION),
             output_fields: ([type(list()), type(None)], OPTION),
             timeout: ([type(int())], OPTION),
-        }
+        },
+        resource_groups_params: {groups: ([type(list()), type(dict()), type(None)], OPTION),
+                                 reset: ([type(bool())], OPTION)}
     }
 
     acc_scene_recall = update_dict_value({
