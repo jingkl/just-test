@@ -791,3 +791,13 @@ class GoSearchParams:
 def get_spawn_rate(total_num: int, default_max_step: int = 5, default_max_spawn_rate: int = 100):
     _spawn_rate = math.ceil(total_num / default_max_step)
     return _spawn_rate if _spawn_rate <= default_max_spawn_rate else default_max_spawn_rate
+
+
+def remove_list_values(_list: list, _value):
+    _list = copy.deepcopy(_list)
+    while True:
+        if _value in _list:
+            _list.remove(_value)
+        else:
+            break
+    return _list

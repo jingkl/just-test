@@ -1,4 +1,6 @@
 import copy
+from dataclasses import dataclass, field
+from typing import Optional
 from client.common.common_type import NAS
 import client.parameters.params_name as pn
 
@@ -40,3 +42,18 @@ GoBenchIndex = {
     "AUTOINDEX": "AUTOINDEX",
     "DISKANN": "DISKANN"
 }
+
+
+@dataclass
+class TransferNodesParams:
+    source: str
+    target: str
+    num_node: int
+
+
+@dataclass
+class TransferReplicasParams:
+    source: str
+    target: str
+    collection_name: str
+    num_replica: int

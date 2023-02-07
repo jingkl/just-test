@@ -6,7 +6,6 @@ from pymilvus import utility
 from client.check.func_check import ResponseChecker
 from client.util.api_request import api_request
 
-
 TIMEOUT = 600
 
 
@@ -15,7 +14,7 @@ class ApiUtilityWrapper:
 
     ut = utility
 
-    def bulk_load(self, collection_name,  partition_name="",
+    def bulk_load(self, collection_name, partition_name="",
                   channels="", row_based=True, files="", timeout=None,
                   using="default", check_task=None, check_items=None, **kwargs):
         func_name = sys._getframe().f_code.co_name
@@ -26,7 +25,7 @@ class ApiUtilityWrapper:
                                        collection_name=collection_name, using=using).run()
         return res, check_result
 
-    def get_bulk_load_state(self, task_id, timeout=None, using="default", check_task=None, check_items=None,  **kwargs):
+    def get_bulk_load_state(self, task_id, timeout=None, using="default", check_task=None, check_items=None, **kwargs):
         func_name = sys._getframe().f_code.co_name
         res, is_succ = api_request([self.ut.get_bulk_load_state, task_id, timeout, using], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
@@ -49,7 +48,7 @@ class ApiUtilityWrapper:
                     continue
                 else:
                     state, _ = self.get_bulk_load_state(task_id, task_timeout, using, **kwargs)
-                    if state.state_name == "BulkLoadPersisted":     # "BulkLoadCompleted"
+                    if state.state_name == "BulkLoadPersisted":  # "BulkLoadCompleted"
                         successes[task_id] = state
                     elif state.state_name == "BulkLoadFailed":
                         fails[task_id] = state
@@ -214,3 +213,46 @@ class ApiUtilityWrapper:
         res, _ = api_request([self.ut.mkts_from_hybridts, hybridts, milliseconds, delta])
         return res
 
+    def create_resource_group(self, name, using="default", timeout=None, check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request([self.ut.create_resource_group, name, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result
+
+    def drop_resource_group(self, name, using="default", timeout=None, check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request([self.ut.drop_resource_group, name, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result
+
+    def describe_resource_group(self, name, using="default", timeout=None, check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request([self.ut.describe_resource_group, name, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result
+
+    def list_resource_groups(self, using="default", timeout=None, check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request([self.ut.list_resource_groups, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result
+
+    def transfer_node(self, source, target, num_node, using="default", timeout=None, check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request([self.ut.transfer_node, source, target, num_node, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result
+
+    def transfer_replica(self, source, target, collection_name, num_replica, using="default", timeout=None,
+                         check_task=None, check_items=None):
+        func_name = sys._getframe().f_code.co_name
+        res, is_succ = api_request(
+            [self.ut.transfer_replica, source, target, collection_name, num_replica, using, timeout])
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ,
+                                       timeout=timeout, using=using).run()
+        return res, check_result

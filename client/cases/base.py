@@ -8,12 +8,15 @@ from client.client_base import ApiConnectionsWrapper, ApiCollectionWrapper, ApiI
 from parameters.input_params import param_info
 from client.common.common_func import gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, \
     parser_data_size, loop_files, loop_ids, gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, \
-    loop_gen_files
+    loop_gen_files, remove_list_values
+from client.common.common_param import TransferNodesParams, TransferReplicasParams
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
 from client.parameters.params import ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, \
     ConcurrentTaskLoad, ConcurrentTaskRelease, ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, \
     ConcurrentTaskSceneTest, ConcurrentTaskSceneInsertDeleteFlush, DataClassBase
+from client.parameters.params_name import reset, groups, max_length, dim, transfer_nodes, transfer_replicas, \
+    resource_groups
 from client.util.api_request import func_time_catch
 from commons.common_params import EnvVariable
 from commons.common_type import LogLevel
@@ -33,6 +36,9 @@ class Base:
 
         self.collection_name = ''
         self.collection_schema = None
+
+        # flag
+        self.resource_groups_flag = False
 
     # def __del__(self):
     #     log.info("[Base] Start disconnect connection.")
@@ -63,8 +69,8 @@ class Base:
         """ Create a collection with default schema """
         schema = gen_collection_schema(vector_field_name=vector_field_name, other_fields=other_fields,
                                        varchar_id=varchar_id,
-                                       max_length=kwargs.pop("max_length", dv.default_max_length),
-                                       dim=kwargs.pop("dim", dv.default_dim)) if schema is None else schema
+                                       max_length=kwargs.pop(max_length, dv.default_max_length),
+                                       dim=kwargs.pop(dim, dv.default_dim)) if schema is None else schema
         collection_name = collection_name or gen_unique_str()
         self.collection_name = self.collection_name or collection_name
 
@@ -81,9 +87,9 @@ class Base:
 
     def clean_all_collection(self, clean=True):
         """ Drop all collections in the database """
-        # if not clean:
-        #     self.remove_connect()
-        #     return
+        if not clean:
+            # self.remove_connect()
+            return
         collections = self.utility_wrap.list_collections()[0][0]
         log.info("[Base] Start clean all collections {}".format(collections))
         for i in collections:
@@ -104,10 +110,11 @@ class Base:
         log.customize(log_level)("[Base] Start flush collection {}".format(collection_obj.name))
         return collection_obj.flush()
 
-    def load_collection(self, replica_number=1):
+    def load_collection(self, replica_number=1, **kwargs):
+        kwargs = self.get_resource_groups(**kwargs)
         log.info(
-            "[Base] Start load collection {0}, replica_number:{1}".format(self.collection_wrap.name, replica_number))
-        return self.collection_wrap.load(replica_number=replica_number)
+            f"[Base] Start load collection {self.collection_wrap.name},replica_number:{replica_number},kwargs:{kwargs}")
+        return self.collection_wrap.load(replica_number=replica_number, **kwargs)
 
     def release_collection(self):
         log.info("[Base] Start release collection {}".format(self.collection_wrap.name))
@@ -324,6 +331,110 @@ class Base:
                         concurrent_number=concurrent_number, during_time=during_time, interval=interval,
                         log_path=log.log_info, output_format=output_format, partition_names=partition_names,
                         secure=secure, user=user, password=password, json_file_path=go_search_params.json_file_path)
+
+    def set_resource_groups(self, **kwargs):
+        """
+        {
+            "groups": {
+                        "transfer_nodes": [{"source": <name>, "target": <name>, "num_node": <int>}, ...],
+                        "transfer_replicas": [{"source": <name>, "target": <name>, "collection_name": <collection_name>,
+                         "num_replica": <int>}, ...]
+                      }  # or [1, 2, 3] just for nodes
+            "reset": bool
+        }
+        """
+        _groups = kwargs.get(groups, None)
+        _reset = kwargs.get(reset, False)
+        default_rg_name = "__default_resource_group"
+
+        # reset all resource groups to initial state
+        if _reset:
+            self.resource_groups_flag = True
+            lrg = self.utility_wrap.list_resource_groups()[0][0]
+            log.debug("[Base] All resource groups {0}".format(lrg))
+            for n in remove_list_values(lrg, default_rg_name):
+                res = self.utility_wrap.describe_resource_group(name=n)[0][0]
+                self.utility_wrap.transfer_node(source=res.name, target=default_rg_name,
+                                                num_node=res.num_available_node)
+                self.utility_wrap.drop_resource_group(name=n)
+                log.debug("[Base] Dropped resource group {0}".format(n))
+
+            _lrg = self.utility_wrap.list_resource_groups()[0][0]
+            if len(remove_list_values(_lrg, default_rg_name)) > 0:
+                raise Exception("[Base] Failed to clean resource groups:{0}, please check manually".format(_lrg))
+            log.debug("[Base] Dropped all resource groups except the default resource group.")
+
+        if isinstance(_groups, list):
+            self.resource_groups_flag = True
+            res = self.utility_wrap.describe_resource_group(name=default_rg_name)[0][0]
+            if sum(_groups) > res.num_available_node:
+                raise Exception(
+                    f"[Base] Default num_available_node:{res.num_available_node} is less than required:{sum(_groups)}, list:{_groups}")
+            for i in range(len(_groups)):
+                name = f"RG_{i}"
+                log.debug(f"[Base] Create resource group {name}")
+                self.utility_wrap.create_resource_group(name=name)
+                self.utility_wrap.transfer_node(source=default_rg_name, target=name, num_node=_groups[i])
+                # todo need to check transfer result
+            log.debug(f"[Base] Transfer all nodes done: {_groups}")
+
+        elif isinstance(_groups, dict):
+            self.resource_groups_flag = True
+            _transfer_nodes = _groups.get(transfer_nodes, [])
+            _transfer_replicas = _groups.get(transfer_replicas, [])
+
+            lrg = self.utility_wrap.list_resource_groups()[0][0]
+            # transfer nodes
+            for _node in _transfer_nodes:
+                node = TransferNodesParams(**_node)
+                if node.source not in lrg:
+                    raise Exception(f"[Base] The source resource group does not exist:{node.source}")
+                if node.target not in lrg:
+                    log.debug(f"[Base] Create resource group {node.target}")
+                    self.utility_wrap.create_resource_group(name=node.target)
+                self.utility_wrap.transfer_node(source=node.source, target=node.target, num_node=node.num_node)
+                # todo need to check transfer result
+            log.debug(f"[Base] Transfer all nodes done: {_transfer_nodes}")
+
+            # transfer replicas
+            for _replica in _transfer_replicas:
+                replica = TransferReplicasParams(**_replica)
+                if replica.source not in lrg:
+                    raise Exception(f"[Base] The source resource group does not exist:{replica.source}")
+                if replica.target not in lrg:
+                    raise Exception(f"[Base] The target resource group does not exist:{replica.source}")
+                self.utility_wrap.transfer_replica(source=replica.source, target=replica.target,
+                                                   collection_name=replica.collection_name,
+                                                   num_replica=replica.num_replica)
+                # todo need to check transfer result
+            log.debug(f"[Base] Transfer all replicas done: {_transfer_replicas}")
+
+    def get_resource_groups(self, **kwargs):
+        _rg = kwargs.pop(resource_groups, None)
+        default_rg_name = "__default_resource_group"
+        if isinstance(_rg, int):
+            self.resource_groups_flag = True
+            # get all resource groups
+            lrg = self.utility_wrap.list_resource_groups()[0][0]
+            if len(lrg) == _rg:
+                kwargs.update({resource_groups: lrg})
+            elif len(lrg) > _rg:
+                rg = random.sample(remove_list_values(lrg, default_rg_name), _rg)
+                kwargs.update({resource_groups: rg})
+            else:
+                raise Exception(f"[Base] The current resource groups{lrg}:{len(lrg)} < required:{_rg}")
+
+        elif isinstance(_rg, list):
+            self.resource_groups_flag = True
+            kwargs.update({resource_groups: _rg})
+        return kwargs
+
+    def show_resource_groups(self):
+        if self.resource_groups_flag:
+            lrg = self.utility_wrap.list_resource_groups()[0][0]
+            for rg in lrg:
+                res = self.utility_wrap.describe_resource_group(name=rg)[0][0]
+                log.info(f"[Base] Describe resource group:{rg}, {res}")
 
     def concurrent_search(self, params: ConcurrentTaskSearch):
         if params.random_data:

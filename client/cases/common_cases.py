@@ -26,6 +26,7 @@ class CommonCases(Base):
 
     def prepare_collection(self, vector_field_name, prepare, prepare_clean=True):
         self.connect()
+        self.set_resource_groups(**self.params_obj.resource_groups_params)
 
         if prepare:
             self.clean_all_collection(clean=prepare_clean)
@@ -453,6 +454,8 @@ class Query(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
+        self.show_resource_groups()
+
         # query
         def run():
             try:
@@ -540,6 +543,8 @@ class Search(CommonCases):
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)
+
+        self.show_resource_groups()
 
         # search
         def run(run_s_p: dict):
@@ -634,6 +639,8 @@ class SearchRecall(CommonCases):
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)
+
+        self.show_resource_groups()
 
         # search
         def run(_nq, _top_k, run_s_p: dict):
