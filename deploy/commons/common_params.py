@@ -5,6 +5,7 @@ queryCoord = "queryCoord"
 dataNode = "dataNode"
 queryNode = "queryNode"
 indexNode = "indexNode"
+standalone = "standalone"
 proxy = "proxy"
 all_pods = [rootCoord, dataCoord, queryCoord, dataNode, queryNode, indexNode, proxy]
 
@@ -14,27 +15,26 @@ storage = "storage"
 pulsar = "pulsar"
 kafka = "kafka"
 minio = "minio"
+rocksmq = "rocksmq"
 
 CLUSTER = "cluster"
 STANDALONE = "standalone"
 
-MilvusCluster = "MilvusCluster"
 Milvus = "Milvus"
 PersistentVolumeClaim = "PersistentVolumeClaim"
 Pod = "Pod"
 PodChaos = "PodChaos"
 DefaultApiVersion = "DefaultApiVersion"
 
-APIVERSION = {MilvusCluster: "milvus.io/v1alpha1",
-              Milvus: "milvus.io/v1alpha1",
+APIVERSION = {Milvus: "milvus.io/v1beta1",
               PersistentVolumeClaim: "v1",
               Pod: "v1",
               PodChaos: "chaos-mesh.org/v1alpha1",
-              DefaultApiVersion: "milvus.io/v1alpha1"}
+              DefaultApiVersion: "milvus.io/v1beta1"}
 
 # common params
 IDC_NAS_URL = "//172.16.70.249/test"
-DefaultRepository = "harbor.zilliz.cc/milvus/milvus"
+DefaultRepository = "harbor.milvus.io/milvus/milvus"
 
 # deploy type
 Helm = "helm"

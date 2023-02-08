@@ -14,7 +14,7 @@ class DynamicClient:
     - List, create, patch (update), delete the custom resources
     """
 
-    def __init__(self, kubeconfig=None, namespace=None, api_version='milvus.io/v1alpha1', kind='MilvusCluster'):
+    def __init__(self, kubeconfig=None, namespace=None, api_version='milvus.io/v1beta1', kind='Milvus'):
         self.kubeconfig = kubeconfig  # kubeconfig of load_kube_config is None if passed no param
         self.namespace = namespace
 
