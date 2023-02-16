@@ -454,7 +454,7 @@ class Query(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_resource_groups()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
 
         # query
         def run():
@@ -544,7 +544,7 @@ class Search(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_resource_groups()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
 
         # search
         def run(run_s_p: dict):
@@ -640,7 +640,7 @@ class SearchRecall(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_resource_groups()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
 
         # search
         def run(_nq, _top_k, run_s_p: dict):

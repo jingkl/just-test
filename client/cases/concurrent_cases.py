@@ -92,6 +92,8 @@ class GoBenchCases(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
+        self.show_resource_groups()
+
         # search
         s_params = self.parser_search_params()
         g_params = self.parser_go_search_params()
@@ -249,6 +251,10 @@ class ConcurrentClientBase(CommonCases):
 
         # load collection
         self.prepare_load(**self.params_obj.load_params)
+
+        self.show_resource_groups()
+        self.show_collection_replicas()
+        self.show_segment_info()
 
         # set output log
         info_logout.reset_output()

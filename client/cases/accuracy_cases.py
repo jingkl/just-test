@@ -119,7 +119,7 @@ class CommonCases(Base):
 
         counts = self.collection_wrap.num_entities
         log.info("[AccCases] Number of vectors in the collection({0}): {1}".format(self.collection_wrap.name, counts))
-        self.show_resource_groups()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
 
     def parser_search_params(self):
         search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))

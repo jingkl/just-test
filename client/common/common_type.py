@@ -91,6 +91,7 @@ class Precision:
     QUERY_PRECISION = 4
     COMMON_PRECISION = 4
     CONCURRENT_PRECISION = 2
+    ALGORITHM_PRECISION = 1
 
 
 class CaseIterParams:

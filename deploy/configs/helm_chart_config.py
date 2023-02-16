@@ -94,14 +94,14 @@ class HelmConfig(BaseConfig):
                 "kafka": {"enabled": kafka}}
 
     def set_nodes_resource(self, cpu=None, mem=None):
-        cluster_resource = self.gen_nodes_resource(cpu, mem)
+        # cluster_resource = self.gen_nodes_resource(cpu, mem)
 
         if self.cluster:
-            return {queryNode: {"resources": cluster_resource},
-                    indexNode: {"resources": cluster_resource},
-                    dataNode: {"resources": cluster_resource}}
+            return {queryNode: {"resources": self.gen_nodes_resource(cpu, mem)},
+                    indexNode: {"resources": self.gen_nodes_resource(cpu, mem)},
+                    dataNode: {"resources": self.gen_nodes_resource(cpu, mem)}}
         else:
-            return {"standalone": {"resources": cluster_resource}}
+            return {"standalone": {"resources": self.gen_nodes_resource(cpu, mem)}}
 
     @staticmethod
     def set_replicas(**kwargs):

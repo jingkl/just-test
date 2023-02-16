@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, List
 from client.common.common_type import NAS
 import client.parameters.params_name as pn
 
@@ -57,3 +57,20 @@ class TransferReplicasParams:
     target: str
     collection_name: str
     num_replica: int
+
+
+@dataclass
+class SegmentsAnalysis:
+    count_segment: int
+    max_segment: int
+    min_segment: int
+    avg_segment: float
+    std_segment: float
+    shards_num: int
+    truncated_avg_segment: float
+    truncated_std_segment: float
+    top_percentile: List[dict]
+
+    @property
+    def to_dict(self):
+        return vars(self)
