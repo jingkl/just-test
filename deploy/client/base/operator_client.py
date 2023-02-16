@@ -5,7 +5,7 @@ from utils.util_log import log
 
 from deploy.commons.common_func import update_dict_value, utc_conversion, format_dict_output, get_api_version, \
     parser_op_item, check_multi_keys_exist
-from deploy.commons.common_params import CLUSTER, STANDALONE, MilvusCluster, Milvus, PersistentVolumeClaim, Pod
+from deploy.commons.common_params import CLUSTER, STANDALONE, Milvus, PersistentVolumeClaim, Pod
 from deploy.client.base.dynamic_client import DynamicClient
 from deploy.client.base.base_client import BaseClient
 from deploy.configs.operator_config import OperatorConfig
@@ -25,7 +25,7 @@ def operator_client_catch(self):
 class OperatorClient(BaseClient):
 
     def __init__(self, kubeconfig=None, namespace=None, api_version=None, deploy_mode=CLUSTER,
-                 release_name="", kind=MilvusCluster, **kwargs):
+                 release_name="", kind=Milvus, **kwargs):
         super().__init__()
         self.kubeconfig = kubeconfig
         self.namespace = namespace
@@ -52,7 +52,7 @@ class OperatorClient(BaseClient):
         self.release_name = release_name
 
     def reset_params(self, kubeconfig=None, namespace=None, api_version=None, deploy_mode=CLUSTER,
-                     kind=MilvusCluster):
+                     kind=Milvus):
         self.kubeconfig = kubeconfig if kubeconfig is not None else self.kubeconfig
         self.namespace = namespace if namespace is not None else self.namespace
         self.api_version = api_version if api_version is not None else self.api_version

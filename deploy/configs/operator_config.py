@@ -1,22 +1,22 @@
 from utils.util_log import log
 
 from deploy.commons.common_func import get_latest_tag, get_image_tag, gen_release_name, update_dict_value
-from deploy.commons.common_params import Milvus, MilvusCluster, etcd, storage, pulsar, kafka, DefaultRepository, \
-    dataNode, queryNode, indexNode, all_pods
+from deploy.commons.common_params import Milvus, etcd, storage, pulsar, kafka, rocksmq, DefaultRepository, \
+    dataNode, queryNode, indexNode, all_pods, standalone
 
 from deploy.configs.base_config import BaseConfig
 
 
 class OperatorConfig(BaseConfig):
 
-    def __init__(self, cluster=True, api_version="milvus.io/v1alpha1", release_name="", **kwargs):
+    def __init__(self, cluster=True, api_version="milvus.io/v1beta1", release_name="", **kwargs):
         super().__init__()
         self.api_version = api_version
         self.release_name = release_name
 
         # deploy mode
         self.cluster = cluster
-        self.kind = MilvusCluster if cluster is True else Milvus
+        self.kind = Milvus
 
         # minio local-path and metrics
         self.storage_local_path = self._dependencies(storage, self.storage_dict)
@@ -33,8 +33,9 @@ class OperatorConfig(BaseConfig):
         # kafka local-path
         self.kafka_local_path = self._dependencies(kafka, self.kafka_dict)
 
-        # standalone local-path
-        self.standalone_local_path = {"spec": self.standalone_dict}
+        # standalone rocksmq local-path
+        self.standalone_local_path = self._dependencies(rocksmq, self.standalone_dict)
+        # self.standalone_local_path = {"spec": self.standalone_dict}
 
         # base config
         self.base_config_dict = self.config_merge([self.op_base_config(), self.delete_pvc_instance()])
@@ -43,15 +44,14 @@ class OperatorConfig(BaseConfig):
     def _dependencies(dep_name, config):
         if dep_name in [etcd, storage, pulsar, kafka] and isinstance(config, dict):
             return {"spec": {"dependencies": {dep_name: {"inCluster": {"values": config}}}}}
+        if dep_name in [rocksmq] and isinstance(config, dict):
+            return {"spec": {"dependencies": {dep_name: config}}}
         else:
             log.error("[OperatorConfig] return dependencies config failed.")
             return {}
 
     def components(self, com_name, config):
-        if self.cluster:
-            return {"spec": {"components": {com_name: config}}}
-        else:
-            return {"spec": {com_name: config}}
+        return {"spec": {"components": {com_name: config}}}
 
     def reset_deploy_mode(self, cluster=True):
         self.cluster = cluster
@@ -66,12 +66,15 @@ class OperatorConfig(BaseConfig):
         base_config = {"apiVersion": api_version,
                        "kind": kind,
                        "metadata": {"name": name}}
-        if kind == MilvusCluster:
-            return base_config
+        if self.cluster:
+            return update_dict_value({
+                "spec": {"mode": "cluster"}
+            }, base_config)
         else:
             return update_dict_value({
                 "spec": {"dependencies": {etcd: {"inCluster": {"values": {"replicaCount": 1}}},
-                                          storage: {"inCluster": {"values": {"mode": "standalone"}}}}}
+                                          storage: {"inCluster": {"values": {"mode": "standalone"}}},
+                                          rocksmq: {"persistence": {"enabled": True}}}}
             }, base_config)
 
     def delete_pvc_instance(self, pvc_deletion=True, deletion_policy="Delete"):
@@ -83,12 +86,11 @@ class OperatorConfig(BaseConfig):
                                               storage: {"inCluster": {"deletionPolicy": deletion_policy,
                                                                       "pvcDeletion": pvc_deletion}}}}}
         else:
-            return {"spec": {"persistence": {"pvcDeletion": pvc_deletion},
-                             "dependencies": {etcd: {"inCluster": {"deletionPolicy": deletion_policy,
+            return {"spec": {"dependencies": {etcd: {"inCluster": {"deletionPolicy": deletion_policy,
                                                                    "pvcDeletion": pvc_deletion}},
+                                              rocksmq: {"persistence": {"pvcDeletion": pvc_deletion}},
                                               storage: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                      "pvcDeletion": pvc_deletion}}}
-                             }}
+                                                                      "pvcDeletion": pvc_deletion}}}}}
 
     # common funcs
     def set_image(self, tag=None, repository=DefaultRepository, prefix="master"):
@@ -116,7 +118,7 @@ class OperatorConfig(BaseConfig):
                                       self.components(indexNode, {"resources": cluster_resource}),
                                       self.components(dataNode, {"resources": cluster_resource})])
         else:
-            return self.components("resources", cluster_resource)
+            return self.components(standalone, {"resources": cluster_resource})
 
     def set_replicas(self, **kwargs):
         """

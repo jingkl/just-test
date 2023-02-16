@@ -18,7 +18,7 @@ class DefaultConfigs:
         self.deploy_mode = deploy_mode
 
         self.cluster = True if self.deploy_mode == CLUSTER else False
-        self.api_version = kwargs.get("api_version", "milvus.io/v1alpha1")
+        self.api_version = kwargs.get("api_version", "milvus.io/v1beta1")
         self.escape = kwargs.get("escape", True)
         self.obj = get_config_obj(self.deploy_tool, cluster=self.cluster, api_version=self.api_version,
                                   escape=self.escape)
@@ -73,7 +73,7 @@ class DefaultConfigs:
         _configs = update_dict_value(_other_configs, _configs_dict)
 
         log.debug("[DefaultConfigs] server resource: \n {}".format(_configs))
-        return self.config_conversion(_configs, update_helm_file, update_helm_file), config_name, _configs
+        return self.config_conversion(_configs, update_helm_file, values_file_path), config_name, _configs
 
         # if self.deploy_tool == Helm:
         #     if update_helm_file:

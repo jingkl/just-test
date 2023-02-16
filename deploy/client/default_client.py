@@ -3,7 +3,7 @@ from commons.common_params import EnvVariable
 from configs.base_config import BaseConfig
 from deploy.client.base import get_client_obj
 from deploy.commons.common_func import gen_release_name
-from deploy.commons.common_params import Helm, CLUSTER, Operator, STANDALONE, APIVERSION, MilvusCluster, Milvus
+from deploy.commons.common_params import Helm, CLUSTER, Operator, STANDALONE, APIVERSION, Milvus
 from parameters.input_params import param_info
 
 
@@ -29,7 +29,7 @@ class DefaultClient:
         self.release_name = kwargs.get("release_name", self.gen_default_release_name())
 
         # params for op
-        self.kind = MilvusCluster if self.deploy_mode is CLUSTER else Milvus
+        self.kind = Milvus
         self.api_version = kwargs.get("api_version", APIVERSION[self.kind])
 
         client_params = {
