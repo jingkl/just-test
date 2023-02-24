@@ -1,6 +1,5 @@
 import threading
 import time
-from functools import partial
 
 from utils.util_log import log
 
@@ -34,6 +33,8 @@ class StreamRead:
                 incremental_content = fd.read()  # read incremental content
 
                 current_position = fd.tell()  # record file current location
+                log.debug("[StreamRead] Read incremental file, last_position:%s current_position:%s" %
+                          (last_position, current_position))
                 if current_position != last_position:  # there is no new file if equal
                     fd.seek(current_position, 0)
                 last_position = current_position  # Move the pointer to the current position

@@ -10,10 +10,11 @@ class CommonParams:
     @staticmethod
     def base(dataset_name, dim, dataset_size, ni_per, metric_type=None, req_run_counts=None,
              other_fields=None,
-             replica_number=None,
+             replica_number=None, resource_groups=None,
              index_type=None, index_param=None,
              ids=None, query_expr=None,
-             search_param=None, search_expr=None, top_k=None, nq=None, guarantee_timestamp=None):
+             search_param=None, search_expr=None, top_k=None, nq=None, guarantee_timestamp=None,
+             reset=False, groups=None):
         dataset_params = {pn.dataset_name: dataset_name,
                           pn.dim: dim,
                           pn.dataset_size: dataset_size,
@@ -21,7 +22,8 @@ class CommonParams:
                           pn.metric_type: metric_type,
                           pn.req_run_counts: req_run_counts}
         collection_params = {pn.other_fields: other_fields}
-        load_params = {pn.replica_number: replica_number}
+        load_params = {pn.replica_number: replica_number,
+                       pn.resource_groups: resource_groups}
         index_params = {pn.index_type: index_type,
                         pn.index_param: index_param}
         query_params = {pn.ids: ids,
@@ -34,6 +36,8 @@ class CommonParams:
                          # "guarantee_timestamp": 1,
                          # "expr": ["float1 > -1 && float1 < 10", "float1 > 0 && float1 < 20"],
                          }
+        resource_groups_params = {pn.reset: reset,
+                                  pn.groups: groups}
 
         return dict_recursive_key({
             pn.dataset_params: dataset_params,
@@ -42,6 +46,7 @@ class CommonParams:
             pn.index_params: index_params,
             pn.query_params: query_params,
             pn.search_params: search_params,
+            pn.resource_groups_params: resource_groups_params,
         })
 
 

@@ -92,7 +92,7 @@ class Base:
         self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
 
     def deploy_default(self, deploy_tool=Operator, deploy_mode=STANDALONE, cpu=8, mem=16, other_config=None,
-                       tag=None, repository=None):
+                       tag=None, repository=None, **kwargs):
         tag = tag or param_info.milvus_tag or AutoGetTag().auto_tag()
         repository = repository or param_info.tag_repository
 
@@ -102,7 +102,8 @@ class Base:
         # init server config
         config_obj = DefaultConfigs(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
         set_image = config_obj.set_image(tag=tag, repository=repository) if tag is not None else {}
-        self.deploy_config = config_obj.server_resource(cpu=cpu, mem=mem, other_configs=[other_configs, set_image])
+        self.deploy_config = config_obj.server_resource(cpu=cpu, mem=mem, other_configs=[other_configs, set_image],
+                                                        **kwargs)
         log.info("[Base] deploy config: {}".format(self.deploy_config))
 
         # init server client

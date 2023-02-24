@@ -75,7 +75,7 @@ class PerfTemplate(Base):
 
     def concurrency_template(self, input_params: InputParamsBase, case_callable_obj: callable,
                              default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE, interval=30,
-                             sync_report=False, old_version_format=True):
+                             sync_report=False, old_version_format=True, **kwargs):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -85,7 +85,7 @@ class PerfTemplate(Base):
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
                                 other_config=input_params.deploy_config, cpu=cpu,
-                                mem=mem)
+                                mem=mem, **kwargs)
             # update server metric
             Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                                deploy_mode=input_params.deploy_mode,

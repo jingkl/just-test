@@ -23,6 +23,7 @@ class TickStatsPrinter:
         self.interval = interval
         self.stop_flag = False
         self.print_flag = False
+        self.t = None
 
     def start_print_stats(self):
         def print_stats_func():
@@ -38,15 +39,18 @@ class TickStatsPrinter:
     def _start_print_stats(self):
         self.print_flag = True
         print_stats(self.env_stats)
+        print_percentile_stats(self.env_stats)
         self.print_flag = False
         if not self.stop_flag:
-            t = threading.Timer(self.interval, self._start_print_stats)
-            t.start()
+            self.t = threading.Timer(self.interval, self._start_print_stats)
+            self.t.start()
 
     def stop_print_stats(self):
         self.stop_flag = True
         while self.print_flag is True:
             time.sleep(1)
+        if self.t and isinstance(self.t, threading.Timer) and hasattr(self.t, "cancel"):
+            self.t.cancel()
         time.sleep(1)
         # print final stats
         log.info("Print locust final stats.")

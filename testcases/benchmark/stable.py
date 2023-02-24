@@ -372,3 +372,24 @@ class TestConcurrentCases(PerfTemplate):
                                   deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_resource_groups_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [ConcurrentParams.params_search(weight=1, nq=1000, top_k=1, search_param={"ef": 64})]
+        # groups = ConcurrentParams.groups(
+        #     [ConcurrentParams.transfer_nodes(dp.default_resource_group, f"RG_{i}", 1) for i in list(range(3))])
+        groups = [1, 1, 1]
+        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[50],
+                                                                         during_time="6h", interval=20,
+                                                                         dataset_size="10m", reset=True, groups=groups,
+                                                                         replica_number=3, resource_groups=3,
+                                                                         **cdp.DefaultIndexParams.HNSW)
+        self.concurrency_template(input_params=input_params, cpu=2, mem=dp.default_mem, queryNode=3,
+                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)

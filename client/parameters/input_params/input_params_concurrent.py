@@ -1,3 +1,4 @@
+from typing import List
 from client.parameters.input_params.input_params_common import CommonParams
 from client.parameters import params_name as pn
 from client.common.common_func import dict_recursive_key, parser_data_size, update_dict_value
@@ -177,6 +178,20 @@ class ConcurrentParams(CommonParams):
                            "index_param": index_param, "metric_type": metric_type}}
 
     @staticmethod
+    def transfer_nodes(source: str, target: str, num_node: int):
+        return {"source": source, "target": target, "num_node": num_node}
+
+    @staticmethod
+    def transfer_replicas(source: str, target: str, collection_name: str, num_replica: int):
+        return {"source": source, "target": target, "collection_name": collection_name, "num_replica": num_replica}
+
+    @staticmethod
+    def groups(nodes: List[dict] = [], replicas: List[dict] = []):
+        if len(nodes) == 0 and len(replicas) == 0:
+            return None
+        return {"transfer_nodes": nodes, "transfer_replicas": replicas}
+
+    @staticmethod
     def params_scene_insert_delete_flush(weight=1, insert_length=1, delete_length=1, random_id=False,
                                          random_vector=False, varchar_filled=False):
         """
@@ -194,6 +209,8 @@ class ConcurrentParams(CommonParams):
 
     def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
                                 dataset_size="1m", ni_per=50000, other_fields=[],
+                                replica_number=None, resource_groups=None,
+                                reset=False, groups=None,
                                 metric_type=pn.MetricsTypeName.L2, index_type=pn.IndexTypeName.HNSW,
                                 index_param={"M": 8, "efConstruction": 200}, concurrent_number=[20],
                                 during_time=120, interval=20, spawn_rate=None):
@@ -201,7 +218,8 @@ class ConcurrentParams(CommonParams):
 
         base_default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                         other_fields=other_fields, metric_type=metric_type, index_type=index_type,
-                                        index_param=index_param)
+                                        index_param=index_param, reset=reset, groups=groups,
+                                        replica_number=replica_number, resource_groups=resource_groups,)
         concurrent_default_params = self.concurrent_base(concurrent_number=concurrent_number, during_time=during_time,
                                                          interval=interval, concurrent_tasks=concurrent_tasks,
                                                          spawn_rate=spawn_rate)

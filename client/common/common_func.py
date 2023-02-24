@@ -8,20 +8,21 @@ import string
 import numpy as np
 import pandas as pd
 import h5py
-import sklearn
 import tqdm
+import sklearn
 from sklearn import preprocessing
 from itertools import product
 import subprocess
 import uuid
+from pprint import pformat
 
 from pymilvus import DataType
 from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper
 from client.common.common_type import DefaultValue as dv
 # from client.common.common_type import ParamsCheckType as pct
 from client.parameters import params_name as pn
-from client.common.common_type import NAS, SimilarityMetrics, AccMetrics
-from client.common.common_param import DatasetPath, GoBenchIndex
+from client.common.common_type import NAS, SimilarityMetrics, AccMetrics, Precision
+from client.common.common_param import DatasetPath, GoBenchIndex, SegmentsAnalysis
 from utils.util_log import log
 
 """API func"""
@@ -117,7 +118,7 @@ def get_search_ids(result):
 
 
 def get_ground_truth_ids(data_size, data_type: str):
-    size = str(int(parser_data_size(data_size)/1000000)) + "M"
+    size = str(int(parser_data_size(data_size) / 1000000)) + "M"
     gnd_file_name = DatasetPath.get(data_type + "_ground_truth", "") + f"/idx_{size}.ivecs"
 
     if check_file_exist(gnd_file_name):
@@ -801,3 +802,31 @@ def remove_list_values(_list: list, _value):
         else:
             break
     return _list
+
+
+def parser_segment_info(segment_info, shards_num: int = 2):
+    log.debug(f"[parser_segment_info] The type for segment_info:{type(segment_info)}")
+    if len(segment_info) == 0:
+        log.warning(f"[parser_segment_info] The number of segments is 0, please check segment_info: {segment_info}")
+        return segment_info
+
+    num_rows_list = []
+    for segment in segment_info:
+        num_rows_list.append(segment.num_rows)
+
+    # Remove the minimum values of the number of shard_num
+    num_rows_list.sort()
+    _num_rows_list = num_rows_list[shards_num:]
+
+    _dict = {"count_segment": len(segment_info),
+             "max_segment": np.max(num_rows_list),
+             "min_segment": np.min(num_rows_list),
+             "avg_segment": round(np.mean(num_rows_list), Precision.ALGORITHM_PRECISION),
+             "std_segment": round(np.std(num_rows_list), Precision.ALGORITHM_PRECISION),
+             "shards_num": shards_num,
+             "truncated_avg_segment": round(np.mean(_num_rows_list), Precision.ALGORITHM_PRECISION),
+             "truncated_std_segment": round(np.std(_num_rows_list), Precision.ALGORITHM_PRECISION),
+             "top_percentile": [{f"TP_{i}": round(np.percentile(num_rows_list, i), Precision.ALGORITHM_PRECISION)} for i
+                                in [j for j in range(10, 100, 10)]]}
+
+    return SegmentsAnalysis(**_dict).to_dict

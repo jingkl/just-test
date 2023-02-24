@@ -14,6 +14,9 @@ class OperatorConfig(BaseConfig):
         self.api_version = api_version
         self.release_name = release_name
 
+        # reset config
+        self.standalone_dict = {"persistence": {"persistentVolumeClaim": {"storageClassName": "local-path"}}}
+
         # deploy mode
         self.cluster = cluster
         self.kind = Milvus
@@ -111,14 +114,14 @@ class OperatorConfig(BaseConfig):
         pass
 
     def set_nodes_resource(self, cpu=None, mem=None):
-        cluster_resource = self.gen_nodes_resource(cpu, mem)
+        # cluster_resource = self.gen_nodes_resource(cpu, mem)
 
         if self.cluster:
-            return self.config_merge([self.components(queryNode, {"resources": cluster_resource}),
-                                      self.components(indexNode, {"resources": cluster_resource}),
-                                      self.components(dataNode, {"resources": cluster_resource})])
+            return self.config_merge([self.components(queryNode, {"resources": self.gen_nodes_resource(cpu, mem)}),
+                                      self.components(indexNode, {"resources": self.gen_nodes_resource(cpu, mem)}),
+                                      self.components(dataNode, {"resources": self.gen_nodes_resource(cpu, mem)})])
         else:
-            return self.components(standalone, {"resources": cluster_resource})
+            return self.components(standalone, {"resources": self.gen_nodes_resource(cpu, mem)})
 
     def set_replicas(self, **kwargs):
         """
