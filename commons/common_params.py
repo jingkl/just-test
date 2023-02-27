@@ -1,7 +1,4 @@
-from pymilvus import DefaultConfig
-
 from configs.base_config import BaseConfig
-from commons.common_type import DefaultParams as dp
 
 
 class EnvVariable:

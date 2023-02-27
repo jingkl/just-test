@@ -1,6 +1,6 @@
-import copy
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Union
+
 from client.common.common_type import NAS
 import client.parameters.params_name as pn
 
@@ -45,6 +45,14 @@ GoBenchIndex = {
 
 
 @dataclass
+class InterfaceResponse:
+    response: any
+    rt: Union[int, float]  # response time
+    res_result: bool
+    check_result: bool
+
+
+@dataclass
 class TransferNodesParams:
     source: str
     target: str
@@ -62,6 +70,7 @@ class TransferReplicasParams:
 @dataclass
 class SegmentsAnalysis:
     count_segment: int
+    total_vectors: int
     max_segment: int
     min_segment: int
     avg_segment: float

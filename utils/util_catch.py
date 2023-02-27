@@ -1,5 +1,4 @@
 import traceback
-import functools
 
 from utils.util_log import log
 

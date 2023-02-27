@@ -1,9 +1,11 @@
 import pytest
+
+from deploy.commons.common_params import Helm, Operator, STANDALONE
+
 from utils.util_log import log
 from configs.log_config import log_config
 from commons.common_func import modify_file
 from parameters.input_params import param_info, InputParamsBase
-from deploy.commons.common_params import Helm, Operator, STANDALONE
 
 
 def pytest_addoption(parser):

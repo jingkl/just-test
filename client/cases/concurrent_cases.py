@@ -1,22 +1,27 @@
 import copy
-import time
 
-from client.parameters.params import ParamsFormat
-from client.parameters import params_name as pn
 from client.common.common_type import Precision, CaseIterParams
-from client.common.common_func import gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, \
-    parser_time, update_dict_value
-from utils.util_log import log
+from client.common.common_func import (
+    gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, parser_time, update_dict_value)
 from client.util.params_check import check_params
-from client.cases.common_cases import CommonCases
-from client.parameters.params import ConcurrentObjParams, ConcurrentTasksParams, ConcurrentTaskSearch, \
-    ConcurrentTaskQuery, ConcurrentInputParamsQuery, ConcurrentInputParamsSearch, ConcurrentInputParamsFlush, \
-    ConcurrentTaskFlush, ConcurrentInputParamsLoad, ConcurrentTaskLoad, ConcurrentInputParamsRelease, \
-    ConcurrentTaskRelease, ConcurrentInputParamsLoadRelease, ConcurrentTaskLoadRelease, ConcurrentInputParamsInsert, \
-    ConcurrentTaskInsert, ConcurrentInputParamsDelete, ConcurrentTaskDelete, ConcurrentInputParamsSceneTest, \
-    ConcurrentTaskSceneTest, DataClassBase, ConcurrentInputParamsSceneInsertDeleteFlush, \
-    ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsDebug, ConcurrentTaskDebug
 from client.util.api_request import info_logout
+from client.cases.common_cases import CommonCases
+from client.parameters import params_name as pn
+from client.parameters.params import (
+    ParamsFormat, ConcurrentObjParams, ConcurrentTasksParams, DataClassBase,
+    ConcurrentTaskDebug, ConcurrentInputParamsDebug,
+    ConcurrentTaskSearch, ConcurrentInputParamsSearch,
+    ConcurrentTaskQuery, ConcurrentInputParamsQuery,
+    ConcurrentTaskFlush, ConcurrentInputParamsFlush,
+    ConcurrentTaskLoad, ConcurrentInputParamsLoad,
+    ConcurrentTaskRelease, ConcurrentInputParamsRelease,
+    ConcurrentTaskLoadRelease, ConcurrentInputParamsLoadRelease,
+    ConcurrentTaskInsert, ConcurrentInputParamsInsert,
+    ConcurrentTaskDelete, ConcurrentInputParamsDelete,
+    ConcurrentTaskSceneTest, ConcurrentInputParamsSceneTest,
+    ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsSceneInsertDeleteFlush)
+
+from utils.util_log import log
 
 
 class GoBenchCases(CommonCases):
@@ -100,10 +105,9 @@ class GoBenchCases(CommonCases):
         params_list = []
         for g_p in g_params:
             for s_p in s_params:
-                search_params, nq, top_k, expr, other_params = self.search_param_analysis(s_p,
-                                                                                          vector_default_field_name,
-                                                                                          self.params_obj.dataset_params[
-                                                                                              pn.metric_type])
+                search_params, nq, top_k, expr, other_params = \
+                    self.search_param_analysis(s_p, vector_default_field_name,
+                                               self.params_obj.dataset_params[pn.metric_type])
                 go_search_params = GoSearchParams(dim=self.params_obj.dataset_params[pn.dim], **search_params)
 
                 actual_params_used = copy.deepcopy(params)
@@ -152,9 +156,9 @@ class ConcurrentClientBase(CommonCases):
     def parser_tasks_params(self, req_type, req_params, vector_field_name: str, metric_type: str):
         if req_type == pn.search:
             params = ConcurrentInputParamsSearch(**req_params)
-            result, nq, top_k, expr, other_params = self.search_param_analysis(_search_params=params.to_dict,
-                                                                               default_field_name=vector_field_name,
-                                                                               metric_type=metric_type)
+            result, nq, top_k, expr, other_params = \
+                self.search_param_analysis(_search_params=params.to_dict, default_field_name=vector_field_name,
+                                           metric_type=metric_type)
             return ConcurrentTaskSearch(**result)
 
         elif req_type == pn.query:

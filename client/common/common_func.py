@@ -3,26 +3,23 @@ import random
 import json
 import math
 import copy
-import operator
 import string
 import numpy as np
 import pandas as pd
 import h5py
 import tqdm
-import sklearn
+import subprocess
 from sklearn import preprocessing
 from itertools import product
-import subprocess
-import uuid
-from pprint import pformat
 
 from pymilvus import DataType
+
 from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper
-from client.common.common_type import DefaultValue as dv
-# from client.common.common_type import ParamsCheckType as pct
 from client.parameters import params_name as pn
+from client.common.common_type import DefaultValue as dv
 from client.common.common_type import NAS, SimilarityMetrics, AccMetrics, Precision
 from client.common.common_param import DatasetPath, GoBenchIndex, SegmentsAnalysis
+
 from utils.util_log import log
 
 """API func"""
@@ -60,11 +57,11 @@ def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_prim
                     _kwargs.update({"dim": kwargs.get("dim", dv.default_dim)})
                 return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=field_types[_field],
                                                                  description=description, is_primary=is_primary,
-                                                                 **_kwargs)[0][0]
+                                                                 **_kwargs).response
     else:
         if dtype in field_types.values():
             return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=dtype, description=description,
-                                                             is_primary=is_primary, **kwargs)[0][0]
+                                                             is_primary=is_primary, **kwargs).response
     log.error("[gen_field_schema] The field schema for generating {0} is not supported, please check.".format(name))
     return []
 
@@ -83,7 +80,7 @@ def gen_collection_schema(vector_field_name="", description=dv.default_desc, def
         fields.append(gen_field_schema(_field, **kwargs))
     log.debug("[gen_collection_schema] The generated field schema contains the following:{}".format(fields))
     return ApiCollectionSchemaWrapper().init_collection_schema(fields=fields, description=description,
-                                                               auto_id=auto_id, primary_field=primary_field)[0][0]
+                                                               auto_id=auto_id, primary_field=primary_field).response
 
 
 """ param handling """
@@ -804,6 +801,16 @@ def remove_list_values(_list: list, _value):
     return _list
 
 
+def list_processing(_type: np, _list: list, _precision=Precision.ALGORITHM_PRECISION, default_value=np.NaN):
+    if len(_list) == 0:
+        return default_value
+
+    if isinstance(_precision, int):
+        return round(_type(*_list), _precision)
+
+    return _type(*_list)
+
+
 def parser_segment_info(segment_info, shards_num: int = 2):
     log.debug(f"[parser_segment_info] The type for segment_info:{type(segment_info)}")
     if len(segment_info) == 0:
@@ -816,17 +823,29 @@ def parser_segment_info(segment_info, shards_num: int = 2):
 
     # Remove the minimum values of the number of shard_num
     num_rows_list.sort()
-    _num_rows_list = num_rows_list[shards_num:]
+    if len(num_rows_list) >= shards_num:
+        _num_rows_list = num_rows_list[shards_num:]
+    else:
+        _num_rows_list = []
+        log.warning("[parser_segment_info] The number of segments:%s are less than shards_num:%s" % (
+            len(num_rows_list), shards_num))
 
     _dict = {"count_segment": len(segment_info),
-             "max_segment": np.max(num_rows_list),
-             "min_segment": np.min(num_rows_list),
-             "avg_segment": round(np.mean(num_rows_list), Precision.ALGORITHM_PRECISION),
-             "std_segment": round(np.std(num_rows_list), Precision.ALGORITHM_PRECISION),
+             "total_vectors": sum(num_rows_list),
+             "max_segment": list_processing(np.max, [num_rows_list], None),
+             "min_segment": list_processing(np.min, [num_rows_list], None),
+             "avg_segment": list_processing(np.mean, [num_rows_list]),
+             "std_segment": list_processing(np.std, [num_rows_list]),
              "shards_num": shards_num,
-             "truncated_avg_segment": round(np.mean(_num_rows_list), Precision.ALGORITHM_PRECISION),
-             "truncated_std_segment": round(np.std(_num_rows_list), Precision.ALGORITHM_PRECISION),
-             "top_percentile": [{f"TP_{i}": round(np.percentile(num_rows_list, i), Precision.ALGORITHM_PRECISION)} for i
+             "truncated_avg_segment": list_processing(np.mean, [_num_rows_list]),
+             "truncated_std_segment": list_processing(np.std, [_num_rows_list]),
+             "top_percentile": [{f"TP_{i}": list_processing(np.percentile, [num_rows_list, i])} for i
                                 in [j for j in range(10, 100, 10)]]}
 
     return SegmentsAnalysis(**_dict).to_dict
+
+
+def check_object(_object, default_value: list = [None]):
+    if _object not in default_value:
+        return True
+    raise Exception(f"[check_object] Object:{_object} check failed in default_value:{default_value}")

@@ -5,12 +5,14 @@ from client.cases.base import Base
 from client.cases.case_report import CasesReport
 from client.parameters.params import ParamsFormat, ParamsBase
 from client.parameters import params_name as pn
+from client.util.params_check import check_params
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_type import DefaultValue as dv
-from client.common.common_func import gen_combinations, update_dict_value, get_vector_type, get_default_field_name, \
-    get_vectors_from_binary, parser_search_params_expr, get_ground_truth_ids, get_search_ids, get_recall_value
+from client.common.common_func import (
+    gen_combinations, update_dict_value, get_vector_type, get_default_field_name, get_vectors_from_binary,
+    parser_search_params_expr, get_ground_truth_ids, get_search_ids, get_recall_value)
+
 from utils.util_log import log
-from client.util.params_check import check_params
 
 
 class CommonCases(Base):
@@ -40,7 +42,7 @@ class CommonCases(Base):
             self.create_collection(**_collection_params)
 
         else:
-            collection_names = self.utility_wrap.list_collections()[0][0] if not self.params_obj.dataset_params.get(
+            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.dataset_params.get(
                 pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[CommonCases] There can only be one collection in the database: {}".format(collection_names)
@@ -58,11 +60,11 @@ class CommonCases(Base):
 
     def prepare_load(self, **kwargs):
         res_load = self.load_collection(**kwargs)
-        self.case_report.add_attr(**{"load": {"RT": round(res_load[0][1], Precision.LOAD_PRECISION)}})
+        self.case_report.add_attr(**{"load": {"RT": round(res_load.rt, Precision.LOAD_PRECISION)}})
 
     def prepare_flush(self):
         res_flush = self.flush_collection()
-        self.case_report.add_attr(**{"flush": {"RT": round(res_flush[0][1], Precision.FLUSH_PRECISION)}})
+        self.case_report.add_attr(**{"flush": {"RT": round(res_flush.rt, Precision.FLUSH_PRECISION)}})
 
     def prepare_index(self, vector_field_name, metric_type, clean_index_before=False):
         self.show_index()
@@ -75,8 +77,8 @@ class CommonCases(Base):
                 pn.metric_type: metric_type,
             }, self.params_obj.index_params)
 
-            result, check_result = self.build_index(**_index_params)
-            rt = round(result[1], Precision.INDEX_PRECISION)
+            result = self.build_index(**_index_params)
+            rt = round(result.rt, Precision.INDEX_PRECISION)
             # set report data
             self.case_report.add_attr(**{"index": {"RT": rt}})
 
@@ -100,8 +102,8 @@ class CommonCases(Base):
         self.show_index()
 
         for scalar in scalars:
-            result, check_result = self.build_scalar_index(scalar)
-            rt = round(result[1], Precision.INDEX_PRECISION)
+            result = self.build_scalar_index(scalar)
+            rt = round(result.rt, Precision.INDEX_PRECISION)
             # set report data
             self.case_report.add_attr(update_report_data, **{"index": {scalar: {"RT": rt}}})
             log.info("[CommonCases] RT of build scalar index {1}: {0}s".format(rt, scalar))
@@ -112,7 +114,7 @@ class CommonCases(Base):
         query_rt = []
         for i in range(req_run_counts):
             res_query = self.query(**kwargs)
-            query_rt.append(round(res_query[0][1], Precision.QUERY_PRECISION))
+            query_rt.append(round(res_query.rt, Precision.QUERY_PRECISION))
 
         self.case_report.add_attr(**{"query": {
             "RT": round(float(np.mean(query_rt)), Precision.QUERY_PRECISION),
@@ -126,7 +128,7 @@ class CommonCases(Base):
         search_rt = []
         for i in range(req_run_counts):
             res_search = self.search(**kwargs)
-            search_rt.append(round(res_search[0][1], Precision.SEARCH_PRECISION))
+            search_rt.append(round(res_search.rt, Precision.SEARCH_PRECISION))
 
         self.case_report.add_attr(**{"search": {
             "RT": round(float(np.mean(search_rt)), Precision.SEARCH_PRECISION),
@@ -140,11 +142,11 @@ class CommonCases(Base):
         res_search = self.search(**kwargs)
         true_ids = get_ground_truth_ids(data_size=self.params_obj.dataset_params[pn.dataset_size],
                                         data_type=self.params_obj.dataset_params[pn.dataset_name])
-        result_ids = get_search_ids(res_search[0][0])
+        result_ids = get_search_ids(res_search.response)
         acc_value = get_recall_value(true_ids[:_nq, :_top_k].tolist(), result_ids)
 
         self.case_report.add_attr(**{"search": {"Recall": acc_value,
-                                                "RT": round(res_search[0][1], Precision.SEARCH_PRECISION)}})
+                                                "RT": round(res_search.rt, Precision.SEARCH_PRECISION)}})
         return self.case_report.to_dict(), True
 
     def parser_search_params(self):

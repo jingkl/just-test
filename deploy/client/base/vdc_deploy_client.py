@@ -1,11 +1,12 @@
 import time
 
-from configs.config_info import config_info
 from deploy.commons.common_params import InstanceStatus, ClassID
 from deploy.commons.common_func import update_dict_value, add_resource
 from deploy.commons.status_code import RMErrorCode
 from deploy.vdc_rest_api import CloudRMApi, InfraApi, CloudServiceApi
 from deploy.client.base.base_client import BaseClient
+
+from configs.config_info import config_info
 from utils.util_cmd import CmdExe
 from utils.util_log import log
 

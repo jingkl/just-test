@@ -1,59 +1,84 @@
 import sys
 
-from client.check.func_check import ResponseChecker
-from client.util.api_request import api_request
 from pymilvus import CollectionSchema, FieldSchema
+
+from client.util.api_request import api_request
+from client.check.func_check import ResponseChecker
+from client.common.common_param import InterfaceResponse
 
 
 class ApiCollectionSchemaWrapper:
-    collection_schema = None
+    # collection_schema = None
+    _collection_schema = None
+
+    @property
+    def collection_schema(self):
+        if not isinstance(self._collection_schema, CollectionSchema):
+            msg = "[ApiCollectionSchemaWrapper] CollectionSchema object:None may not be initialized yet, please check!"
+            raise Exception(msg)
+        return self._collection_schema
+
+    @collection_schema.setter
+    def collection_schema(self, value):
+        self._collection_schema = value
 
     def init_collection_schema(self, fields, description="", check_task=None, check_items=None, **kwargs):
         """In order to distinguish the same name of CollectionSchema"""
         func_name = sys._getframe().f_code.co_name
-        response, is_succ = api_request([CollectionSchema, fields, description], **kwargs)
-        self.collection_schema = response if is_succ else None
-        check_result = ResponseChecker(response, func_name, check_task, check_items, is_succ=is_succ, fields=fields,
+        res, res_result = api_request([CollectionSchema, fields, description], **kwargs)
+        self.collection_schema = res[0] if res_result else None
+        check_result = ResponseChecker(res, func_name, check_task, check_items, is_succ=res_result, fields=fields,
                                        description=description, **kwargs).run()
-        return response, check_result
+        return InterfaceResponse(*res, res_result, check_result)
 
     @property
     def primary_field(self):
-        return self.collection_schema.primary_field if self.collection_schema else None
+        return self.collection_schema.primary_field
 
     @property
     def fields(self):
-        return self.collection_schema.fields if self.collection_schema else None
+        return self.collection_schema.fields
 
     @property
     def description(self):
-        return self.collection_schema.description if self.collection_schema else None
+        return self.collection_schema.description
 
     @property
     def auto_id(self):
-        return self.collection_schema.auto_id if self.collection_schema else None
+        return self.collection_schema.auto_id
 
 
 class ApiFieldSchemaWrapper:
-    field_schema = None
+    # field_schema = None
+    _field_schema = None
+
+    @property
+    def field_schema(self):
+        if not isinstance(self._field_schema, FieldSchema):
+            raise Exception("[ApiFieldSchemaWrapper] FieldSchema object:None may not be initialized yet, please check!")
+        return self._field_schema
+
+    @field_schema.setter
+    def field_schema(self, value):
+        self._field_schema = value
 
     def init_field_schema(self, name, dtype, description="", check_task=None, check_items=None, **kwargs):
         """In order to distinguish the same name of FieldSchema"""
         func_name = sys._getframe().f_code.co_name
-        response, is_succ = api_request([FieldSchema, name, dtype, description], **kwargs)
-        self.field_schema = response if is_succ else None
-        check_result = ResponseChecker(response, func_name, check_task, check_items, is_succ, name=name, dtype=dtype,
+        res, res_result = api_request([FieldSchema, name, dtype, description], **kwargs)
+        self.field_schema = res[0] if res_result else None
+        check_result = ResponseChecker(res, func_name, check_task, check_items, res_result, name=name, dtype=dtype,
                                        description=description, **kwargs).run()
-        return response, check_result
+        return InterfaceResponse(*res, res_result, check_result)
 
     @property
     def description(self):
-        return self.field_schema.description if self.field_schema else None
+        return self.field_schema.description
 
     @property
     def params(self):
-        return self.field_schema.params if self.field_schema else None
+        return self.field_schema.params
 
     @property
     def dtype(self):
-        return self.field_schema.dtype if self.field_schema else None
+        return self.field_schema.dtype

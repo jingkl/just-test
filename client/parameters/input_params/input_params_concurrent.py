@@ -1,9 +1,10 @@
 from typing import List
+
 from client.parameters.input_params.input_params_common import CommonParams
 from client.parameters import params_name as pn
 from client.common.common_func import dict_recursive_key, parser_data_size, update_dict_value
 from client.common.common_type import DefaultValue
-import client.parameters.input_params.define_params as dp
+
 from utils.util_log import log
 
 
@@ -187,6 +188,10 @@ class ConcurrentParams(CommonParams):
 
     @staticmethod
     def groups(nodes: List[dict] = [], replicas: List[dict] = []):
+        """
+        nodes: Optional[list] - Tasks that require transfer nodes
+        replicas: Optional[list] - Tasks that require transfer replicas
+        """
         if len(nodes) == 0 and len(replicas) == 0:
             return None
         return {"transfer_nodes": nodes, "transfer_replicas": replicas}

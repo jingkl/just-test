@@ -1,8 +1,8 @@
 import traceback
 import time
-import functools
-from pprint import pformat
 from typing import Tuple
+
+from client.common.common_param import InterfaceResponse
 
 from commons.common_type import PRECISION
 from commons.common_func import truncated_output
@@ -99,7 +99,7 @@ def time_wrapper(func):
 
 def func_time_catch():
     def wrapper(func):
-        def inner_wrapper(*args, **kwargs) -> Tuple[tuple, bool]:
+        def inner_wrapper(*args, **kwargs) -> InterfaceResponse:
             start = time.perf_counter()
             try:
                 res = func(*args, **kwargs)
@@ -108,11 +108,13 @@ def func_time_catch():
                 msg = "[Time] {0} run in {1}s, response: {2}".format(func.__name__,
                                                                      round(rt, PRECISION.COMMON_PRECISION), res)
                 log.debug(msg)
-                return (res, rt), True
+                # return (res, rt), True
+                return InterfaceResponse(res, rt, True, True)
             except Exception as e:
                 rt = time.perf_counter() - start
                 log.error(traceback.format_exc())
                 log.error("[func_time_catch] : %s" % truncated_output(e, info_logout.log_row_length))
-                return (e, rt), False
+                # return (e, rt), False
+                return InterfaceResponse(e, rt, False, False)
         return inner_wrapper
     return wrapper

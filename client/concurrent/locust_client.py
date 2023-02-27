@@ -7,8 +7,8 @@ def event_catch():
     def wrapper(func):
         def inner_wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
-            exception = None if result[1] is True else "False"
-            rt = result[0][1] * 1000
+            exception = None if result.check_result else "False"
+            rt = result.rt * 1000
             events.request.fire(request_type=concurrent_global_params.request_type, name=func.__name__,
                                 response_time=rt, response_length=0, exception=exception, context=User.context)
         return inner_wrapper
@@ -25,8 +25,8 @@ class ClientTask:
 
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
-            exception = None if result[1] is True else "False"
-            rt = result[0][1] * 1000
+            exception = None if result.check_result else "False"
+            rt = result.rt * 1000
             events.request.fire(request_type=concurrent_global_params.request_type, name=name,
                                 response_time=rt, response_length=0, exception=exception, context=User.context)
 

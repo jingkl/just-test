@@ -1,10 +1,10 @@
-from utils.util_log import log
-
-from deploy.commons.common_func import get_latest_tag, get_image_tag, gen_release_name, update_dict_value
-from deploy.commons.common_params import Milvus, etcd, storage, pulsar, kafka, rocksmq, DefaultRepository, \
-    dataNode, queryNode, indexNode, all_pods, standalone
-
 from deploy.configs.base_config import BaseConfig
+from deploy.commons.common_func import get_latest_tag, get_image_tag, gen_release_name, update_dict_value
+from deploy.commons.common_params import (
+    Milvus, etcd, storage, pulsar, kafka, rocksmq, DefaultRepository, dataNode, queryNode, indexNode, all_pods,
+    standalone)
+
+from utils.util_log import log
 
 
 class OperatorConfig(BaseConfig):

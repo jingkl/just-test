@@ -1,9 +1,10 @@
 import pytest
 
 from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, SearchRecall, GoBenchCases
-from client.parameters.input_params import AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, \
-    SearchParams, GoBenchParams
+from client.parameters.input_params import (
+    AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, SearchParams, GoBenchParams)
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
+
 from workflow.performance_template import PerfTemplate
 from parameters.input_params import param_info, InputParamsBase
 from commons.common_type import DefaultParams as dp

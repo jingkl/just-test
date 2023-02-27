@@ -4,12 +4,14 @@ import time
 
 from client.cases.base import Base
 from client.cases.case_report import CasesReport
-from client.common.common_func import get_source_file, read_ann_hdf5_file, normalize_data, get_acc_metric_type, \
-    gen_combinations, update_dict_value, get_vector_type, get_default_field_name, get_search_ids, get_recall_value
-from client.common.common_type import Precision, CaseIterParams
 from client.parameters import params_name as pn
 from client.parameters.params import ParamsFormat, ParamsBase
 from client.util.params_check import check_params
+from client.common.common_type import Precision, CaseIterParams
+from client.common.common_func import (
+    get_source_file, read_ann_hdf5_file, normalize_data, get_acc_metric_type, gen_combinations, update_dict_value,
+    get_vector_type, get_default_field_name, get_search_ids, get_recall_value)
+
 from utils.util_log import log
 
 
@@ -83,14 +85,14 @@ class CommonCases(Base):
             self.clean_index()
 
             res_index = self.build_index(**_index_params)
-            self.case_report.add_attr(**{"index": {"build_time": round(res_index[0][1], Precision.INDEX_PRECISION)}})
+            self.case_report.add_attr(**{"index": {"build_time": round(res_index.rt, Precision.INDEX_PRECISION)}})
 
             self.show_index()
 
             # load collection
             self.load_collection(**self.params_obj.load_params)
         else:
-            collection_names = self.utility_wrap.list_collections()[0][0] if not self.params_obj.dataset_params.get(
+            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.dataset_params.get(
                 pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[AccCases] There can only be one collection in the database: {}".format(collection_names)
@@ -110,11 +112,12 @@ class CommonCases(Base):
 
                 res_index = self.build_index(**_index_params)
                 self.case_report.add_attr(
-                    **{"index": {"build_time": round(res_index[0][1], Precision.INDEX_PRECISION)}})
+                    **{"index": {"build_time": round(res_index.rt, Precision.INDEX_PRECISION)}})
 
                 self.show_index()
 
-            self.collection_wrap.release()
+            # self.collection_wrap.release()
+            self.release_collection()
             self.load_collection(**self.params_obj.load_params)
 
         counts = self.collection_wrap.num_entities
@@ -166,15 +169,15 @@ class CommonCases(Base):
             search_rt = []
             while cnt < 100 and start_time < end_time:
                 res_search = self.search(**_params)
-                search_rt.append(round(res_search[0][1], Precision.SEARCH_PRECISION))
+                search_rt.append(round(res_search.rt, Precision.SEARCH_PRECISION))
                 cnt += 1
                 start_time = time.time()
 
-            result, check_result = self.search(**_params)
-            rt = result[1]
+            result = self.search(**_params)
+            rt = result.rt
             search_rt.append(rt)
 
-            result_ids = get_search_ids(result[0])
+            result_ids = get_search_ids(result.response)
             acc_value = get_recall_value(self.dataset_neighbors[:nq, :top_k].tolist(), result_ids)
 
             search_res = {"Recall": acc_value,
