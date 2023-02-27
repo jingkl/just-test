@@ -2,16 +2,9 @@ import time
 import random
 from pprint import pformat
 from pymilvus import DefaultConfig
-try:
-    from pymilvus import DEFAULT_RESOURCE_GROUP
-    RESOURCE_GROUPS_FLAG = True
-except ImportError as e:
-    DEFAULT_RESOURCE_GROUP = "__default_resource_group"
-    RESOURCE_GROUPS_FLAG = False
 
 from client.client_base import ApiConnectionsWrapper, ApiCollectionWrapper, ApiIndexWrapper, ApiPartitionWrapper, \
     ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper, ApiUtilityWrapper
-
 from parameters.input_params import param_info
 from client.common.common_func import gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, \
     parser_data_size, loop_files, loop_ids, gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, \
@@ -28,6 +21,13 @@ from client.util.api_request import func_time_catch
 from commons.common_params import EnvVariable
 from commons.common_type import LogLevel
 from utils.util_log import log
+
+try:
+    from pymilvus import DEFAULT_RESOURCE_GROUP
+    RESOURCE_GROUPS_FLAG = True
+except ImportError as e:
+    DEFAULT_RESOURCE_GROUP = dv.default_resource_group
+    RESOURCE_GROUPS_FLAG = False
 
 
 class Base:
@@ -98,6 +98,14 @@ class Base:
         log.info("[Base] Start clean all collections {}".format(collections))
         for i in collections:
             self.utility_wrap.drop_collection(i)
+
+    def release_all_collections(self):
+        collections = self.utility_wrap.list_collections()[0][0]
+        log.info("[Base] Start release all collections {}".format(collections))
+        for i in collections:
+            c = ApiCollectionWrapper()
+            c.init_collection(i)
+            c.release()
 
     def clear_collections(self, clean_collection=True):
         if clean_collection:
@@ -336,6 +344,57 @@ class Base:
                         log_path=log.log_info, output_format=output_format, partition_names=partition_names,
                         secure=secure, user=user, password=password, json_file_path=go_search_params.json_file_path)
 
+    def _transfer_nodes(self, source: str, target: str, num_node: int):
+        if num_node > 0:
+            self.utility_wrap.transfer_node(source=source, target=target, num_node=num_node)
+        else:
+            log.warning(f"[Base] Can not transfer node {num_node} from {source} to {target}")
+
+    def transfer_nodes(self, node: TransferNodesParams, all_rg: list):
+        if node.source not in all_rg:
+            raise Exception(f"[Base] The source resource group does not exist:{node.source}")
+        if node.target not in all_rg:
+            log.debug(f"[Base] Create resource group {node.target} before transfer")
+            self.utility_wrap.create_resource_group(name=node.target)
+        self._transfer_nodes(source=node.source, target=node.target, num_node=node.num_node)
+
+    def _transfer_replicas(self, source: str, target: str, collection_name: str, num_replica: int):
+        if num_replica > 0:
+            self.utility_wrap.transfer_replica(source=source, target=target, collection_name=collection_name,
+                                               num_replica=num_replica)
+        else:
+            log.warning("[Base] Can't transfer replica %s from %s to %s, collection_name: %s" % (
+                num_replica, source, target, collection_name))
+
+    def transfer_replicas(self, replica: TransferReplicasParams, all_rg: list):
+        if replica.source not in all_rg:
+            raise Exception(f"[Base] The source resource group does not exist:{replica.source}")
+        if replica.target not in all_rg:
+            raise Exception(f"[Base] The target resource group does not exist:{replica.source}")
+        self._transfer_replicas(source=replica.source, target=replica.target,
+                                collection_name=replica.collection_name, num_replica=replica.num_replica)
+
+    def drop_all_resource_groups(self):
+        lrg = self.utility_wrap.list_resource_groups()[0][0]
+        log.debug("[Base] All resource groups {0}".format(lrg))
+        for n in remove_list_values(lrg, DEFAULT_RESOURCE_GROUP):
+            res = self.utility_wrap.describe_resource_group(name=n)[0][0]
+            self._transfer_nodes(source=n, target=DEFAULT_RESOURCE_GROUP, num_node=res.num_available_node)
+            self.utility_wrap.drop_resource_group(name=n)
+            log.debug("[Base] Dropped resource group {0}".format(n))
+
+    def reset_resource_groups(self, reset_rg=True):
+        if not reset_rg:
+            return
+        self.release_all_collections()
+        self.drop_all_resource_groups()
+
+        # check result
+        _lrg = self.utility_wrap.list_resource_groups()[0][0]
+        if len(remove_list_values(_lrg, DEFAULT_RESOURCE_GROUP)) > 0:
+            raise Exception("[Base] Failed to clean resource groups:{0}, please check manually".format(_lrg))
+        log.info("[Base] Dropped all resource groups except the default resource group.")
+
     def set_resource_groups(self, **kwargs):
         """
         {
@@ -350,34 +409,23 @@ class Base:
         _groups = kwargs.get(groups, None)
         _reset = kwargs.get(reset, False)
 
-        # reset all resource groups to initial state
-        if _reset:
-            lrg = self.utility_wrap.list_resource_groups()[0][0]
-            log.debug("[Base] All resource groups {0}".format(lrg))
-            for n in remove_list_values(lrg, DEFAULT_RESOURCE_GROUP):
-                res = self.utility_wrap.describe_resource_group(name=n)[0][0]
-                self.utility_wrap.transfer_node(source=res.name, target=DEFAULT_RESOURCE_GROUP,
-                                                num_node=res.num_available_node)
-                self.utility_wrap.drop_resource_group(name=n)
-                log.debug("[Base] Dropped resource group {0}".format(n))
-
-            _lrg = self.utility_wrap.list_resource_groups()[0][0]
-            if len(remove_list_values(_lrg, DEFAULT_RESOURCE_GROUP)) > 0:
-                raise Exception("[Base] Failed to clean resource groups:{0}, please check manually".format(_lrg))
-            log.debug("[Base] Dropped all resource groups except the default resource group.")
+        # reset all resource groups to initial state and all collections will be released
+        self.reset_resource_groups(_reset)
 
         if isinstance(_groups, list):
+            # check available nodes
             res = self.utility_wrap.describe_resource_group(name=DEFAULT_RESOURCE_GROUP)[0][0]
             if sum(_groups) > res.num_available_node:
-                raise Exception(
-                    f"[Base] Default num_available_node:{res.num_available_node} is less than required:{sum(_groups)}, list:{_groups}")
+                raise Exception("[Base] Default num_available_node:%s is less than required:%s, list:%s" % (
+                    res.num_available_node, sum(_groups), _groups))
+
+            # transfer nodes
+            lrg = self.utility_wrap.list_resource_groups()[0][0]
             for i in range(len(_groups)):
-                name = f"RG_{i}"
-                log.debug(f"[Base] Create resource group {name}")
-                self.utility_wrap.create_resource_group(name=name)
-                self.utility_wrap.transfer_node(source=DEFAULT_RESOURCE_GROUP, target=name, num_node=_groups[i])
+                self.transfer_nodes(
+                    TransferNodesParams(source=DEFAULT_RESOURCE_GROUP, target=f"RG_{i}", num_node=_groups[i]), lrg)
                 # todo need to check transfer result
-            log.debug(f"[Base] Transfer all nodes done: {_groups}")
+            log.info(f"[Base] Transfer all nodes done: {_groups}")
 
         elif isinstance(_groups, dict):
             _transfer_nodes = _groups.get(transfer_nodes, [])
@@ -386,28 +434,15 @@ class Base:
             lrg = self.utility_wrap.list_resource_groups()[0][0]
             # transfer nodes
             for _node in _transfer_nodes:
-                node = TransferNodesParams(**_node)
-                if node.source not in lrg:
-                    raise Exception(f"[Base] The source resource group does not exist:{node.source}")
-                if node.target not in lrg:
-                    log.debug(f"[Base] Create resource group {node.target}")
-                    self.utility_wrap.create_resource_group(name=node.target)
-                self.utility_wrap.transfer_node(source=node.source, target=node.target, num_node=node.num_node)
+                self.transfer_nodes(TransferNodesParams(**_node), lrg)
                 # todo need to check transfer result
-            log.debug(f"[Base] Transfer all nodes done: {_transfer_nodes}")
+            log.info(f"[Base] Transfer all nodes done: {_transfer_nodes}")
 
             # transfer replicas
             for _replica in _transfer_replicas:
-                replica = TransferReplicasParams(**_replica)
-                if replica.source not in lrg:
-                    raise Exception(f"[Base] The source resource group does not exist:{replica.source}")
-                if replica.target not in lrg:
-                    raise Exception(f"[Base] The target resource group does not exist:{replica.source}")
-                self.utility_wrap.transfer_replica(source=replica.source, target=replica.target,
-                                                   collection_name=replica.collection_name,
-                                                   num_replica=replica.num_replica)
+                self.transfer_replicas(TransferReplicasParams(**_replica), lrg)
                 # todo need to check transfer result
-            log.debug(f"[Base] Transfer all replicas done: {_transfer_replicas}")
+            log.info(f"[Base] Transfer all replicas done: {_transfer_replicas}")
 
     def get_resource_groups(self, **kwargs):
         _rg = kwargs.pop(resource_groups, None)

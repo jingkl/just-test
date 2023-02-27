@@ -380,7 +380,8 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=1, nq=1000, top_k=1, search_param={"ef": 64})]
+        concurrent_tasks = [ConcurrentParams.params_search(weight=1, nq=1000, top_k=1, search_param={"ef": 64},
+                                                           timeout=600)]
         # groups = ConcurrentParams.groups(
         #     [ConcurrentParams.transfer_nodes(dp.default_resource_group, f"RG_{i}", 1) for i in list(range(3))])
         groups = [1, 1, 1]
