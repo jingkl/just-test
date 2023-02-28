@@ -56,6 +56,7 @@ class DefaultValue:
     Max_file_count = 10000
 
     default_timeout = 60
+    default_resource_group = "__default_resource_group"
 
 
 class SimilarityMetrics:
