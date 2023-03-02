@@ -1,6 +1,7 @@
 import time
 import random
 from pprint import pformat
+
 from pymilvus import DefaultConfig
 
 from client.client_base import (
