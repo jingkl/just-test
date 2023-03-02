@@ -1,5 +1,3 @@
-
-
 class ResultMetric:
 
     def __init__(self, test_result: dict = {}):

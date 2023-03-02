@@ -2,7 +2,6 @@ from client.common.common_type import DefaultValue as dv
 
 try:
     from pymilvus import DEFAULT_RESOURCE_GROUP
-    RESOURCE_GROUPS_FLAG = True
 except ImportError as e:
     DEFAULT_RESOURCE_GROUP = dv.default_resource_group
 

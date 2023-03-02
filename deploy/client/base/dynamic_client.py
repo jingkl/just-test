@@ -1,11 +1,11 @@
 from kubernetes import config, dynamic
 from kubernetes.client import api_client, Configuration
 
+from deploy.commons.common_func import read_file
+
+from commons.common_params import EnvVariable
 from utils.util_catch import func_catch
 from utils.util_log import log
-
-from deploy.commons.common_func import read_file
-from commons.common_params import EnvVariable
 
 
 class DynamicClient:
@@ -13,6 +13,20 @@ class DynamicClient:
     - Creation of a custom resource definition (CRD) using dynamic-client
     - List, create, patch (update), delete the custom resources
     """
+
+    _api = None
+
+    @property
+    def api(self):
+        if self._api is None:
+            msg = f"[OperatorClient] crd_api:{self._api} may not be initialized yet, please check!"
+            log.error(msg)
+            raise Exception(msg)
+        return self._api
+
+    @api.setter
+    def api(self, value):
+        self._api = value
 
     def __init__(self, kubeconfig=None, namespace=None, api_version='milvus.io/v1beta1', kind='Milvus'):
         self.kubeconfig = kubeconfig  # kubeconfig of load_kube_config is None if passed no param
@@ -67,16 +81,6 @@ class DynamicClient:
             return None
 
     @staticmethod
-    def check_crd_api(crd_api):
-        if crd_api is not None:
-            return True
-        else:
-            msg = "[OperatorClient] crd_api init failed, please check."
-            log.error(msg)
-            # return False
-            raise Exception(msg)
-
-    @staticmethod
     def result_to_dict(_res):
         if type(_res).__name__ == "ResourceInstance":
             return _res.to_dict()
@@ -85,8 +89,7 @@ class DynamicClient:
 
     @func_catch()
     def create(self, body, namespace=None):
-        namespace = namespace or self.namespace
-        return self.api.create(body=body, namespace=namespace) if self.check_crd_api(self.api) else False
+        return self.api.create(body=body, namespace=(namespace or self.namespace))
 
     @func_catch()
     def get(self, namespace=None, label_selector=None):
@@ -95,19 +98,15 @@ class DynamicClient:
         :param label_selector: label_selector="release=<release_name>"
         :return: ResourceInstance
         """
-        namespace = namespace or self.namespace
-        return self.api.get(namespace=namespace, label_selector=label_selector) if self.check_crd_api(self.api) else False
+        return self.api.get(namespace=(namespace or self.namespace), label_selector=label_selector)
 
     @func_catch()
     def patch(self, body, namespace=None, content_type="application/merge-patch+json"):
-        namespace = namespace or self.namespace
-        return self.api.patch(body=body, namespace=namespace, content_type=content_type) if self.check_crd_api(
-            self.api) else False
+        return self.api.patch(body=body, namespace=(namespace or self.namespace), content_type=content_type)
 
     @func_catch()
     def delete(self, name, namespace=None):
-        namespace = namespace or self.namespace
-        return self.api.delete(name=name, namespace=namespace) if self.check_crd_api(self.api) else False
+        return self.api.delete(name=name, namespace=(namespace or self.namespace))
 
     @func_catch()
     def watch(self, namespace=None, timeout=5):
@@ -120,5 +119,4 @@ class DynamicClient:
                    'raw_object': a dict representing the watched object.
                    'object': A ResourceInstance wrapping raw_object.
         """
-        namespace = namespace or self.namespace
-        return self.api.watch(namespace=namespace, timeout=timeout) if self.check_crd_api(self.api) else False
+        return self.api.watch(namespace=(namespace or self.namespace), timeout=timeout)

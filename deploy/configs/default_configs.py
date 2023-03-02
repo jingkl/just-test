@@ -1,6 +1,7 @@
 from deploy.configs import get_config_obj
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository
 from deploy.commons.common_func import server_resource_check, gen_server_config_name, update_dict_value
+
 from parameters.input_params import param_info
 from commons.common_params import EnvVariable
 from utils.util_log import log
@@ -74,17 +75,6 @@ class DefaultConfigs:
 
         log.debug("[DefaultConfigs] server resource: \n {}".format(_configs))
         return self.config_conversion(_configs, update_helm_file, values_file_path), config_name, _configs
-
-        # if self.deploy_tool == Helm:
-        #     if update_helm_file:
-        #         self.obj.update_values_file(values_file_path, _configs)
-        #         return _configs, config_name, _configs
-        #
-        #     else:
-        #         return self.obj.config_to_set_params(_configs), config_name, _configs
-        #
-        # if self.deploy_tool == Operator:
-        #     return _configs, config_name, _configs
 
     def config_conversion(self, config, update_helm_file=False, values_file_path=''):
         if self.deploy_tool == Helm:

@@ -1,12 +1,11 @@
 from pymilvus import DefaultConfig
 
-from utils.util_catch import func_catch
-from utils.util_cmd import CmdExe
-from utils.util_log import log
-
 from deploy.client.base.base_client import BaseClient
 from deploy.commons.common_func import gen_release_name
 from deploy.commons.common_params import default_namespace
+
+from utils.util_cmd import CmdExe
+from utils.util_log import log
 
 
 class CliClient(BaseClient):

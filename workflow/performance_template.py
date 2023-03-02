@@ -2,14 +2,15 @@ from collections import Iterable, Iterator
 from pprint import pformat
 import copy
 
+from deploy.commons.common_params import CLUSTER, STANDALONE
+
 from workflow.base import Base
 from parameters.input_params import param_info, InputParamsBase
-from utils.util_log import log
 from commons.common_func import get_sync_report_flag
 from data_report.metrics import Report_Metric_Object
-from deploy.commons.common_params import CLUSTER, STANDALONE
 from db_client.client_db import Database_Client
 from check.data_check import DataCheck
+from utils.util_log import log
 
 
 class PerfTemplate(Base):

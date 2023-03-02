@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional, Union
-
 from pymilvus import DefaultConfig
-from commons.common_type import DefaultParams as dp
+
 from deploy.commons.common_params import Helm, STANDALONE, DefaultRepository
+
+from commons.common_type import DefaultParams as dp
 
 
 class ParamInfo:

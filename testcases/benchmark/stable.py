@@ -2,11 +2,12 @@ import pytest
 
 from client.cases import ConcurrentClientBase
 from client.parameters.input_params import ConcurrentParams
+import client.parameters.input_params.define_params as cdp
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
+
 from workflow.performance_template import PerfTemplate
 from parameters.input_params import InputParamsBase
 from commons.common_type import DefaultParams as dp
-import client.parameters.input_params.define_params as cdp
 
 
 class TestConcurrentCases(PerfTemplate):
@@ -42,7 +43,7 @@ class TestConcurrentCases(PerfTemplate):
         # concurrent_tasks = [ConcurrentParams.params_search(), ConcurrentParams.params_query(ids=[1, 10, 100, 1000]),
         #                     ConcurrentParams.params_scene_insert_delete_flush(random_id=True, random_vector=True)]
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  old_version_format=False, sync_report=True,
+                                  old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
 
     @pytest.mark.locust
@@ -58,7 +59,7 @@ class TestConcurrentCases(PerfTemplate):
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -75,7 +76,7 @@ class TestConcurrentCases(PerfTemplate):
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -92,7 +93,7 @@ class TestConcurrentCases(PerfTemplate):
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -109,7 +110,7 @@ class TestConcurrentCases(PerfTemplate):
             during_time=1800, interval=20,
             **cdp.DefaultIndexParams.IVF_SQ8)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -129,7 +130,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          during_time=600, interval=20,
                                                                          **cdp.DefaultIndexParams.FLAT)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -149,7 +150,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          during_time=600, interval=20,
                                                                          **cdp.DefaultIndexParams.FLAT)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -169,7 +170,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10m",
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -189,7 +190,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10m",
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -211,7 +212,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.HNSW)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -233,7 +234,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.HNSW)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -255,7 +256,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -277,7 +278,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -300,7 +301,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.HNSW)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -323,7 +324,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.HNSW)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -346,7 +347,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -369,7 +370,7 @@ class TestConcurrentCases(PerfTemplate):
                                                                          dataset_size="10w", other_fields=["float_1"],
                                                                          **cdp.DefaultIndexParams.DISKANN)
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -391,6 +392,6 @@ class TestConcurrentCases(PerfTemplate):
                                                                          replica_number=3, resource_groups=3,
                                                                          **cdp.DefaultIndexParams.HNSW)
         self.concurrency_template(input_params=input_params, cpu=2, mem=dp.default_mem, queryNode=3,
-                                  deploy_mode=deploy_mode, old_version_format=False, sync_report=True,
+                                  deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)

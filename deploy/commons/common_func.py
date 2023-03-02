@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
-import time
 import datetime
-import string
 import random
 import os
 import requests
 import json
 import copy
-import pytz
 from yaml import full_load, dump
-# import tableprint as tp
-from pprint import pprint
 
-from deploy.commons.common_params import CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, \
-    DefaultApiVersion, ClassID
+from deploy.commons.common_params import (
+    CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, DefaultApiVersion, ClassID)
+
 from utils.util_log import log
 
 

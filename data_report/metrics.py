@@ -1,6 +1,7 @@
+from typing import Union
+
 from data_report.submetric import ServerMetric, ClientMetric, ResultMetric
 from utils.util_log import log
-from typing import Union
 
 
 class ReportMetrics(object):

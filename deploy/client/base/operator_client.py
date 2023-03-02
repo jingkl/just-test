@@ -1,14 +1,14 @@
 import time
 from pprint import pformat
 
-from utils.util_log import log
-
-from deploy.commons.common_func import update_dict_value, utc_conversion, format_dict_output, get_api_version, \
-    parser_op_item, check_multi_keys_exist
-from deploy.commons.common_params import CLUSTER, STANDALONE, Milvus, PersistentVolumeClaim, Pod
-from deploy.client.base.dynamic_client import DynamicClient
 from deploy.client.base.base_client import BaseClient
+from deploy.client.base.dynamic_client import DynamicClient
 from deploy.configs.operator_config import OperatorConfig
+from deploy.commons.common_params import CLUSTER, STANDALONE, Milvus, PersistentVolumeClaim, Pod
+from deploy.commons.common_func import (
+    update_dict_value, utc_conversion, format_dict_output, get_api_version, parser_op_item, check_multi_keys_exist)
+
+from utils.util_log import log
 
 
 def operator_client_catch(self):
@@ -168,7 +168,6 @@ class OperatorClient(BaseClient):
         namespace = namespace or self.namespace
 
         start_time = time.time()
-        status = None
         while time.time() < start_time + timeout:
             status = self.get_status(release_name, namespace)
 

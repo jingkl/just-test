@@ -1,11 +1,10 @@
 import copy
-import sys
 from dataclasses import dataclass, field
 from typing import Optional
+
 from client.common.common_func import gen_combinations, update_dict_value, loop_ids, gen_vectors, get_default_field_name
 from client.common.common_type import concurrent_global_params, DefaultValue
 from client.parameters.params_name import *
-from utils.util_log import log
 
 
 @dataclass

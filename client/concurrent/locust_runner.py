@@ -1,7 +1,6 @@
 import time
 import gevent
 import threading
-import random
 from locust import User, events
 from locust.stats import print_stats, print_percentile_stats, StatsEntry
 from locust.env import Environment
@@ -9,8 +8,8 @@ from locust.env import Environment
 from client.common.common_func import get_spawn_rate
 from client.common.common_type import Precision
 from client.parameters.params import ConcurrentTasksParams, ConcurrentObjParams, DataClassBase
-from utils.util_log import log
 from client.concurrent.locust_client import ClientTask, MyTaskSet
+from utils.util_log import log
 
 
 class TickStatsPrinter:

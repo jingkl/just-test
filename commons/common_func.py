@@ -1,13 +1,7 @@
 import os
-import random
 import json
-import math
-import string
-import numpy as np
-import pandas as pd
 from yaml import full_load
 import copy
-from sklearn import preprocessing
 from typing import List
 
 from deploy.commons.common_params import Helm, Operator
@@ -64,6 +58,17 @@ def modify_file(file_path_list, is_modify=False, input_content=""):
                     f.write(input_content)
                     f.close()
                 log.info("[modify_file] file(%s) modification is complete." % file_path)
+
+
+def read_json_str(json_str: str, out_put=True):
+    try:
+        return json.loads(json_str, strict=False)
+    except ValueError:
+        if out_put:
+            log.error(f"[read_json_str] Can not parser json string: {json_str}")
+        else:
+            log.error(f"[read_json_str] Can not parser json string, please check")
+        return json_str
 
 
 def read_json_file(file_path, out_put=True):
@@ -124,7 +129,8 @@ def parser_input_config(input_content):
             _content = read_yaml_file(input_content)
         else:
             try:
-                _content = eval(input_content)
+                # _content = eval(input_content)
+                _content = read_json_str(input_content)
             except Exception:
                 raise Exception(msg)
     elif isinstance(input_content, dict):

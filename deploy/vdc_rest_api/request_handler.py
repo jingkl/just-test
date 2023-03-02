@@ -1,6 +1,3 @@
-# from requests.packages.urllib3.util.ssl_ import create_urllib3_context
-# create_urllib3_context()
-
 import requests
 import urllib3
 

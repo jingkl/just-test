@@ -1,9 +1,8 @@
-from utils.util_log import log
-from commons.common_params import EnvVariable
-from configs.base_config import BaseConfig
 from deploy.client.base import get_client_obj
 from deploy.commons.common_func import gen_release_name
 from deploy.commons.common_params import Helm, CLUSTER, Operator, STANDALONE, APIVERSION, Milvus
+
+from commons.common_params import EnvVariable
 from parameters.input_params import param_info
 
 

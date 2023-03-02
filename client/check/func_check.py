@@ -1,7 +1,8 @@
-from utils.util_log import log
 from client.common.common_type import DefaultValue as dv
 from client.common.common_type import Error, CheckTasks
 import client.check.param_check as pc
+
+from utils.util_log import log
 
 
 class ResponseChecker:

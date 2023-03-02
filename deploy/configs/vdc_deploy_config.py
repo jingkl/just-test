@@ -1,5 +1,3 @@
-from utils.util_log import log
-
 from deploy.commons.common_params import CLUSTER, STANDALONE
 from deploy.commons.common_func import get_class_mode, update_dict_value
 

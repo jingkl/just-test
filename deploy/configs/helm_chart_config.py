@@ -1,8 +1,7 @@
-from deploy.commons.common_func import get_latest_tag, get_image_tag, update_dict_value
-from deploy.commons.common_params import IDC_NAS_URL, dataNode, queryNode, indexNode, all_pods, minio, etcd, pulsar, \
-    kafka, DefaultRepository
-
 from deploy.configs.base_config import BaseConfig
+from deploy.commons.common_func import get_latest_tag, get_image_tag, update_dict_value
+from deploy.commons.common_params import (
+    IDC_NAS_URL, dataNode, queryNode, indexNode, all_pods, minio, etcd, pulsar, kafka, DefaultRepository)
 
 
 class HelmConfig(BaseConfig):

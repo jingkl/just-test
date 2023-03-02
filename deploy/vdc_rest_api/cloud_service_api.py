@@ -1,7 +1,8 @@
 import uuid
 
-from configs.config_info import config_info
 from deploy.vdc_rest_api.request_handler import Request
+
+from configs.config_info import config_info
 
 
 class CloudServiceApi:
