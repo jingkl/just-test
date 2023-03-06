@@ -1,6 +1,7 @@
 import abc
 
-from deploy.commons.common_func import update_dict_value, dict_to_set_str, read_yaml_file, write_yaml_file
+from deploy.commons.common_func import (
+    update_dict_value, dict_to_set_str, read_yaml_file, write_yaml_file, dict_recursive_key)
 
 from utils.util_log import log
 
@@ -8,6 +9,9 @@ from utils.util_log import log
 class BaseConfig(metaclass=abc.ABCMeta):
 
     def __init__(self):
+        # log level
+        self.log_level_dict = {"log": {"level": "debug"}}
+
         # healthy check disabled
         self.healthy_check_dict = {"livenessProbe": {"enabled": False}, "readinessProbe": {"enabled": False}}
 
@@ -103,6 +107,14 @@ class BaseConfig(metaclass=abc.ABCMeta):
 
         return cluster_resource
 
+    @staticmethod
+    def custom_resource(limits_cpu=None, requests_cpu=None, limits_mem=None, requests_mem=None):
+        _resource = {"limits": {"cpu": str(limits_cpu) if limits_cpu else None,
+                                "memory": str(limits_mem) + "Gi" if limits_mem else None},
+                     "requests": {"cpu": str(requests_cpu) if requests_cpu else None,
+                                  "memory": str(requests_mem) + "Gi" if requests_mem else None}}
+        return dict_recursive_key(dict_recursive_key(_resource), key={})
+
     @abc.abstractmethod
     def set_image(self, *args, **kwargs):
         log.debug("[BaseConfig] Set image: {}".format(args, kwargs))
@@ -118,3 +130,7 @@ class BaseConfig(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def set_replicas(self, *args, **kwargs):
         log.debug("[BaseConfig] Set replicas: {}".format(args, kwargs))
+
+    @abc.abstractmethod
+    def set_custom_config(self, *args, **kwargs):
+        log.debug("[BaseConfig] Set custom config: {}".format(args, kwargs))

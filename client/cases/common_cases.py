@@ -42,8 +42,8 @@ class CommonCases(Base):
             self.create_collection(**_collection_params)
 
         else:
-            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.dataset_params.get(
-                pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
+            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.collection_params.get(
+                pn.collection_name, None) else [self.params_obj.collection_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[CommonCases] There can only be one collection in the database: {}".format(collection_names)
                 log.error(msg)
@@ -456,7 +456,8 @@ class Query(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
         # query
         def run():
@@ -546,7 +547,8 @@ class Search(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
         # search
         def run(run_s_p: dict):
@@ -642,7 +644,8 @@ class SearchRecall(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
         # search
         def run(_nq, _top_k, run_s_p: dict):

@@ -97,7 +97,8 @@ class GoBenchCases(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_resource_groups()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
         # search
         s_params = self.parser_search_params()
@@ -256,9 +257,8 @@ class ConcurrentClientBase(CommonCases):
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
-        self.show_resource_groups()
-        self.show_collection_replicas()
-        self.show_segment_info()
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
         # set output log
         info_logout.reset_output()

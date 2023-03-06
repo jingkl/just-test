@@ -1,10 +1,33 @@
+from typing import Optional, Union, List
+
 from deploy.configs import get_config_obj
-from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository
+from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository, pulsar, kafka
 from deploy.commons.common_func import server_resource_check, gen_server_config_name, update_dict_value
 
 from parameters.input_params import param_info
 from commons.common_params import EnvVariable
 from utils.util_log import log
+
+
+class NodeResource:
+    def __init__(self, nodes: list, replicas: Union[int] = 1, cpu: Union[int, float] = None,
+                 mem: Union[int, float] = None, custom: Union[dict] = {}):
+        self.nodes = nodes
+        self.replicas = replicas
+        self.cpu = cpu
+        self.mem = mem
+        self.custom = custom
+
+    def custom_resource(self, limits_cpu=None, requests_cpu=None, limits_mem=None, requests_mem=None):
+        self.custom = {"limits_cpu": limits_cpu, "requests_cpu": requests_cpu,
+                       "limits_mem": limits_mem, "requests_mem": requests_mem}
+        return self
+
+
+class SetDependence:
+    def __init__(self, mq_type: Union[pulsar, kafka] = pulsar, disk_size: Union[int, float] = None):
+        self.mq_type = mq_type
+        self.disk_size = disk_size
 
 
 class DefaultConfigs:
@@ -25,7 +48,7 @@ class DefaultConfigs:
                                   escape=self.escape)
 
         self._default_config = [self.obj.base_config_dict, self.obj.storage_local_path, self.obj.etcd_local_path,
-                                self.obj.etcd_node_selector]
+                                self.obj.etcd_node_selector, self.obj.log_level]
 
         self.cluster_default_configs = [self.obj.pulsar_local_path, self.obj.kafka_local_path] + self._default_config
 
@@ -38,6 +61,31 @@ class DefaultConfigs:
 
     def set_image(self, tag=None, repository=DefaultRepository):
         return self.obj.set_image(tag=tag, repository=repository)
+
+    def custom_resource(self, limits_cpu=None, requests_cpu=None, limits_mem=None, requests_mem=None):
+        _resource = self.obj.custom_resource(limits_cpu=limits_cpu, requests_cpu=requests_cpu,
+                                             limits_mem=limits_mem, requests_mem=requests_mem)
+        return _resource
+
+    def set_nodes_resource(self, node_resources: List[NodeResource]):
+        totals = []
+        for node_resource in node_resources:
+            _resource = self.obj.set_nodes_resource(node_resource.cpu, node_resource.mem,
+                                                    custom_resource=self.custom_resource(**node_resource.custom),
+                                                    nodes=node_resource.nodes)
+            _replicas = self.obj.set_replicas(**{n: node_resource.replicas for n in node_resource.nodes})
+            _all = self.obj.config_merge([_resource, _replicas])
+            totals.append(_all)
+        return self.obj.config_merge(totals)
+
+    def set_mq(self, set_dependence: SetDependence):
+        return self.obj.set_mq(_pulsar=(set_dependence.mq_type == pulsar), _kafka=(set_dependence.mq_type == kafka))
+
+    def setting_configs(self, node_resources: List[NodeResource], set_dependence: SetDependence):
+        _nodes = self.set_nodes_resource(node_resources=node_resources) if node_resources else {}
+        _mq = self.set_mq(set_dependence=set_dependence) if set_dependence else {}
+        _disk_resource = self.obj.set_custom_config(disk_size=set_dependence.disk_size) if set_dependence else {}
+        return self.obj.config_merge([_nodes, _mq, _disk_resource])
 
     def server_resource(self, cpu=8, mem=16, use_default_config=True, deploy_mode=None, other_configs=[],
                         update_helm_file=False, values_file_path='', **kwargs):

@@ -266,7 +266,9 @@ class OperatorClient(BaseClient):
 
         label_selectors = ["app.kubernetes.io/instance={0}".format(release_name),
                            "app.kubernetes.io/instance={0}-etcd".format(release_name),
-                           "release={0}-pulsar".format(release_name), "release={0}-kafka".format(release_name),
+                           "release={0}-pulsar".format(release_name),
+                           "app.kubernetes.io/instance={0}-kafka".format(release_name),
+                           # "release={0}-kafka".format(release_name),
                            "release={0}-minio".format(release_name)]
 
         pod_details_list = []

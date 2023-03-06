@@ -46,7 +46,7 @@ class DataCheck:
     def data_parser_format(old_version_format=True):
         _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\]'
         _log_level = r'\[\s+INFO\]\s+-\s+'
-        _name = r'[a-z]+\s+[a-z0-9]+\s+'
+        _name = r'[a-z]+\s+[a-zA-Z0-9._-]+\s+'
         _int = r'\d+'
         _int_percentage = r'\d+\(\d+\.\d+\%\)'
         _float = r'\d+\.\d+'
@@ -60,7 +60,7 @@ class DataCheck:
 
         # new version
         _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\s+-\s+'
-        _log_level = r'INFO\s+-\s+[a-z0-9]+\]:\s+'
+        _log_level = r'INFO\s+-\s+[a-zA-Z0-9]+\]:\s+'
         new_format = _data_time + _log_level + _name + _int + _space + _int_percentage + _space + _vertical_bar + _space
         new_format += _int + _space + _int + _space + _int + _space + _int + _space + _vertical_bar + _space
         new_format += _float + _space + _float + _space

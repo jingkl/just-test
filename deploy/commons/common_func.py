@@ -285,7 +285,12 @@ def dict_recursive_key(_dict, key=None):
 
 
 def gen_release_name(prefix=''):
-    return prefix + '-' + str(random.randint(1, 100)) + '-' + str(random.randint(1000, 10000))
+    if len(prefix) > 22:
+        _prefix = prefix[:15] + prefix[-7:]
+        log.warning(f"[gen_release_name] Prefix:{prefix} is too long, keep 22 characters:{_prefix}")
+        prefix = _prefix
+    release_name = prefix + '-' + str(random.randint(1, 100)) + '-' + str(random.randint(1000, 10000))
+    return release_name
 
 
 def server_resource_check(other_configs):
@@ -295,8 +300,8 @@ def server_resource_check(other_configs):
 
     for other_config in other_configs:
         if not isinstance(other_config, dict):
-            log.error("[DefaultConfigs] The elements of the list are not dictionaries: {}".format(other_config))
-            log.error("[DefaultConfigs] The param of other_configs: {}".format(other_configs))
+            log.error("[server_resource_check] The elements of the list are not dictionaries: {}".format(other_config))
+            log.error("[server_resource_check] The param of other_configs: {}".format(other_configs))
             return []
 
     return other_configs

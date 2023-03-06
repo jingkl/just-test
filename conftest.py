@@ -4,7 +4,7 @@ from deploy.commons.common_params import Helm, Operator, STANDALONE
 
 from utils.util_log import log
 from configs.log_config import log_config
-from commons.common_func import modify_file
+from commons.common_func import modify_file, check_deploy_tool
 from parameters.input_params import param_info, InputParamsBase
 
 
@@ -114,7 +114,7 @@ def initialize_env(request):
 @pytest.fixture(scope="session")
 def input_params(request) -> InputParamsBase:
     return InputParamsBase(**{
-        "deploy_tool": str(request.config.getoption("--deploy_tool")).lower(),
+        "deploy_tool": check_deploy_tool(str(request.config.getoption("--deploy_tool")).lower()),
         "deploy_mode": str(request.config.getoption("--deploy_mode")).lower(),
         "deploy_config": request.config.getoption("--deploy_config"),
         "upgrade_config": request.config.getoption("--upgrade_config"),

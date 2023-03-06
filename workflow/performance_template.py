@@ -22,7 +22,8 @@ class PerfTemplate(Base):
         input_params.deploy_config = ""
 
     def serial_template(self, input_params: InputParamsBase, case_callable_obj: callable,
-                        default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE):
+                        default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE,
+                        node_resources=None, set_dependence=None, input_configs: dict = {}, **kwargs):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -31,8 +32,9 @@ class PerfTemplate(Base):
             input_params.deploy_mode = input_params.deploy_mode or deploy_mode
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
-                                other_config=input_params.deploy_config, cpu=cpu,
-                                mem=mem)
+                                other_config=input_params.deploy_config,
+                                cpu=cpu, mem=mem, input_configs=input_configs,
+                                node_resources=node_resources, set_dependence=set_dependence, **kwargs)
             # update server metric
             Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                                deploy_mode=input_params.deploy_mode,
@@ -76,7 +78,8 @@ class PerfTemplate(Base):
 
     def concurrency_template(self, input_params: InputParamsBase, case_callable_obj: callable,
                              default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE, interval=30,
-                             sync_report=False, old_version_format=True, **kwargs):
+                             sync_report=False, old_version_format=True, input_configs: dict = {},
+                             node_resources=None, set_dependence=None, **kwargs):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -85,8 +88,9 @@ class PerfTemplate(Base):
             input_params.deploy_mode = input_params.deploy_mode or deploy_mode
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
-                                other_config=input_params.deploy_config, cpu=cpu,
-                                mem=mem, **kwargs)
+                                other_config=input_params.deploy_config,
+                                cpu=cpu, mem=mem, input_configs=input_configs,
+                                node_resources=node_resources, set_dependence=set_dependence, **kwargs)
             # update server metric
             Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
                                                deploy_mode=input_params.deploy_mode,
@@ -139,7 +143,8 @@ class PerfTemplate(Base):
 
         # todo server status check
 
-    def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE):
+    def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE,
+                        node_resources=None, set_dependence=None, input_configs: dict = {}, **kwargs):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -148,8 +153,9 @@ class PerfTemplate(Base):
             input_params.deploy_mode = input_params.deploy_mode or deploy_mode
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
-                                other_config=input_params.deploy_config, cpu=cpu,
-                                mem=mem)
+                                other_config=input_params.deploy_config,
+                                cpu=cpu, mem=mem, input_configs=input_configs,
+                                node_resources=node_resources, set_dependence=set_dependence, **kwargs)
         else:
             self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
 

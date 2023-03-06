@@ -166,8 +166,9 @@ def gen_file_name(file_id, dim, data_type):
 
 
 def parser_data_size(data_size):
-    return eval(str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
-                                                                                                             "*1000000000"))
+    return eval(
+        str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
+                                                                                                     "*1000000000"))
 
 
 def parser_time(_time):

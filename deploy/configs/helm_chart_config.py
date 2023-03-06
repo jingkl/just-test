@@ -1,7 +1,10 @@
 from deploy.configs.base_config import BaseConfig
 from deploy.commons.common_func import get_latest_tag, get_image_tag, update_dict_value
 from deploy.commons.common_params import (
-    IDC_NAS_URL, dataNode, queryNode, indexNode, all_pods, minio, etcd, pulsar, kafka, DefaultRepository)
+    IDC_NAS_URL, dataNode, queryNode, indexNode, all_pods, minio, etcd, pulsar, kafka, standalone, DefaultRepository,
+    ephemeral_storage)
+
+from utils.util_log import log
 
 
 class HelmConfig(BaseConfig):
@@ -13,6 +16,9 @@ class HelmConfig(BaseConfig):
         # deploy mode
         self.cluster = cluster
         self._deploy_mode = self.set_deploy_mode(self.cluster)
+
+        # set log level
+        self.log_level = self.log_level_dict
 
         # healthy check disabled
         self.healthy_check = self.healthy_check_dict
@@ -88,19 +94,18 @@ class HelmConfig(BaseConfig):
         return update_dict_value(tag_dict, repository_dict)
 
     @staticmethod
-    def set_mq(pulsar=True, kafka=False):
-        return {"pulsar": {"enabled": pulsar},
-                "kafka": {"enabled": kafka}}
+    def set_mq(_pulsar: bool = False, _kafka: bool = False):
+        if _pulsar + _kafka == 1:
+            return {"pulsar": {"enabled": _pulsar}, "kafka": {"enabled": _kafka}}
+        log.error(f"[HelmConfig] Can not support all mqs or none, pulsar:{_pulsar}, kafka:{_kafka}")
+        # use default mq
+        return {}
 
-    def set_nodes_resource(self, cpu=None, mem=None):
-        # cluster_resource = self.gen_nodes_resource(cpu, mem)
-
-        if self.cluster:
-            return {queryNode: {"resources": self.gen_nodes_resource(cpu, mem)},
-                    indexNode: {"resources": self.gen_nodes_resource(cpu, mem)},
-                    dataNode: {"resources": self.gen_nodes_resource(cpu, mem)}}
-        else:
-            return {"standalone": {"resources": self.gen_nodes_resource(cpu, mem)}}
+    def set_nodes_resource(self, cpu=None, mem=None, custom_resource: dict = None,
+                           nodes: list = [queryNode, indexNode, dataNode]):
+        if not self.cluster:
+            return {"standalone": {"resources": custom_resource or self.gen_nodes_resource(cpu, mem)}}
+        return {n: {"resources": custom_resource or self.gen_nodes_resource(cpu, mem)} for n in nodes}
 
     @staticmethod
     def set_replicas(**kwargs):
@@ -115,3 +120,16 @@ class HelmConfig(BaseConfig):
             if key in all_pods and str(kwargs[key]).isdigit():
                 set_dict = update_dict_value({key: {"replicas": int(kwargs[key])}}, set_dict)
         return set_dict
+
+    def set_custom_config(self, **kwargs):
+        disk_size = kwargs.get("disk_size", None)
+        if not disk_size:
+            return {}
+        if self.cluster:
+            return {queryNode: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}},
+                                "disk": {"size": {"enabled": True}}},
+                    indexNode: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}},
+                                "disk": {"size": {"enabled": True}}}
+                    }  # for 100m datasets
+        return {standalone: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}},
+                             "disk": {"size": {"enabled": True}}}}  # for 100m datasets

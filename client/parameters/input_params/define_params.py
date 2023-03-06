@@ -11,5 +11,6 @@ other_fields = ["int64_1", "int64_2", "float_1", "double_1", "varchar_1"]
 class DefaultIndexParams:
     FLAT = {pn.index_type: pn.IndexTypeName.FLAT, pn.index_param: {}}
     IVF_SQ8 = {pn.index_type: pn.IndexTypeName.IVF_SQ8, pn.index_param: {pn.nlist: 1024}}
+    IVF_SQ8_2048 = {pn.index_type: pn.IndexTypeName.IVF_SQ8, pn.index_param: {pn.nlist: 2048}}
     HNSW = {pn.index_type: pn.IndexTypeName.HNSW, pn.index_param: {"M": 8, "efConstruction": 200}}
     DISKANN = {pn.index_type: pn.IndexTypeName.DISKANN, pn.index_param: {}}

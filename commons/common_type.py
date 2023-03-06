@@ -16,7 +16,9 @@ class LogLevel:
 class DefaultParams:
     default_replica_num = 1
     default_cpu = 8
+    min_cpu = 2
     default_mem = 16
+    min_mem = 2
     default_resource_group = DEFAULT_RESOURCE_GROUP
 
 

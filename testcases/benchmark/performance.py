@@ -3,7 +3,8 @@ import pytest
 from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, SearchRecall, GoBenchCases
 from client.parameters.input_params import (
     AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, SearchParams, GoBenchParams)
-from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
+from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar
+from deploy.configs.default_configs import NodeResource, SetDependence
 
 from workflow.performance_template import PerfTemplate
 from parameters.input_params import param_info, InputParamsBase
@@ -36,6 +37,12 @@ class TestServerDeploy(PerfTemplate):
             3. both: do nothing
             4. not both: deploy server and delete the server
         """
+        # node_resources = [NodeResource(
+        #     nodes=[queryNode, indexNode], replicas=2).custom_resource(requests_cpu=1.5, requests_mem=1)]
+        # set_dependence = SetDependence(mq_type=pulsar)
+        # self.server_template(input_params=input_params, cpu=4, mem=4, deploy_mode=CLUSTER,
+        #                      node_resources=node_resources, set_dependence=set_dependence)
+
         self.server_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=CLUSTER)
 
 

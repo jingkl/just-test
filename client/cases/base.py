@@ -79,8 +79,7 @@ class Base:
                           collection_obj: callable = None, log_level=LogLevel.INFO, varchar_id=False, **kwargs):
         """ Create a collection with default schema """
         schema = gen_collection_schema(vector_field_name=vector_field_name, other_fields=other_fields,
-                                       varchar_id=varchar_id,
-                                       max_length=kwargs.pop(max_length, dv.default_max_length),
+                                       varchar_id=varchar_id, max_length=kwargs.pop(max_length, dv.default_max_length),
                                        dim=kwargs.pop(dim, dv.default_dim)) if schema is None else schema
         collection_name = collection_name or gen_unique_str()
         self.collection_name = self.collection_name or collection_name
@@ -467,8 +466,8 @@ class Base:
             kwargs.update({resource_groups: _rg})
         return kwargs
 
-    def show_resource_groups(self):
-        if RESOURCE_GROUPS_FLAG:
+    def show_resource_groups(self, _flag=True):
+        if RESOURCE_GROUPS_FLAG and _flag:
             lrg = self.utility_wrap.list_resource_groups().response
             for rg in lrg:
                 res = self.utility_wrap.describe_resource_group(name=rg).response
@@ -486,8 +485,8 @@ class Base:
         res_seg = parser_segment_info(segment_info=res, shards_num=shards_num)
         log.info(f"[Base] Parser segment info: \n{pformat(res_seg, sort_dicts=False)}")
 
-    def show_all_resource(self, collection_name="", shards_num=2):
-        self.show_resource_groups()
+    def show_all_resource(self, collection_name="", shards_num=2, show_resource_groups=True):
+        self.show_resource_groups(_flag=show_resource_groups)
         self.show_collection_replicas()
         self.show_segment_info(collection_name=collection_name, shards_num=shards_num)
 
@@ -536,7 +535,8 @@ class Base:
 
         # insert vectors
         self.insert(data_type="local", dim=params.dim, size=params.data_size, ni=params.nb,
-                    collection_obj=collection_obj, collection_name=collection_name, log_level=log_level)
+                    collection_obj=collection_obj, collection_name=collection_name,
+                    collection_schema=collection_obj.schema.to_dict(), log_level=log_level)
 
         # flush collection
         self.flush_collection(collection_obj=collection_obj, log_level=log_level)

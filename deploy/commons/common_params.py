@@ -39,9 +39,15 @@ DefaultRepository = "harbor.milvus.io/milvus/milvus"
 # deploy type
 Helm = "helm"
 Operator = "operator"
+OP = "op"
+
 
 # default params
 default_namespace = "qa-milvus"
+
+
+# default key's name
+ephemeral_storage = "ephemeral-storage"
 
 
 class ClassID:

@@ -2,7 +2,7 @@ from deploy.configs.base_config import BaseConfig
 from deploy.commons.common_func import get_latest_tag, get_image_tag, gen_release_name, update_dict_value
 from deploy.commons.common_params import (
     Milvus, etcd, storage, pulsar, kafka, rocksmq, DefaultRepository, dataNode, queryNode, indexNode, all_pods,
-    standalone)
+    standalone, ephemeral_storage)
 
 from utils.util_log import log
 
@@ -20,6 +20,9 @@ class OperatorConfig(BaseConfig):
         # deploy mode
         self.cluster = cluster
         self.kind = Milvus
+
+        # set log level
+        self.log_level = {"spec": {"config": self.log_level_dict}}
 
         # minio local-path and metrics
         self.storage_local_path = self._dependencies(storage, self.storage_dict)
@@ -86,6 +89,8 @@ class OperatorConfig(BaseConfig):
                                                                    "pvcDeletion": pvc_deletion}},
                                               pulsar: {"inCluster": {"deletionPolicy": deletion_policy,
                                                                      "pvcDeletion": pvc_deletion}},
+                                              kafka: {"inCluster": {"deletionPolicy": deletion_policy,
+                                                                    "pvcDeletion": pvc_deletion}},
                                               storage: {"inCluster": {"deletionPolicy": deletion_policy,
                                                                       "pvcDeletion": pvc_deletion}}}}}
         else:
@@ -110,18 +115,21 @@ class OperatorConfig(BaseConfig):
         return self.components("image", repository + ":" + tag)
 
     @staticmethod
-    def set_mq(pulsar=True, kafka=False):
-        pass
+    def set_mq(_pulsar: bool = False, _kafka: bool = False):
+        if _pulsar and not _kafka:
+            return {"spec": {"dependencies": {"msgStreamType": "pulsar"}}}
+        elif not _pulsar and _kafka:
+            return {"spec": {"dependencies": {"msgStreamType": "kafka"}}}
+        log.error(f"[OperatorConfig] Can not support all mqs or none, pulsar:{_pulsar}, kafka:{_kafka}")
+        # use default mq
+        return {}
 
-    def set_nodes_resource(self, cpu=None, mem=None):
-        # cluster_resource = self.gen_nodes_resource(cpu, mem)
-
-        if self.cluster:
-            return self.config_merge([self.components(queryNode, {"resources": self.gen_nodes_resource(cpu, mem)}),
-                                      self.components(indexNode, {"resources": self.gen_nodes_resource(cpu, mem)}),
-                                      self.components(dataNode, {"resources": self.gen_nodes_resource(cpu, mem)})])
-        else:
-            return self.components(standalone, {"resources": self.gen_nodes_resource(cpu, mem)})
+    def set_nodes_resource(self, cpu=None, mem=None, custom_resource: dict = None,
+                           nodes: list = [queryNode, indexNode, dataNode]):
+        if not self.cluster:
+            return self.components(standalone, {"resources": custom_resource or self.gen_nodes_resource(cpu, mem)})
+        return self.config_merge(
+            [self.components(n, {"resources": custom_resource or self.gen_nodes_resource(cpu, mem)}) for n in nodes])
 
     def set_replicas(self, **kwargs):
         """
@@ -135,3 +143,16 @@ class OperatorConfig(BaseConfig):
             if key in all_pods and str(kwargs[key]).isdigit():
                 set_dict = update_dict_value(self.components(key, {"replicas": int(kwargs[key])}), set_dict)
         return set_dict
+
+    def set_custom_config(self, **kwargs):
+        disk_size = kwargs.get("disk_size", None)
+        if not disk_size:
+            return {}
+        if self.cluster:
+            return {"spec": {
+                "components": {queryNode: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}}},
+                               indexNode: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}}}},
+                "config": {"disk": {"size": {"enabled": True}}}}}
+        return {"spec": {
+            "components": {standalone: {"resources": {"limits": {ephemeral_storage: str(disk_size) + "Gi"}}}},
+            "config": {"disk": {"size": {"enabled": True}}}}}

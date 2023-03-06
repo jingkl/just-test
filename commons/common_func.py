@@ -4,7 +4,7 @@ from yaml import full_load
 import copy
 from typing import List
 
-from deploy.commons.common_params import Helm, Operator
+from deploy.commons.common_params import Helm, Operator, OP
 
 from utils.util_log import log
 from utils.util_catch import func_request
@@ -223,3 +223,11 @@ def dict2str(source_dict, _charts=['/', '.', '\\', '$']):
     s_dict = copy.deepcopy(source_dict)
 
     return dict_rm_point(s_dict, _charts)
+
+
+def check_deploy_tool(deploy_tool: str):
+    if deploy_tool == Helm:
+        return Helm
+    elif deploy_tool in [OP, Operator]:
+        return Operator
+    raise Exception(f"[check_deploy_tool] Deploy tool {deploy_tool} not supported!!")

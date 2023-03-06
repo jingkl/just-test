@@ -92,8 +92,8 @@ class CommonCases(Base):
             # load collection
             self.load_collection(**self.params_obj.load_params)
         else:
-            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.dataset_params.get(
-                pn.collection_name, None) else [self.params_obj.dataset_params[pn.collection_name]]
+            collection_names = self.utility_wrap.list_collections().response if not self.params_obj.collection_params.get(
+                pn.collection_name, None) else [self.params_obj.collection_params[pn.collection_name]]
             if len(collection_names) == 0 or len(collection_names) > 1:
                 msg = "[AccCases] There can only be one collection in the database: {}".format(collection_names)
                 log.error(msg)
@@ -122,7 +122,8 @@ class CommonCases(Base):
 
         counts = self.collection_wrap.num_entities
         log.info("[AccCases] Number of vectors in the collection({0}): {1}".format(self.collection_wrap.name, counts))
-        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2))
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
 
     def parser_search_params(self):
         search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))

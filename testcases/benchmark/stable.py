@@ -1,9 +1,11 @@
 import pytest
 
 from client.cases import ConcurrentClientBase
+from client.common.common_func import parser_data_size  # do not remove
 from client.parameters.input_params import ConcurrentParams
 import client.parameters.input_params.define_params as cdp
-from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator
+from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar
+from deploy.configs.default_configs import NodeResource, SetDependence
 
 from workflow.performance_template import PerfTemplate
 from parameters.input_params import InputParamsBase
@@ -42,9 +44,9 @@ class TestConcurrentCases(PerfTemplate):
         """
         # concurrent_tasks = [ConcurrentParams.params_search(), ConcurrentParams.params_query(ids=[1, 10, 100, 1000]),
         #                     ConcurrentParams.params_scene_insert_delete_flush(random_id=True, random_vector=True)]
-        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
-                                  old_version_format=False,
-                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
+        self.concurrency_template(
+            input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, old_version_format=False,
+            case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -55,9 +57,8 @@ class TestConcurrentCases(PerfTemplate):
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
-            concurrent_number=[100],
-            during_time=1800, interval=20,
-            **cdp.DefaultIndexParams.IVF_SQ8)
+            concurrent_number=[100], during_time=1800, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -72,9 +73,8 @@ class TestConcurrentCases(PerfTemplate):
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
-            concurrent_number=[100],
-            during_time=1800, interval=20,
-            **cdp.DefaultIndexParams.IVF_SQ8)
+            concurrent_number=[100], during_time=1800, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -89,9 +89,8 @@ class TestConcurrentCases(PerfTemplate):
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(nq=100, top_k=10, search_param={"nprobe": 16})],
-            concurrent_number=[1000],
-            during_time=1800, interval=20,
-            **cdp.DefaultIndexParams.IVF_SQ8)
+            concurrent_number=[1000], during_time=1800, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -106,9 +105,8 @@ class TestConcurrentCases(PerfTemplate):
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(nq=100, top_k=10, search_param={"nprobe": 16})],
-            concurrent_number=[1000],
-            during_time=1800, interval=20,
-            **cdp.DefaultIndexParams.IVF_SQ8)
+            concurrent_number=[1000], during_time=1800, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -126,9 +124,9 @@ class TestConcurrentCases(PerfTemplate):
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_flush(weight=1),
                             ConcurrentParams.params_insert(weight=20, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time=600, interval=20,
-                                                                         **cdp.DefaultIndexParams.FLAT)
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time=600, interval=20, **cdp.DefaultIndexParams.FLAT)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -146,9 +144,9 @@ class TestConcurrentCases(PerfTemplate):
                             ConcurrentParams.params_load(weight=1),
                             ConcurrentParams.params_flush(weight=1),
                             ConcurrentParams.params_insert(weight=20, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time=600, interval=20,
-                                                                         **cdp.DefaultIndexParams.FLAT)
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time=600, interval=20, **cdp.DefaultIndexParams.FLAT)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -161,14 +159,14 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10,
-                                                           search_param={"search_list": 30}),
-                            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="1h", interval=20,
-                                                                         dataset_size="10m",
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        concurrent_tasks = [
+            ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30}),
+            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="1h", interval=20, dataset_size="10m",
+            **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -181,14 +179,14 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10,
-                                                           search_param={"search_list": 30}),
-                            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="1h", interval=20,
-                                                                         dataset_size="10m",
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        concurrent_tasks = [
+            ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30}),
+            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="1h", interval=20, dataset_size="10m",
+            **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -201,16 +199,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=2),
-                            ConcurrentParams.params_delete(weight=1, delete_length=1),
-                            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.HNSW)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=10, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=2),
+            ConcurrentParams.params_delete(weight=1, delete_length=1),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -223,16 +225,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=2),
-                            ConcurrentParams.params_delete(weight=1, delete_length=1),
-                            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.HNSW)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=10, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=2),
+            ConcurrentParams.params_delete(weight=1, delete_length=1),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -245,16 +251,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=2),
-                            ConcurrentParams.params_delete(weight=1, delete_length=1),
-                            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=10, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=2),
+            ConcurrentParams.params_delete(weight=1, delete_length=1),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -267,16 +277,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=10, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=2),
-                            ConcurrentParams.params_delete(weight=1, delete_length=1),
-                            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=10, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=5, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=2),
+            ConcurrentParams.params_delete(weight=1, delete_length=1),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -289,17 +303,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1),
-                            ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
-                                                                              delete_length=1, random_id=True,
-                                                                              random_vector=True, varchar_filled=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.HNSW)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_insert_delete_flush(
+                weight=1, insert_length=1, delete_length=1, random_id=True, random_vector=True, varchar_filled=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -312,17 +329,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"ef": 16},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1),
-                            ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
-                                                                              delete_length=1, random_id=True,
-                                                                              random_vector=True, varchar_filled=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.HNSW)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_insert_delete_flush(
+                weight=1, insert_length=1, delete_length=1, random_id=True, random_vector=True, varchar_filled=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -335,17 +355,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1),
-                            ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
-                                                                              delete_length=1, random_id=True,
-                                                                              random_vector=True, varchar_filled=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_insert_delete_flush(
+                weight=1, insert_length=1, delete_length=1, random_id=True, random_vector=True, varchar_filled=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -358,17 +381,20 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"search_list": 30},
-                                                           expr=eval("{'float_1': {'GT': -1.0, 'LT': 100000 * 0.5}}")),
-                            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
-                            ConcurrentParams.params_load(weight=1),
-                            ConcurrentParams.params_scene_insert_delete_flush(weight=1, insert_length=1,
-                                                                              delete_length=1, random_id=True,
-                                                                              random_vector=True, varchar_filled=True)]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[20],
-                                                                         during_time="5h", interval=20,
-                                                                         dataset_size="10w", other_fields=["float_1"],
-                                                                         **cdp.DefaultIndexParams.DISKANN)
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_insert_delete_flush(
+                weight=1, insert_length=1, delete_length=1, random_id=True, random_vector=True, varchar_filled=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
@@ -381,17 +407,225 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        concurrent_tasks = [ConcurrentParams.params_search(weight=1, nq=1000, top_k=1, search_param={"ef": 64},
-                                                           timeout=600)]
+        concurrent_tasks = [
+            ConcurrentParams.params_search(weight=1, nq=1000, top_k=1, search_param={"ef": 64}, timeout=600)]
         # groups = ConcurrentParams.groups(
         #     [ConcurrentParams.transfer_nodes(dp.default_resource_group, f"RG_{i}", 1) for i in list(range(3))])
         groups = [1, 1, 1]
-        default_case_params = ConcurrentParams().params_scene_concurrent(concurrent_tasks, concurrent_number=[50],
-                                                                         during_time="6h", interval=20,
-                                                                         dataset_size="10m", reset=True, groups=groups,
-                                                                         replica_number=3, resource_groups=3,
-                                                                         **cdp.DefaultIndexParams.HNSW)
-        self.concurrency_template(input_params=input_params, cpu=2, mem=dp.default_mem, queryNode=3,
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[50], during_time="6h", interval=20, dataset_size="10m", reset=True,
+            groups=groups, replica_number=3, resource_groups=3, **cdp.DefaultIndexParams.HNSW)
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.default_mem, queryNode=3,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_1b_ivf_sq8_ddl_dql_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [
+            ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"nprobe": 16}),
+            ConcurrentParams.params_query(weight=2, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size="1b",
+            **cdp.DefaultIndexParams.IVF_SQ8)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=6, cpu=8, mem=64),
+        ]
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_100m_ivf_sq8_ddl_dql_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [
+            ConcurrentParams.params_search(weight=20, nq=10, top_k=10, search_param={"nprobe": 16}),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size="100m",
+            **cdp.DefaultIndexParams.IVF_SQ8_2048)
+
+        self.concurrency_template(input_params=input_params, cpu=32, mem=96,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_ivf_sq8_ddl_dql_filter_replica2_cluster(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+        replica_number = 2
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"nprobe": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1, replica_number=replica_number),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], replica_number=replica_number, **cdp.DefaultIndexParams.IVF_SQ8_2048)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=2, cpu=4, mem=64),
+        ]
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_ivf_sq8_ddl_dql_filter_kafka_cluster(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"nprobe": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.IVF_SQ8_2048)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=1, cpu=8, mem=64),
+        ]
+        set_dependence = SetDependence(mq_type=kafka)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources,
+                                  set_dependence=set_dependence)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_hnsw_ddl_dql_filter_kafka_cluster(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=2, cpu=4, mem=64),
+        ]
+        set_dependence = SetDependence(mq_type=kafka)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources,
+                                  set_dependence=set_dependence)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_100m_diskann_ddl_dql_filter_standalone(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
+        set_dependence = SetDependence(disk_size=100)
+
+        self.concurrency_template(input_params=input_params, cpu=8, mem=64,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, set_dependence=set_dependence)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_diskann_ddl_dql_filter_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"search_list": 30},
+                expr=eval('{"float_1": {"GT": -1.0, "LT": parser_data_size(data_size) * 0.5}}')),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.DISKANN)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[queryNode, indexNode],
+                         replicas=1).custom_resource(limits_cpu=8, requests_cpu=8, limits_mem=32, requests_mem=32)
+        ]
+
+        set_dependence = SetDependence(disk_size=100)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params,
+                                  node_resources=node_resources, set_dependence=set_dependence)
