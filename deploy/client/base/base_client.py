@@ -39,3 +39,10 @@ class BaseClient(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_all_values(self, *args, **kwargs):
         log.debug("[BaseClient] Get all values: {}".format(args, kwargs))
+
+    @abc.abstractmethod
+    def wait_for_healthy(self, *args, **kwargs):
+        log.debug("[BaseClient] Wait for healthy: {}".format(args, kwargs))
+
+    def set_global_params(self, *args, **kwargs):
+        pass

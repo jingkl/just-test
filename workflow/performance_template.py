@@ -17,7 +17,7 @@ class PerfTemplate(Base):
 
     @staticmethod
     def clear_deploy_report_params(input_params: InputParamsBase):
-        input_params.deploy_tool = ""
+        # input_params.deploy_tool = ""
         input_params.deploy_mode = ""
         input_params.deploy_config = ""
 
@@ -40,6 +40,9 @@ class PerfTemplate(Base):
                                                deploy_mode=input_params.deploy_mode,
                                                config_name=self.deploy_config[1], config=self.deploy_config[2])
         else:
+            if param_info.release_name:
+                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+                self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
         Report_Metric_Object.update_server(host=param_info.param_host)
 
@@ -96,6 +99,9 @@ class PerfTemplate(Base):
                                                deploy_mode=input_params.deploy_mode,
                                                config_name=self.deploy_config[1], config=self.deploy_config[2])
         else:
+            if param_info.release_name:
+                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+                self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
         Report_Metric_Object.update_server(host=param_info.param_host)
 
@@ -143,13 +149,14 @@ class PerfTemplate(Base):
 
         # todo server status check
 
-    def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE,
-                        node_resources=None, set_dependence=None, input_configs: dict = {}, **kwargs):
+    def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE, deploy_skip=False,
+                        node_resources=None, set_dependence=None, deploy_uninstall=True, input_configs: dict = {},
+                        **kwargs):
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
         # server
-        if not param_info.deploy_skip:
+        if not deploy_skip and not param_info.deploy_skip:
             input_params.deploy_mode = input_params.deploy_mode or deploy_mode
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
@@ -160,7 +167,7 @@ class PerfTemplate(Base):
             self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
 
         if not param_info.deploy_retain:
-            self.deploy_delete()
+            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
 
         # clear self.teardown_funcs
         self.teardown_funcs = []

@@ -38,3 +38,13 @@ class ReportMetric:
 
     # Client params
     run_id = "run_id"
+
+
+class HttpStatusCode:
+    Continue = 100
+    OK = 200
+    BadRequest = 400
+    Forbidden = 403
+    NotFound = 404
+    BadGateway = 502
+    GatewayTimeout = 504

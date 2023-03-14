@@ -19,12 +19,18 @@ def pytest_addoption(parser):
     parser.addoption("--password", action="store", default="", help="enable secure and set user password")
     parser.addoption("--run_id", action="store", default=None, help="run id for client test")
     parser.addoption('--err_msg', action='store', default="err_msg", help="error message of test")
+    parser.addoption("--vdc_user", action="store", default="default", help="vdc user name")
+    parser.addoption("--vdc_env", action="store", default="UAT3", help="vdc env")
+    parser.addoption("--vdc_region_id", action="store", default="", help="vdc region id")
+
+    # deploy
     parser.addoption("--milvus_tag", action="store", default=None, help="Milvus container tag")
     parser.addoption("--milvus_tag_prefix", action="store", default="", help="Milvus container tag prefix")
     parser.addoption("--tag_repository", action="store", default=None, help="tag repository")
     parser.addoption("--update_helm_file", action="store_true", default=False, help="update helm file values.yaml")
     parser.addoption("--release_name_prefix", action="store", default="", help="release name prefix")
     parser.addoption("--release_name", action="store", default="", help="release name")
+
     parser.addoption('--sync_report', action='store_true', default=False, help="sync report result")
     parser.addoption('--async_report', action='store_true', default=False, help="async report result")
     # case input params
@@ -32,11 +38,15 @@ def pytest_addoption(parser):
                      help="skip deploy, use the incoming address or the default address")
     parser.addoption("--client_test_skip", action="store_true", default=False,
                      help="skip client test, only deploy or other test")
-    parser.addoption("--deploy_tool", action="store", default=Helm, help="helm or operator")
-    parser.addoption("--deploy_mode", action="store", default="", help="standalone or cluster")
+
+    # deploy
+    parser.addoption("--deploy_tool", action="store", default=Helm, help="helm or operator or vdc")
+    parser.addoption("--deploy_mode", action="store", default="", help="standalone or cluster or class_id")
     parser.addoption("--deploy_config", action="store", default="", help="str or dict")
     parser.addoption("--upgrade_config", action="store", default="", help="str or dict")
-    parser.addoption('--deploy_retain', action='store_true', default=False, help="retain Milvus")
+    parser.addoption('--deploy_retain', action='store_true', default=False, help="retain Milvus instance")
+    parser.addoption('--deploy_retain_pvc', action='store_true', default=False, help="retain Milvus's pvc")
+
     parser.addoption("--case_params", action="store", default="", help="str or dict")
     parser.addoption('--case_skip_prepare', action='store_true', default=False, help="skip prepare collection")
     parser.addoption('--case_skip_prepare_clean', action='store_true', default=False,
@@ -75,11 +85,15 @@ def initialize_env(request):
     update_helm_file = request.config.getoption("--update_helm_file")
     deploy_skip = request.config.getoption("--deploy_skip")
     deploy_retain = request.config.getoption("--deploy_retain")
+    deploy_retain_pvc = request.config.getoption("--deploy_retain_pvc")
     client_test_skip = request.config.getoption("--client_test_skip")
     release_name_prefix = request.config.getoption("--release_name_prefix")
     release_name = request.config.getoption("--release_name")
     sync_report = request.config.getoption("--sync_report")
     async_report = request.config.getoption("--async_report")
+    vdc_user = request.config.getoption("--vdc_user")
+    vdc_env = request.config.getoption("--vdc_env")
+    vdc_region_id = request.config.getoption("--vdc_region_id")
     # release_name_prefix = getattr(request.config.option, "release_name_prefix")
 
     """ params check """
@@ -94,13 +108,13 @@ def initialize_env(request):
 
     log.info("#" * 80)
     log.info("[initialize_milvus] Log cleaned up, start testing...")
-    param_info.prepare_param_info(client_version, host, port, secure=secure, milvus_tag=milvus_tag,
-                                  milvus_tag_prefix=milvus_tag_prefix, tag_repository=tag_repository,
-                                  deploy_skip=deploy_skip, deploy_retain=deploy_retain, run_id=run_id,
-                                  client_test_skip=client_test_skip, update_helm_file=update_helm_file,
-                                  release_name_prefix=release_name_prefix, release_name=release_name,
-                                  sync_report=sync_report, async_report=async_report, param_user=user,
-                                  param_password=password)
+    param_info.prepare_param_info(
+        client_version, host, port, secure=secure, milvus_tag=milvus_tag, milvus_tag_prefix=milvus_tag_prefix,
+        tag_repository=tag_repository, deploy_skip=deploy_skip, deploy_retain=deploy_retain,
+        deploy_retain_pvc=deploy_retain_pvc, run_id=run_id, client_test_skip=client_test_skip,
+        update_helm_file=update_helm_file, release_name_prefix=release_name_prefix, release_name=release_name,
+        sync_report=sync_report, async_report=async_report, param_user=user, param_password=password,
+        vdc_user=vdc_user, vdc_env=vdc_env, vdc_region_id=vdc_region_id)
     log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
     # yield
     # if param_info.test_status is False:

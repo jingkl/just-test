@@ -37,6 +37,7 @@ dataset_size = "dataset_size"
 max_length = "max_length"
 varchar_filled = "varchar_filled"
 scalars_index = "scalars_index"
+scalars_params = "scalars_params"
 show_resource_groups = "show_resource_groups"
 
 # common

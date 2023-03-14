@@ -42,6 +42,9 @@ class BaseConfig(metaclass=abc.ABCMeta):
         self.standalone_dict = {"persistence": {"persistentVolumeClaim": {"storageClass": "local-path"}}}
 
         # The value to reset after inheriting the class
+        # set log level
+        self.log_level = {}
+
         # minio local-path and metrics
         self.storage_local_path = {}
 

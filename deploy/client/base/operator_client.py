@@ -8,6 +8,7 @@ from deploy.commons.common_params import CLUSTER, STANDALONE, Milvus, Persistent
 from deploy.commons.common_func import (
     update_dict_value, utc_conversion, format_dict_output, get_api_version, parser_op_item, check_multi_keys_exist)
 
+from parameters.input_params import param_info
 from utils.util_log import log
 
 
@@ -99,11 +100,12 @@ class OperatorClient(BaseClient):
             return self.release_name
         return self.dc.result_to_dict(res) if parser_result else res
 
-    def upgrade(self, body: dict, namespace=None, content_type="application/merge-patch+json", parser_result=True):
+    def upgrade(self, body: dict, release_name="", namespace=None, content_type="application/merge-patch+json",
+                parser_result=True):
         namespace = namespace or self.namespace
+        release_name = release_name or self.release_name
 
-        if self.release_name != "":
-            body = update_dict_value({"metadata": {"name": self.release_name}}, body)
+        body = update_dict_value({"metadata": {"name": release_name}}, body) if release_name != "" else body
         res, result = self.dc.patch(body=body, namespace=namespace, content_type=content_type, result_check=True)
         if not result:
             status = res.status if "status" in dir(res) else res
@@ -281,3 +283,9 @@ class OperatorClient(BaseClient):
         log.info("[get_pods] pod details of release({0}): ".format(release_name))
         return format_dict_output(("NAME", "STATUS", "RESTARTS", "AGE", "IP", "NODE"), pod_details_list)
         # return pformat(pod_details_list)
+
+    def set_global_params(self, release_name: str):
+        release_name = release_name or self.release_name
+
+        # set endpoint
+        param_info.param_host, param_info.param_port = str(self.endpoint(release_name=release_name)).split(':')

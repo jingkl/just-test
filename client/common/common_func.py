@@ -18,7 +18,7 @@ from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFie
 from client.parameters import params_name as pn
 from client.common.common_type import DefaultValue as dv
 from client.common.common_type import NAS, SimilarityMetrics, AccMetrics, Precision
-from client.common.common_param import DatasetPath, GoBenchIndex, SegmentsAnalysis
+from client.common.common_param import DatasetPath, ScalarDatasetPath, GoBenchIndex, SegmentsAnalysis
 
 from utils.util_log import log
 
@@ -45,7 +45,7 @@ def field_type():
     return data_types
 
 
-def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_primary=False, **kwargs):
+def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_primary=False, scalars_params={}, **kwargs):
     field_types = field_type()
     if dtype is None:
         for _field in field_types.keys():
@@ -53,34 +53,49 @@ def gen_field_schema(name: str, dtype=None, description=dv.default_desc, is_prim
                 _kwargs = {}
                 if _field in ["STRING", "VARCHAR"]:
                     _kwargs.update({"max_length": kwargs.get("max_length", dv.default_max_length)})
-                if _field in ["BINARY_VECTOR", "FLOAT_VECTOR"]:
+                elif _field in ["BINARY_VECTOR", "FLOAT_VECTOR"]:
                     _kwargs.update({"dim": kwargs.get("dim", dv.default_dim)})
-                return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=field_types[_field],
-                                                                 description=description, is_primary=is_primary,
-                                                                 **_kwargs).response
+
+                _kwargs.update(scalars_params.get(name, {}).get("params", {}))
+                return ApiFieldSchemaWrapper().init_field_schema(
+                    name=name, dtype=field_types[_field], description=description, is_primary=is_primary,
+                    **_kwargs).response
     else:
         if dtype in field_types.values():
-            return ApiFieldSchemaWrapper().init_field_schema(name=name, dtype=dtype, description=description,
-                                                             is_primary=is_primary, **kwargs).response
+            kwargs.update(scalars_params.get(name, {}).get("params", {}))
+            return ApiFieldSchemaWrapper().init_field_schema(
+                name=name, dtype=dtype, description=description, is_primary=is_primary, **kwargs).response
     log.error("[gen_field_schema] The field schema for generating {0} is not supported, please check.".format(name))
     return []
 
 
 def gen_collection_schema(vector_field_name="", description=dv.default_desc, default_fields=True, auto_id=False,
-                          other_fields=[], primary_field=None, varchar_id=False, **kwargs):
+                          other_fields=[], primary_field=None, varchar_id=False, scalars_params={}, **kwargs):
+    """
+    "scalars_params" =  {<field_name>: {
+                                        "params": {},  # for creating collection, e.g.: max_length
+                                        "other_params": {
+                                                "dataset": <dataset name>
+                                                ...  # extra params, e.g.: varchar_filled
+                                        }  # for inserting values
+                        }, ...}
+    """
     id_type = DataType.INT64
     _k = {}
+
     if varchar_id:
         id_type = DataType.VARCHAR
         _k.update({"max_length": kwargs.get("max_length", dv.default_max_length)})
-    fields = [gen_field_schema("id", dtype=id_type, is_primary=True, **_k),
-              gen_field_schema(vector_field_name, dim=kwargs.get("dim", dv.default_dim))] if default_fields else []
+    fields = [gen_field_schema("id", dtype=id_type, is_primary=True, scalars_params=scalars_params, **_k),
+              gen_field_schema(vector_field_name, scalars_params=scalars_params,
+                               dim=kwargs.get("dim", dv.default_dim))] if default_fields else []
 
     for _field in other_fields:
-        fields.append(gen_field_schema(_field, **kwargs))
+        fields.append(gen_field_schema(_field, scalars_params=scalars_params, **kwargs))
+
     log.debug("[gen_collection_schema] The generated field schema contains the following:{}".format(fields))
-    return ApiCollectionSchemaWrapper().init_collection_schema(fields=fields, description=description,
-                                                               auto_id=auto_id, primary_field=primary_field).response
+    return ApiCollectionSchemaWrapper().init_collection_schema(
+        fields=fields, description=description, auto_id=auto_id, primary_field=primary_field).response
 
 
 """ param handling """
@@ -165,6 +180,15 @@ def gen_file_name(file_id, dim, data_type):
         return ""
 
 
+def gen_scalar_file_name(file_id, dataset_name):
+    file_name = "%s_%05d.npy" % (dv.SCALAR_FILE_PREFIX, int(file_id))
+    if dataset_name in ScalarDatasetPath.keys():
+        return ScalarDatasetPath[dataset_name] + file_name
+    else:
+        log.error("[gen_scalar_file_name] data type not supported: {}".format(dataset_name))
+        return ""
+
+
 def parser_data_size(data_size):
     return eval(
         str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
@@ -211,9 +235,11 @@ def gen_ids(start_id, end_id):
     return [k for k in range(start_id, end_id)]
 
 
-def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
+def gen_values(data_type, vectors, ids, varchar_filled=False, field={}, default_value=None, other_params={}):
     values = None
-    if data_type in [DataType.INT8, DataType.INT16, DataType.INT32, DataType.INT64]:
+    if default_value is not None and isinstance(default_value, list) and len(default_value) != 0:
+        values = default_value
+    elif data_type in [DataType.INT8, DataType.INT16, DataType.INT32, DataType.INT64]:
         values = ids
     elif data_type in [DataType.DOUBLE]:
         values = [(i + 0.0) for i in ids]
@@ -222,6 +248,7 @@ def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
     elif data_type in [DataType.FLOAT_VECTOR, DataType.BINARY_VECTOR]:
         values = vectors
     elif data_type in [DataType.VARCHAR]:
+        varchar_filled = other_params.get("varchar_filled", varchar_filled)
         if varchar_filled is False:
             values = [str(i) for i in ids]
         else:
@@ -234,7 +261,10 @@ def gen_values(data_type, vectors, ids, varchar_filled=False, field={}):
     return values
 
 
-def gen_entities(info, vectors=None, ids=None, varchar_filled=False):
+def gen_entities(info, vectors=None, ids=None, varchar_filled=False, insert_scalars_params={}):
+    """
+    insert_scalars_params = {<field name>: {"default_value": [], other_params: {}}...}
+    """
     if not isinstance(info, dict):
         log.error("[gen_entities] info is not a dict, please check: {}".format(type(info)))
         return {}
@@ -245,7 +275,8 @@ def gen_entities(info, vectors=None, ids=None, varchar_filled=False):
     entities = {}
     for field in info["fields"]:
         _type = field["type"]
-        entities.update({field["name"]: gen_values(_type, vectors, ids, varchar_filled, field)})
+        entities.update({field["name"]: gen_values(_type, vectors, ids, varchar_filled, field,
+                                                   **insert_scalars_params.get(field["name"], {}))})
     return pd.DataFrame(entities)
 
 
@@ -374,6 +405,36 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
     return vectors
 
 
+def gen_insert_scalars_params(scalars_params: dict):
+    insert_scalars_params = {}
+    for k, v in scalars_params.items():
+        if isinstance(v, dict):
+            insert_scalars_params[k] = {"other_params": v.get("other_params", {})}
+        else:
+            raise Exception(f"[gen_insert_scalars_params] Value:{v} of key:{k} isn't dict type:{type(v)}, please check")
+    return insert_scalars_params
+
+
+def gen_scalar_values(scalars_params: dict, insert_length: int):
+    _loop_files = {k: loop_gen_scalar_files(scalars_params[k]["other_params"].get("dataset")) for k in
+                   scalars_params.keys() if scalars_params[k].get("other_params", {}).get("dataset", False)}
+    _insert_scalars_params = gen_insert_scalars_params(scalars_params)
+    _loop_dict = copy.deepcopy(_insert_scalars_params)
+
+    for k in _loop_dict.keys():
+        _loop_dict[k]["default_value"] = []
+
+    while True:
+        for k, v in _loop_files.items():
+            while len(_loop_dict[k]["default_value"]) < insert_length:
+                _loop_dict[k]["default_value"].extend(read_npy_file(next(v), allow_pickle=True))
+
+        for k, v in _loop_dict.items():
+            _insert_scalars_params[k]["default_value"] = _loop_dict[k]["default_value"][:insert_length]
+            _loop_dict[k]["default_value"] = _loop_dict[k]["default_value"][insert_length:]
+        yield _insert_scalars_params
+
+
 """ common func """
 
 
@@ -462,9 +523,9 @@ def read_json_file(file_name):
     return {}
 
 
-def read_npy_file(file_name):
+def read_npy_file(file_name, allow_pickle=False):
     if check_file_exist(file_name):
-        file_list = np.load(file_name).tolist()
+        file_list = np.load(file_name, allow_pickle=allow_pickle).tolist()
         return file_list
     msg = "[read_npy_file] Can not read npy file, please check."
     log.error(msg)
@@ -513,6 +574,11 @@ def loop_files(files):
 def loop_gen_files(dim, data_type):
     for i in range(dv.Max_file_count):
         yield gen_file_name(i, dim, data_type)
+
+
+def loop_gen_scalar_files(dataset_name):
+    for i in range(dv.Max_file_count):
+        yield gen_scalar_file_name(i, dataset_name)
 
 
 def loop_ids(step=50000, start_id=0):
@@ -693,7 +759,7 @@ def go_bench(go_benchmark: str, uri: str, collection_name: str, index_type: str,
                          "expression": str,  # search expression
                         }
     :param index_type: str
-    :param search_timeout: str
+    :param search_timeout: int
     :param search_vector: search vectors
     :param concurrent_number: int
     :param during_time: concurrency lasts time / second

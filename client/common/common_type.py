@@ -54,6 +54,8 @@ class DefaultValue:
     FILE_PREFIX = "binary"
     Max_file_count = 10000
 
+    SCALAR_FILE_PREFIX = "scalar"
+
     default_timeout = 60
     default_resource_group = "__default_resource_group"
 
@@ -72,6 +74,7 @@ class NAS:
     DATASET_DIR = EnvVariable.DATASET_DIR
     RAW_DATA_DIR = DATASET_DIR + "/raw_data/"
     ANN_DATA_DIR = DATASET_DIR + "/ann_hdf5/"
+    SCALAR_DATA_DIR = DATASET_DIR + "/scalar/"
 
 
 class AccMetrics:

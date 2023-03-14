@@ -5,10 +5,14 @@ import os
 import requests
 import json
 import copy
+import string
+import math
 from yaml import full_load, dump
+from typing import Union
 
 from deploy.commons.common_params import (
-    CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, DefaultApiVersion, ClassID)
+    CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, DefaultApiVersion, ClassID, RMNodeCategory,
+    Helm, Operator, OP, VDC)
 
 from utils.util_log import log
 
@@ -307,7 +311,9 @@ def server_resource_check(other_configs):
     return other_configs
 
 
-def gen_server_config_name(cpu, mem, cluster=True, **kwargs):
+def gen_server_config_name(cpu, mem, cluster=True, deploy_mode=None, **kwargs):
+    if not cpu and not mem:
+        return deploy_mode
     _name = CLUSTER if cluster else STANDALONE
 
     _name += "_{0}c{1}m".format(cpu, mem)
@@ -384,10 +390,10 @@ def check_multi_keys_exist(target: dict, keys: list):
     """
     t = target
     for k in keys:
-        if k in t:
+        if isinstance(t, dict) and k in t.keys():
             t = t[k]
         else:
-            raise ValueError("[check_multi_keys_exist] Keys:{0} not in target dict:{1}".format(keys, target))
+            raise ValueError(f"[check_multi_keys_exist] Keys:{keys} not in target dict:{target}, check key:{k}")
     return t
 
 
@@ -431,13 +437,48 @@ def hide_dict_value(source, keys):
     return target
 
 
-def find_key(resource: dict, key: str, values: list):
+def check_dict_keys(target: dict, keys: list):
+    """
+    :return key's value
+    """
+    t = target
+    for k in keys:
+        if isinstance(t, dict) and k in t.keys():
+            t = t[k]
+        else:
+            return False
+    return True
+
+
+def get_resource_isdigit(key):
+    if str(key).isdigit():
+        return float(key)
+    elif str(key).endswith("Gi") and str(key).strip("Gi").isdigit():
+        return math.ceil(float(str(key).strip("Gi")))
+    elif str(key).endswith("Mi") and str(key).strip("Mi").isdigit():
+        return math.ceil(float(str(key).strip("Mi")) / 1024.0)
+    raise ValueError(f"[get_resource_isdigit] Can not parser key:{key}, please check.")
+
+
+def _find_key(resource: dict, key: str, values: list):
     for k, v in resource.items():
         if isinstance(v, dict):
             find_key(v, key, values)
         if key == k and str(v).isdigit():
             _v = int(resource["replicas"]) * v if "replicas" in resource else v
             values.append(int(_v))
+    return values
+
+
+def find_key(resource: dict, key: str, values: list):
+    for k, v in resource.items():
+        if isinstance(v, dict) and hasattr(RMNodeCategory, k):
+            if check_dict_keys(v, ["resources", "limits", key]):
+                _value = get_resource_isdigit(check_multi_keys_exist(v, ["resources", "limits", key]))
+                _v = int(v["replicas"]) * _value if "replicas" in v else _value
+                values.append(math.ceil(_v))
+            else:
+                find_key(v, key, values)
     return values
 
 
@@ -460,3 +501,77 @@ def get_class_mode(deploy_mode, deploy_class):
     else:
         class_mode = "XLarge" if deploy_mode == CLUSTER else "Free"
         return eval("ClassID.{0}".format(class_mode)), deploy_mode
+
+
+def gen_str(length=16):
+    return ''.join(random.sample(string.ascii_letters + string.digits, length))
+
+
+def gen_db_resource(source: dict, class_id: list, db_raw: list, oversold: list):
+    for k, v in source.items():
+        if isinstance(v, dict) and hasattr(RMNodeCategory, k):
+            if "replicas" in v and str(v["replicas"]).isdigit() and int(v["replicas"]) != 0 and \
+                    "resources" in v and "limits" in v["resources"] and "requests" in v["resources"]:
+                r_l = v["resources"]["limits"]
+                r_r = v["resources"]["requests"]
+
+                if "cpu" in r_l and "memory" in r_l and str(r_l["cpu"]).isdigit() and int(r_l["cpu"]) != 0:
+                    l_cpu = int(r_l["cpu"])
+                    # l_memory = eval(str(r_l["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
+                    l_memory = eval(str(r_l["memory"]).replace("Mi", '').replace("Gi", '*1024.0'))
+
+                    fouram_id = "fouram-{0}c{1}g".format(l_cpu, int(l_memory / 1024))
+                    class_id.append((fouram_id, int(l_cpu), int(l_memory)))
+                    db_raw.append((k, int(v["replicas"]), fouram_id, int(l_cpu), int(l_memory)))
+                    if "cpu" in r_r and "memory" in r_r and str(r_r["cpu"]).isdigit() and int(r_r["cpu"]) != 0:
+                        r_cpu = int(r_r["cpu"])
+                        # r_memory = eval(str(r_r["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
+                        r_memory = eval(str(r_r["memory"]).replace("Mi", '').replace("Gi", '*1024.0'))
+                        extend_field = {
+                            "requests.cpu": str('%.3f' % r_cpu),
+                            "requests.memory": str('%.1f' % r_memory),
+                            "limits.cpu": str('%.3f' % l_cpu),
+                            "limits.memory": str('%.1f' % l_memory)
+                        }
+                        oversold.append((k, fouram_id, extend_field))
+            else:
+                gen_db_resource(v, class_id, db_raw, oversold)
+    return class_id, db_raw, oversold
+
+
+def get_child_class_id(spec: dict):
+    class_ids, db_raw, oversold = gen_db_resource(spec, [], [], [])
+    return list(set(class_ids)), db_raw, oversold
+
+
+def parser_modify_params(modify_params: dict, parent_key=None, params_key_value=None):
+    if params_key_value is None:
+        params_key_value = {}
+    for key, value in modify_params.items():
+        if parent_key is None:
+            current_key = key
+        else:
+            current_key = parent_key + "." + key
+
+        if isinstance(value, dict):
+            parser_modify_params(value, current_key, params_key_value)
+        else:
+            params_key_value[current_key] = value
+    return params_key_value
+
+
+def get_class_key_name(class_name, value):
+    if type(class_name) == type(classmethod):
+        for n in dir(class_name):
+            if eval(f"class_name.{n}") == value:
+                return n
+    raise ValueError(
+        f"[get_class_key_name] Can't get value: {value} from class_name: {class_name}, type: {type(class_name)}")
+
+
+def get_default_deploy_mode(deploy_tool: Union[Helm, Operator, OP, VDC]):
+    if deploy_tool in [Helm, Operator, OP]:
+        return CLUSTER
+    elif deploy_tool in [VDC]:
+        return get_class_key_name(ClassID, ClassID.Class1CU)
+    return STANDALONE

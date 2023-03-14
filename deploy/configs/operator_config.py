@@ -63,10 +63,7 @@ class OperatorConfig(BaseConfig):
         self.cluster = cluster
 
     def op_base_config(self, name="", api_version=None, kind=None):
-        if self.release_name == "":
-            name = gen_release_name('fouram-op') if name == "" else name
-        else:
-            name = self.release_name
+        name = self.release_name or name or gen_release_name('fouram-op')
         api_version = api_version if api_version is not None else self.api_version
         kind = kind if kind is not None else self.kind
         base_config = {"apiVersion": api_version,
@@ -102,7 +99,7 @@ class OperatorConfig(BaseConfig):
 
     # common funcs
     def set_image(self, tag=None, repository=DefaultRepository, prefix="master"):
-        if tag is None or not isinstance(tag, str):
+        if not tag or not isinstance(tag, str):
             tag = get_image_tag()
             if prefix not in tag or tag == prefix + "-latest":
                 tag = get_latest_tag()

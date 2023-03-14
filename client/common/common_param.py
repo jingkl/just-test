@@ -20,6 +20,11 @@ DatasetPath = {
     "binary": NAS.RAW_DATA_DIR + 'binary/',
 }
 
+ScalarDatasetPath = {
+    "laion2b_url": NAS.SCALAR_DATA_DIR + "laion2b_url/",
+    "laion2b_int64": NAS.SCALAR_DATA_DIR + "laion2b_int64/"
+}
+
 MetricsToIndexType = {
     "L2": [pn.IndexTypeName.FLAT, pn.IndexTypeName.IVF_FLAT, pn.IndexTypeName.IVF_SQ8, pn.IndexTypeName.IVF_PQ,
            pn.IndexTypeName.HNSW, pn.IndexTypeName.IVF_HNSW, pn.IndexTypeName.RHNSW_FLAT, pn.IndexTypeName.RHNSW_SQ,

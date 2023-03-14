@@ -1,6 +1,6 @@
 from deploy.client.base import get_client_obj
 from deploy.commons.common_func import gen_release_name
-from deploy.commons.common_params import Helm, CLUSTER, Operator, STANDALONE, APIVERSION, Milvus
+from deploy.commons.common_params import Helm, CLUSTER, Operator, VDC, STANDALONE, APIVERSION, Milvus
 
 from commons.common_params import EnvVariable
 from parameters.input_params import param_info
@@ -11,8 +11,8 @@ class DefaultClient:
     def __init__(self, deploy_tool=Helm, deploy_mode=CLUSTER, kubeconfig=EnvVariable.KUBECONFIG,
                  namespace=EnvVariable.NAMESPACE, **kwargs):
         """
-        :param deploy_tool: helm or operator
-        :param deploy_mode: cluster or standalone
+        :param deploy_tool: helm or operator or vdc
+        :param deploy_mode: cluster or standalone or class_id's name
         :param kubeconfig: path of kubeconfig
         :param namespace: namespace
         :param kwargs: api_version and deploy_mode for op, helm_path and chart for cli
@@ -46,7 +46,11 @@ class DefaultClient:
         if param_info.release_name != "":
             return param_info.release_name
         prefix = str(param_info.release_name_prefix) or "fouram"
-        return gen_release_name(prefix) if self.deploy_tool == Helm else gen_release_name(prefix + "-op")
+        if self.deploy_tool == Operator:
+            prefix += '-op'
+        elif self.deploy_tool == VDC:
+            prefix += '-vdc'
+        return gen_release_name(prefix)
 
     def install(self, configs, check_health=True):
         self.release_name = self.obj.install(configs, return_release_name=True, check_health=check_health)
@@ -82,3 +86,7 @@ class DefaultClient:
     def wait_for_healthy(self, release_name=""):
         release_name = release_name or self.release_name
         return self.obj.wait_for_healthy(release_name)
+
+    def set_global_params(self, release_name=""):
+        release_name = release_name or self.release_name
+        return self.obj.set_global_params(release_name)

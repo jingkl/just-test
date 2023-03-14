@@ -73,18 +73,15 @@ class HelmConfig(BaseConfig):
 
     @staticmethod
     def get_server_tag(tag=None, prefix="master"):
-        if tag is None or not isinstance(tag, str):
+        if not tag or not isinstance(tag, str):
             tag = get_image_tag()
             if prefix not in tag or tag == prefix + "-latest":
                 tag = get_latest_tag()
         return {"image": {"all": {"tag": tag}}}
 
     @staticmethod
-    def set_image_repository(repository=DefaultRepository):
-        if repository is not None:
-            return {"image": {"all": {"repository": repository}}}
-        else:
-            return {}
+    def set_image_repository(repository: str = DefaultRepository):
+        return {"image": {"all": {"repository": repository}}} if repository else {}
 
     # common funcs
     def set_image(self, tag=None, repository=DefaultRepository, prefix="master"):

@@ -1,5 +1,44 @@
+from dataclasses import dataclass, field
+from typing import Optional
+
 from commons.common_func import read_json_file
 from commons.common_params import EnvVariable
+
+
+class ParamsBase:
+    @property
+    def to_dict(self):
+        return vars(self)
+
+
+@dataclass
+class VDCUSERParams(ParamsBase):
+    email: Optional[str] = field(default_factory=lambda: "")
+    password: Optional[str] = field(default_factory=lambda: "")
+    user_id: Optional[str] = field(default_factory=lambda: "")
+
+    def check_params(self):
+        assert self.email and self.password and self.user_id
+        return self
+
+
+@dataclass
+class VDCENVParams(ParamsBase):
+    region_id: Optional[str] = field(default_factory=lambda: "")
+    rm_host: Optional[str] = field(default_factory=lambda: "")
+    cloud_service_host: Optional[str] = field(default_factory=lambda: "")
+    infra_host: Optional[str] = field(default_factory=lambda: "")
+    infra_token: Optional[str] = field(default_factory=lambda: "")
+    cloud_service_test_host: Optional[str] = field(default_factory=lambda: "")
+    mysql: Optional[dict] = field(default_factory=lambda: {})
+
+    def check_params(self):
+        assert self.region_id and self.rm_host and self.cloud_service_host and \
+               self.infra_host and self.infra_token and self.cloud_service_test_host
+
+        for j in ["host", "user", "password"]:
+            assert j in self.mysql
+        return self
 
 
 class ConfigInfo:
@@ -16,10 +55,11 @@ class ConfigInfo:
         self.mongo_db_servers = {}
         self.parser_config(self.config_file)
 
-        self.sit = {}
-        self.uat = {}
-        self.vdc_global_params = {}
+        self.vdc_users = {}
+        self.vdc_environments = {}
         self.parser_vdc_config(self.vdc_config_file)
+        self.vdc_user = VDCUSERParams()
+        self.vdc_env = VDCENVParams()
 
     def parser_config(self, config_file):
         config_dict = read_json_file(config_file, out_put=False)
@@ -36,23 +76,20 @@ class ConfigInfo:
     def parser_vdc_config(self, config_file):
         config_dict = read_json_file(config_file, out_put=False)
 
-        if "SIT" in config_dict:
-            self.sit = config_dict["SIT"]
-            for i in ["user_id", "rm_host", "cloud_service_host", "infra_host", "region_id", "infra_token"]:
-                assert i in self.sit
+        if "ENV" in config_dict.keys() and isinstance(config_dict["ENV"], dict):
+            for k, v in config_dict["ENV"].items():
+                if isinstance(v, dict):
+                    self.vdc_environments[k] = VDCENVParams(**v).check_params()
 
-        if "UAT" in config_dict:
-            self.uat = config_dict["UAT"]
-            for i in ["user_id", "rm_host", "cloud_service_host", "infra_host", "region_id", "infra_token"]:
-                assert i in self.sit
-            for j in ["host", "user", "password"]:
-                assert j in self.uat["mysql"]
+        if "USERS" in config_dict.keys() and isinstance(config_dict["USERS"], dict):
+            for k, v in config_dict["USERS"].items():
+                if isinstance(v, dict):
+                    self.vdc_users[k] = VDCUSERParams(**v).check_params()
 
-        if "global" in config_dict:
-            self.vdc_global_params = config_dict["global"]
-            for i in ["email", "password"]:
-                assert i in self.vdc_global_params
+    def set_vdc_config(self, vdc_user="default", vdc_env="UAT3") -> (VDCUSERParams, VDCENVParams):
+        self.vdc_user = self.vdc_users.get(vdc_user, self.vdc_user)
+        self.vdc_env = self.vdc_environments.get(vdc_env, self.vdc_env)
+        return self.vdc_user, self.vdc_env
 
 
 config_info = ConfigInfo(EnvVariable.WORK_DIR)
-

@@ -4,6 +4,7 @@ from deploy.client.base.base_client import BaseClient
 from deploy.commons.common_func import gen_release_name
 from deploy.commons.common_params import default_namespace
 
+from parameters.input_params import param_info
 from utils.util_cmd import CmdExe
 from utils.util_log import log
 
@@ -146,3 +147,9 @@ class CliClient(BaseClient):
     def wait_for_healthy(*args, **kwargs):
         """ helm not need check health """
         return True
+
+    def set_global_params(self, release_name: str):
+        release_name = release_name or self.release_name
+
+        # set endpoint
+        param_info.param_host, param_info.param_port = str(self.endpoint(release_name=release_name)).split(':')

@@ -64,14 +64,16 @@ class CommonCases(Base):
             # create collection
             _collection_params = update_dict_value({
                 pn.vector_field_name: vector_default_field_name,
-                pn.dim: self.params_obj.dataset_params[pn.dim]
+                pn.dim: self.params_obj.dataset_params[pn.dim],
+                pn.scalars_params: self.params_obj.dataset_params.get(pn.scalars_params, {})
             }, self.params_obj.collection_params)
             self.create_collection(**_collection_params)
             self.get_collection_schema()
 
             # insert vectors
             res_insert = self.ann_insert(source_vectors=self.dataset_train,
-                                         ni=self.params_obj.dataset_params[pn.ni_per])
+                                         ni=self.params_obj.dataset_params[pn.ni_per],
+                                         scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
             self.case_report.add_attr(**res_insert)
 
             # flush collection

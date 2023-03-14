@@ -38,6 +38,7 @@ class ParamsFormat:
                          max_length: ([type(int())], OPTION),
                          varchar_filled: ([type(bool())], OPTION),
                          scalars_index: ([type(list())], OPTION),
+                         scalars_params: ([type(dict())], OPTION),
                          show_resource_groups: ([type(bool())], OPTION)},
         collection_params: {other_fields: ([type(list())], OPTION),
                             shards_num: ([type(int())], OPTION),

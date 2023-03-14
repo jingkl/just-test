@@ -1,5 +1,7 @@
-from deploy.vdc_rest_api.request_handler import Request
+from typing import Union
+from deploy.commons.common_params import Helm, Operator, OP, VDC
 
+from commons.request_handler import Request
 from parameters.input_params import param_info
 from utils.util_log import log
 
@@ -15,7 +17,9 @@ class AutoGetTag:
         self.prefix = param_info.milvus_tag_prefix or self.prefix
         self.tag_name = self.prefix + "-latest"
 
-    def auto_tag(self):
+    def auto_tag(self, deploy_tool: Union[Helm, Operator, OP, VDC] = Helm):
+        if deploy_tool in [VDC]:
+            return ""
         self.refresh_prefix()
 
         t = self.get_image_tag_idc()
@@ -38,7 +42,7 @@ class AutoGetTag:
         try:
             res = self.req.get(url=url, headers=headers)
             for r in res:
-                t = r["tags"][0]["name"]
+                t = r["tags"][0]["name"] if isinstance(r["tags"], list) else r["tags"]
                 if str(t).startswith(self.prefix) and t != self.tag_name:
                     log.info("[AutoGetTag] The image name used is %s" % str(t))
                     return t

@@ -90,7 +90,7 @@ class BuildIndexParams(CommonParams):
 
 
 class LoadParams(CommonParams):
-    def params_load(self, dataset_name=pn.DatasetsName.LOCAL, dim=768, dataset_size="1m", ni_per=50000,
+    def params_load(self, dataset_name=pn.DatasetsName.LOCAL, dim=768, dataset_size="1m", ni_per=20000,
                     index_type=pn.IndexTypeName.FLAT, index_param={}, metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                    index_type=index_type, index_param=index_param, metric_type=metric_type)

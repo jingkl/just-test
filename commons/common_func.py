@@ -4,7 +4,7 @@ from yaml import full_load
 import copy
 from typing import List
 
-from deploy.commons.common_params import Helm, Operator, OP
+from deploy.commons.common_params import Helm, Operator, OP, VDC
 
 from utils.util_log import log
 from utils.util_catch import func_request
@@ -187,6 +187,8 @@ def check_deploy_config(deploy_tool, configs):
         configs = configs if isinstance(configs, str) else ""
     elif deploy_tool == Operator:
         configs = configs if isinstance(configs, dict) else {}
+    elif deploy_tool == VDC:
+        configs = configs if isinstance(configs, dict) else {}
     return configs
 
 
@@ -230,4 +232,23 @@ def check_deploy_tool(deploy_tool: str):
         return Helm
     elif deploy_tool in [OP, Operator]:
         return Operator
+    elif deploy_tool in [VDC]:
+        return VDC
     raise Exception(f"[check_deploy_tool] Deploy tool {deploy_tool} not supported!!")
+
+
+def hide_value(source, keys):
+    for key, value in source.items():
+        if isinstance(value, dict) and key not in keys:
+            hide_value(source[key], keys)
+        if key in keys and not isinstance(value, dict):
+            source[key] = "***"
+    return source
+
+
+def hide_dict_value(source, keys):
+    if not isinstance(source, dict) or not isinstance(keys, list):
+        return source
+    _s = copy.deepcopy(source)
+    target = hide_value(_s, keys)
+    return target
