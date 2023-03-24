@@ -68,6 +68,12 @@ class MyTaskSet(TaskSet):
     def scene_insert_delete_flush(self):
         self.client.scene_insert_delete_flush(self.tasks_params.scene_insert_delete_flush.params)
 
+    def scene_insert_partition(self):
+        self.client.scene_insert_partition(self.tasks_params.scene_insert_partition.params)
+
+    def scene_test_partition(self):
+        self.client.scene_test_partition(self.tasks_params.scene_test_partition.params)
+
     def iterate_search(self):
         self.client.iterate_search(self.tasks_params.iterate_search.params)
 

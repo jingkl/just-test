@@ -1,4 +1,5 @@
 import sys
+import time
 from numpy import NaN
 
 from pymilvus import Partition
@@ -8,6 +9,7 @@ from client.util.api_request import api_request
 from client.common.common_param import InterfaceResponse
 
 from parameters.input_params import param_info
+from utils.util_log import log
 
 
 TIMEOUT = None
@@ -51,6 +53,22 @@ class ApiPartitionWrapper:
     @property
     def num_entities(self):
         return self.partition.num_entities
+
+    def _flush(self):
+        log.warning("[ApiCollectionWrapper] Collection has not attribute 'flush', call 'num_entities' instead.")
+        start = time.perf_counter()
+        _res = self.partition.num_entities
+        rt = time.perf_counter() - start
+        return InterfaceResponse(_res, rt,  True, True)
+
+    def flush(self, check_task=None, check_items=None, **kwargs):
+        if not hasattr(self.partition, "flush"):
+            return self._flush()
+
+        func_name = sys._getframe().f_code.co_name
+        res, res_result = api_request([self.partition.flush], **kwargs)
+        check_result = ResponseChecker(res, func_name, check_task, check_items, res_result, **kwargs).run()
+        return InterfaceResponse(*res, res_result, check_result)
 
     def drop(self, check_task=None, check_items=None, **kwargs):
         func_name = sys._getframe().f_code.co_name

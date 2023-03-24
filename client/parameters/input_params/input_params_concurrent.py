@@ -215,6 +215,34 @@ class ConcurrentParams(CommonParams):
                            "random_id": random_id, "random_vector": random_vector, "varchar_filled": varchar_filled}}
 
     @staticmethod
+    def params_scene_insert_partition(weight=1, data_size="1m", ni=5, with_flush=False, timeout: int = 30):
+        """
+        data_size: total insert data_size data into partition
+        ni: insert ni into the created partition per time
+        timeout: Optional[int] = 30
+        """
+        return {"type": "scene_insert_partition", "weight": weight,
+                "params": {"data_size": data_size, "ni": ni, "with_flush": with_flush, "timeout": timeout}}
+
+    @staticmethod
+    def params_scene_test_partition(weight=1, data_size="3k", ni=3000, nq=1, search_param={"ef": 64}, limit=10, expr=None,
+                                    output_fields=None, guarantee_timestamp=None, timeout: int = 120):
+        """
+        data_size: total insert data_size data into partition
+        ni: insert ni into the created partition per time
+        search_param: search param
+        limit: search limit
+        expr: search expr
+        output_fields: search output_fields
+        guarantee_timestamp: guarantee_timestamp
+        timeout: Optional[int] = 120, insert and search timeout
+        """
+        return {"type": "scene_test_partition", "weight": weight,
+                "params": {"data_size": data_size, "ni": ni, "nq": nq, "search_param": search_param, "limit": limit,
+                           "expr": expr, "output_fields": output_fields, "guarantee_timestamp": guarantee_timestamp,
+                           "timeout": timeout}}
+
+    @staticmethod
     def params_iterate_search(weight=1, nq=1, top_k=1, search_param={"ef": 64}, guarantee_timestamp: int = None,
                               timeout: int = 60):
         """

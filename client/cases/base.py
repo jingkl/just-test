@@ -17,8 +17,9 @@ from client.common.common_type import DefaultValue as dv
 from client.parameters.params import (
     ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, ConcurrentTaskRelease,
     ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest,
+    ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskSceneInsertPartition,
     ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskIterateSearch, ConcurrentTaskLoadSearchRelease,
-    ConcurrentTaskSceneSearchTest)
+    ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition)
 from client.parameters.params_name import (
     reset, groups, max_length, dim, transfer_nodes, transfer_replicas, resource_groups)
 from client.util.api_request import func_time_catch
@@ -147,7 +148,7 @@ class Base:
         log.info("[Base] Collection schema: {0}".format(self.collection_schema))
 
     def insert_batch(self, vectors, ids, data_size, varchar_filled=False, collection_obj: callable = None,
-                     collection_schema=None, log_level=LogLevel.INFO, insert_scalars_params={}):
+                     collection_schema=None, log_level=LogLevel.INFO, insert_scalars_params={}, **kwargs):
         if self.collection_schema is None and collection_schema is None:
             self.get_collection_schema()
             collection_schema = self.collection_schema
@@ -162,12 +163,13 @@ class Base:
         log.customize(log_level)(
             "[Base] Start inserting, ids: {0} - {1}, data size: {2}".format(ids[0], ids[-1], data_size))
         collection_obj = collection_obj or self.collection_wrap
-        res = collection_obj.insert(entities)
+        res = collection_obj.insert(entities, **kwargs)
         self.count_entities(collection_obj=collection_obj, log_level=log_level)
         return res.rt
 
     def insert(self, data_type, dim, size, ni, varchar_filled=False, collection_obj: callable = None,
-               collection_schema=None, collection_name="", log_level=LogLevel.INFO, scalars_params={}):
+               collection_schema=None, collection_name="", log_level=LogLevel.INFO,
+               scalars_params={}, **kwargs):
         data_size = parser_data_size(size)
         data_size_format = str(format(data_size, ',d'))
         ni_cunt = int(data_size / int(ni))
@@ -187,12 +189,14 @@ class Base:
 
             for i in range(0, ni_cunt):
                 batch_rt += self.insert_batch(gen_vectors(ni, dim), next(_loop_ids), data_size_format, varchar_filled,
-                                              collection_obj, collection_schema, log_level, next(insert_scalars_params))
+                                              collection_obj, collection_schema, log_level,
+                                              next(insert_scalars_params), **kwargs)
 
             if last_insert > 0:
                 last_rt = self.insert_batch(
                     gen_vectors(last_insert, dim), next(_loop_ids)[:last_insert], data_size_format,
-                    varchar_filled, collection_obj, collection_schema, log_level, next(insert_scalars_params))
+                    varchar_filled, collection_obj, collection_schema, log_level,
+                    next(insert_scalars_params), **kwargs)
 
         else:
             # files = get_file_list(data_size, dim, data_type)
@@ -210,7 +214,8 @@ class Base:
                         if len(vectors) >= ni:
                             break
                 batch_rt += self.insert_batch(vectors[:ni], next(_loop_ids), data_size_format, varchar_filled,
-                                              collection_obj, collection_schema, log_level, next(insert_scalars_params))
+                                              collection_obj, collection_schema, log_level,
+                                              next(insert_scalars_params), **kwargs)
                 vectors = vectors[ni:]
 
             if last_insert > 0:
@@ -221,7 +226,7 @@ class Base:
                             break
                 last_rt = self.insert_batch(
                     vectors[:last_insert], next(_loop_ids)[:last_insert], data_size_format, varchar_filled,
-                    collection_obj, collection_schema, log_level, next(insert_scalars_params))
+                    collection_obj, collection_schema, log_level, next(insert_scalars_params), **kwargs)
 
         total_time = round((batch_rt + last_rt), Precision.COMMON_PRECISION)
         ips = round(int(data_size) / total_time, Precision.INSERT_PRECISION)
@@ -514,15 +519,59 @@ class Base:
         if collection_obj.has_index().response:
             metric_type = collection_obj.index().response.params.get("metric_type")
             index_type = collection_obj.index().response.params.get("index_type")
+            index_param = collection_obj.index().response.params.get("params")
 
-        log.debug("[Base] Collection {0} field_name: {1}, dim:{2}, metric_type:{3}, index_type:{4}".format(
-            collection_obj.name, field_name, dim, metric_type, index_type))
-        return field_name, dim, metric_type, index_type
+        log.debug("[Base] Collection {0} field_name: {1}, dim:{2}, metric_type:{3}, index_type:{4}, index_param: {5}".format(
+            collection_obj.name, field_name, dim, metric_type, index_type, index_param))
+        return field_name, dim, metric_type, index_type, index_param
 
     def check_collection_load(self, collection_name: str):
         res = self.utility_wrap.loading_progress(collection_name, check_task=CheckTasks.ignore_check)
         result = res.response.get("loading_progress", "") if res.res_result else ""
         return True if result == "100%" else False
+
+    def create_partition(self, collection, partition_name, partition_obj: callable = None, log_level=LogLevel.DEBUG):
+        partition_obj = partition_obj or self.partition_wrap
+        partition_obj.init_partition(collection, partition_name)
+        log.customize(log_level)(
+            "[Base] Create partition {0} of collection({1})".format(partition_name, collection.name))
+
+    def drop_partition(self, partition_obj: callable = None, log_level=LogLevel.DEBUG):
+        partition_obj = partition_obj or self.partition_wrap
+        partition_obj.drop()
+        log.customize(log_level)("[Base] Drop partition {0})".format(partition_obj.name))
+
+    def count_partition_entities(self, partition_obj: callable = None, log_level=LogLevel.DEBUG):
+        partition_obj = partition_obj or self.partition_wrap
+        counts = partition_obj.num_entities
+        log.customize(log_level)("[Base] Partition {0} num entities: ({1})".format(partition_obj.name, counts))
+
+    def flush_partition(self, partition_obj: callable = None, log_level=LogLevel.DEBUG):
+        partition_obj = partition_obj or self.partition_wrap
+        log.customize(log_level)("[Base] Start flush partition {}".format(partition_obj.name))
+        return partition_obj.flush()
+
+    def load_partition(self, partition_obj: callable = None, replica_number=1, log_level=LogLevel.DEBUG, **kwargs):
+        partition_obj = partition_obj or self.partition_wrap
+        kwargs = self.get_resource_groups(**kwargs)
+        log.customize(log_level)(
+            f"[Base] Start load partition {partition_obj.name},replica_number:{replica_number},kwargs:{kwargs}")
+        return partition_obj.load(replica_number=replica_number, **kwargs)
+
+    def release_partition(self, partition_obj: callable = None, log_level=LogLevel.DEBUG, **kwargs):
+        partition_obj = partition_obj or self.partition_wrap
+        log.customize(log_level)("[Base] Start release partition {}".format([partition_obj.name]))
+        return partition_obj.release(**kwargs)
+
+    def search_partition(self, data, anns_field, param, limit, expr=None, partition_obj: callable = None, timeout=300,
+                         log_level=LogLevel.DEBUG, **kwargs):
+        """
+        :return: (result, rt), check_result
+        """
+        partition_obj = partition_obj or self.partition_wrap
+        msg = "[Base] Params of search: nq:{0}, anns_field:{1}, param:{2}, limit:{3}, expr:\"{4}\", kwargs:{5}"
+        log.customize(log_level)(msg.format(len(data), anns_field, param, limit, expr, kwargs))
+        return partition_obj.search(data, anns_field, param, limit, expr=expr, timeout=timeout, **kwargs)
 
     def concurrent_search(self, params: ConcurrentTaskSearch):
         if params.random_data:
@@ -608,6 +657,79 @@ class Base:
         return "[Base] concurrent_scene_insert_delete_flush finished."
 
     @func_time_catch()
+    def concurrent_scene_insert_partition(self, params: ConcurrentTaskSceneInsertPartition):
+        log_level = LogLevel.DEBUG
+        _dim = self.get_collection_params(self.collection_wrap)[1]
+        partition_obj = ApiPartitionWrapper()
+        partition_name = gen_unique_str("p")
+
+        # create partition
+        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj, log_level=log_level)
+
+        # insert vectors
+        self.insert(data_type="local", dim=_dim, size=params.data_size, ni=params.ni,
+                    collection_obj=self.collection_wrap, collection_name=self.collection_wrap.name,
+                    collection_schema=self.collection_schema, log_level=log_level, partition_name=partition_name, **params.obj_params)
+
+        if params.with_flush:
+            self.flush_partition(partition_obj, log_level)
+
+        # drop partition
+        self.drop_partition(partition_obj, log_level)
+        # time.sleep(5)
+        return "[Base] concurrent_scene_insert_partition finished."
+
+    @func_time_catch()
+    def concurrent_scene_test_partition(self, params: ConcurrentTaskSceneTestPartition):
+        log_level = LogLevel.DEBUG
+        _vector_field_name, _dim, _metric_type, _index_type, _index_param = self.get_collection_params(self.collection_wrap)
+        partition_obj = ApiPartitionWrapper()
+        partition_name = gen_unique_str("sp")
+
+        # create partition
+        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj, log_level)
+
+        # insert vectors
+        self.insert(data_type="local", dim=_dim, size=params.data_size, ni=params.ni,
+                    collection_obj=self.collection_wrap, collection_name=self.collection_wrap.name,
+                    collection_schema=self.collection_schema, log_level=log_level, partition_name=partition_name,
+                    **params.obj_params)
+
+        # flush partition
+        self.flush_partition(partition_obj, log_level)
+
+        # count vectors
+        self.count_partition_entities(partition_obj, log_level)
+
+        # create index again
+        self.build_index(field_name=_vector_field_name, index_type=_index_type,
+                         metric_type=_metric_type, index_param=_index_param, log_level=log_level)
+
+        # load and search
+        self.load_partition(partition_obj, log_level=log_level)
+
+        # search partition
+        data = gen_vectors(nb=params.nq, dim=_dim)
+        self.search_partition(data=data, anns_field=_vector_field_name,
+                              param=params.search_param, limit=params.limit,
+                              partition_obj=partition_obj,
+                              check_task=CheckTasks.assert_result, log_level=log_level, **params.obj_params)
+
+        # release partition and search failed
+        self.release_partition(partition_obj, log_level=log_level, timeout=params.timeout, check_task=CheckTasks.assert_result)
+        self.search_partition(data=data, anns_field=_vector_field_name,
+                              param=params.search_param, limit=params.limit,
+                              partition_obj=partition_obj,
+                              check_task=CheckTasks.err_res, check_items={dv.err_code: 0,
+                                                                          dv.err_msg: f"was not loaded into memory"},
+                              log_level=log_level, **params.obj_params)
+
+        # drop partition
+        log.customize(log_level)("[Base] Drop partition {}.".format(partition_name))
+        self.drop_partition(partition_obj, log_level)
+        return "[Base] concurrent_scene_test_partition finished."
+
+    @func_time_catch()
     def concurrent_debug(self, params: DataClassBase):
         # time.sleep(random.randint(1, 6))
         # time.sleep(round(random.random(), 4))
@@ -628,7 +750,7 @@ class Base:
                 c.init_collection(i)
 
                 # get collection params
-                params.anns_field, dim, metric_type, index_type = self.get_collection_params(c)
+                params.anns_field, dim, metric_type, index_type, _ = self.get_collection_params(c)
 
                 if params.anns_field and dim and metric_type and index_type:
                     # set search vectors

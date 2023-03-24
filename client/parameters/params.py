@@ -410,6 +410,71 @@ class ConcurrentTaskSceneInsertDeleteFlush(DataClassBase):
 
 
 @dataclass
+class ConcurrentInputParamsSceneInsertPartition(DataClassBase):
+    data_size: Optional[str] = "1m"
+    ni: Optional[int] = 5
+    with_flush: Optional[bool] = False
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
+class ConcurrentTaskSceneInsertPartition(DataClassBase):
+    data_size: Optional[str] = "1m"
+    ni: Optional[int] = 5
+    with_flush: Optional[bool] = False
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    @property
+    def obj_params(self):
+        return {"timeout": self.timeout}
+
+
+@dataclass
+class ConcurrentInputParamsSceneTestPartition(DataClassBase):
+    # collection and insert
+    data_size: Optional[int] = 3000
+    ni: Optional[int] = 3000
+
+    # search
+    nq: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+    limit: Optional[int] = 10
+    expr: Optional[str] = None
+    output_fields: Optional[list] = None
+    guarantee_timestamp: Optional[int] = None
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
+class ConcurrentTaskSceneTestPartition(DataClassBase):
+    # collection and insert
+    data_size: Optional[int] = 3000
+    ni: Optional[int] = 3000
+
+    # search
+    nq: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+    limit: Optional[int] = 10
+    expr: Optional[str] = None
+    output_fields: Optional[list] = None
+    guarantee_timestamp: Optional[int] = None
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    @property
+    def search_obj_params(self):
+        return {
+            "expr": self.expr,
+            "output_fields": self.output_fields,
+            "guarantee_timestamp": self.guarantee_timestamp,
+            "timeout": self.timeout
+        }
+
+    @property
+    def obj_params(self):
+        return {"timeout": self.timeout}
+
+
+@dataclass
 class ConcurrentInputParamsIterateSearch(DataClassBase):
     nq: Optional[int] = 1
     top_k: Optional[int] = 10
@@ -538,6 +603,10 @@ class ConcurrentTasksParams:
     scene_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneTest})
     scene_insert_delete_flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(
         **{"params": ConcurrentTaskSceneInsertDeleteFlush})
+    scene_insert_partition: Optional[ConcurrentObjParams] = ConcurrentObjParams(
+        **{"params": ConcurrentTaskSceneInsertPartition})
+    scene_test_partition: Optional[ConcurrentObjParams] = ConcurrentObjParams(
+        **{"params": ConcurrentTaskSceneTestPartition})
     iterate_search: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskIterateSearch})
     load_search_release: Optional[ConcurrentObjParams] = ConcurrentObjParams(
         **{"params": ConcurrentTaskLoadSearchRelease})

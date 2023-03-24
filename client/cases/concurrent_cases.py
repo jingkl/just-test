@@ -22,7 +22,9 @@ from client.parameters.params import (
     ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsSceneInsertDeleteFlush,
     ConcurrentTaskIterateSearch, ConcurrentInputParamsIterateSearch,
     ConcurrentTaskLoadSearchRelease, ConcurrentInputParamsLoadSearchRelease,
-    ConcurrentTaskSceneSearchTest, ConcurrentInputParamsSceneSearchTest
+    ConcurrentTaskSceneSearchTest, ConcurrentInputParamsSceneSearchTest,
+    ConcurrentTaskSceneInsertPartition, ConcurrentInputParamsSceneInsertPartition,
+    ConcurrentInputParamsSceneTestPartition, ConcurrentTaskSceneTestPartition
 )
 
 from utils.util_log import log
@@ -206,6 +208,14 @@ class ConcurrentClientBase(CommonCases):
 
         elif req_type == pn.load_release:
             return ConcurrentTaskLoadRelease(**ConcurrentInputParamsLoadRelease(**req_params).to_dict)
+
+        elif req_type == pn.scene_insert_partition:
+            params = ConcurrentInputParamsSceneInsertPartition(**req_params).to_dict
+            return ConcurrentTaskSceneInsertPartition(**params)
+
+        elif req_type == pn.scene_test_partition:
+            params = ConcurrentInputParamsSceneTestPartition(**req_params).to_dict
+            return ConcurrentTaskSceneTestPartition(**params)
 
         elif req_type == pn.iterate_search:
             params = ConcurrentInputParamsIterateSearch(**req_params)
