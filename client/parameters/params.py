@@ -47,6 +47,7 @@ class ParamsFormat:
         load_params: {replica_number: ([type(int())], OPTION),
                       refresh: ([type(bool())], OPTION),
                       resource_groups: ([type(int()), type(list())], OPTION)},
+        query_params: {output_fields: ([type(list()), type(None)], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int())], OPTION),
@@ -205,12 +206,14 @@ class ConcurrentTaskSearch(DataClassBase):
 class ConcurrentInputParamsQuery(DataClassBase):
     ids: Optional[list] = None
     expr: Optional[str] = None
+    output_fields: Optional[list] = None
     timeout: Optional[int] = DefaultValue.default_timeout
 
 
 @dataclass
 class ConcurrentTaskQuery(DataClassBase):
     expr: str
+    output_fields: Optional[list] = None
     timeout: Optional[int] = DefaultValue.default_timeout
 
 

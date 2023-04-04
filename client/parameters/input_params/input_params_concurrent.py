@@ -109,13 +109,15 @@ class ConcurrentParams(CommonParams):
                            "guarantee_timestamp": guarantee_timestamp, "timeout": timeout, "random_data": random_data}}
 
     @staticmethod
-    def params_query(weight=1, ids: list = None, expr: str = None, timeout: int = 60):
+    def params_query(weight=1, ids: list = None, expr: str = None, output_fields: list = None, timeout: int = 60):
         """
         ids: Optional[list] = None
         expr: Optional[str] = None
+        output_fields: Optional[list] = None
         timeout: Optional[int] = 60
         """
-        return {"type": "query", "weight": weight, "params": {"ids": ids, "expr": expr, "timeout": timeout}}
+        return {"type": "query", "weight": weight,
+                "params": {"ids": ids, "expr": expr, "output_fields": output_fields, "timeout": timeout}}
 
     @staticmethod
     def params_flush(weight=1, timeout: int = 30):

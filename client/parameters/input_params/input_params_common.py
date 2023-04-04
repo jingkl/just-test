@@ -13,7 +13,7 @@ class CommonParams:
              other_fields=None,
              replica_number=None, resource_groups=None,
              index_type=None, index_param=None,
-             ids=None, query_expr=None,
+             ids=None, query_expr=None, output_fields=None,
              search_param=None, search_expr=None, top_k=None, nq=None, guarantee_timestamp=None,
              reset=False, groups=None):
         dataset_params = {pn.dataset_name: dataset_name,
@@ -28,7 +28,8 @@ class CommonParams:
         index_params = {pn.index_type: index_type,
                         pn.index_param: index_param}
         query_params = {pn.ids: ids,
-                        pn.expr: query_expr}
+                        pn.expr: query_expr,
+                        pn.output_fields: output_fields}
         search_params = {pn.top_k: top_k,
                          pn.nq: nq,
                          pn.search_param: search_param,
@@ -100,32 +101,32 @@ class LoadParams(CommonParams):
 
 class QueryParams(CommonParams):
     def params_scene_query_ids_local(self, dataset_name=pn.DatasetsName.LOCAL, dim=512, dataset_size="50m",
-                                     ni_per=30000, ids=[1, 100, 10000], req_run_counts=10,
+                                     ni_per=30000, ids=[1, 100, 10000], output_fields=None, req_run_counts=10,
                                      index_type=pn.IndexTypeName.FLAT, index_param={},
                                      metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                    ids=ids, req_run_counts=req_run_counts, index_type=index_type,
-                                   index_param=index_param, metric_type=metric_type)
+                                   index_param=index_param, metric_type=metric_type, output_fields=output_fields)
         log.debug("[QueryByIdsParams] Default params of params_scene_query_ids_local: {0}".format(default_params))
         return default_params
 
     def params_scene_query_ids_sift(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="1m",
-                                    ni_per=50000, ids=[1, 100, 10000], req_run_counts=10,
+                                    ni_per=50000, ids=[1, 100, 10000], output_fields=None, req_run_counts=10,
                                     index_type=pn.IndexTypeName.FLAT, index_param={},
                                     metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                    ids=ids, req_run_counts=req_run_counts, index_type=index_type,
-                                   index_param=index_param, metric_type=metric_type)
+                                   index_param=index_param, metric_type=metric_type, output_fields=output_fields)
         log.debug("[QueryByIdsParams] Default params of params_scene_query_ids_sift: {0}".format(default_params))
         return default_params
 
     def params_scene_query_expr_sift(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="1m",
                                      ni_per=50000, query_expr="id in [1, 100, 1000, 10000]", req_run_counts=10,
-                                     index_type=pn.IndexTypeName.FLAT, index_param={},
+                                     index_type=pn.IndexTypeName.FLAT, index_param={}, output_fields=None,
                                      metric_type=pn.MetricsTypeName.L2):
         default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                    query_expr=query_expr, req_run_counts=req_run_counts, index_type=index_type,
-                                   index_param=index_param, metric_type=metric_type)
+                                   index_param=index_param, metric_type=metric_type, output_fields=output_fields)
         log.debug("[QueryByIdsParams] Default params of params_scene_query_expr_sift: {0}".format(default_params))
         return default_params
 

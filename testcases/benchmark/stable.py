@@ -2,6 +2,7 @@ import pytest
 
 from client.cases import ConcurrentClientBase
 from client.common.common_func import parser_data_size  # do not remove
+from client.common.common_type import DefaultValue as dv
 from client.parameters.input_params import ConcurrentParams
 import client.parameters.input_params.define_params as cdp
 from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar
@@ -47,6 +48,40 @@ class TestConcurrentCases(PerfTemplate):
         self.concurrency_template(
             input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, old_version_format=False,
             case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_ivf_sq8_query_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            [ConcurrentParams.params_query(weight=2, expr="0 < id < 100",
+                                           output_fields=[dv.default_float_vec_field_name])],
+            concurrent_number=[100], during_time=600, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_ivf_sq8_query_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            [ConcurrentParams.params_query(weight=2, expr="0 < id < 100",
+                                           output_fields=[dv.default_float_vec_field_name])],
+            concurrent_number=[100], during_time=600, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -186,6 +221,56 @@ class TestConcurrentCases(PerfTemplate):
         default_case_params = ConcurrentParams().params_scene_concurrent(
             concurrent_tasks, concurrent_number=[20], during_time="1h", interval=20, dataset_size="10m",
             **cdp.DefaultIndexParams.DISKANN)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_hnsw_dql_filter_insert_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=30, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_flush(weight=5),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_hnsw_dql_filter_insert_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=30, nq=10, top_k=10, search_param={"ef": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_flush(weight=5),
+            ConcurrentParams.params_insert(weight=1, nb=1, random_id=True, random_vector=True)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="5h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
 
         self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                                   deploy_mode=deploy_mode, old_version_format=False,

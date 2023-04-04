@@ -313,7 +313,7 @@ class Base:
         log.customize(log_level)("[Base] Number of vectors in the collection({0}): {1}".format(collection_obj.name,
                                                                                                counts))
 
-    def query(self, ids=None, expr=None):
+    def query(self, ids=None, expr=None, **kwargs):
         """
         :return: (result, rt), check_result
         """
@@ -327,8 +327,8 @@ class Base:
         elif expr is not None:
             _expr = expr
 
-        log.info("[Base] expr of query: \"{0}\"".format(_expr))
-        return self.collection_wrap.query(expr=_expr)
+        log.info("[Base] expr of query: \"{0}\", kwargs:{1}".format(_expr, kwargs))
+        return self.collection_wrap.query(expr=_expr, **kwargs)
 
     def search(self, data, anns_field, param, limit, expr=None, timeout=300, **kwargs):
         """
