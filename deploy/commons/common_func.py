@@ -7,6 +7,7 @@ import json
 import copy
 import string
 import math
+import unicodedata
 from yaml import full_load, dump
 from typing import Union
 
@@ -450,14 +451,23 @@ def check_dict_keys(target: dict, keys: list):
     return True
 
 
-def get_resource_isdigit(key):
-    if str(key).isdigit():
+def is_number(key):
+    try:
         return float(key)
-    elif str(key).endswith("Gi") and str(key).strip("Gi").isdigit():
-        return math.ceil(float(str(key).strip("Gi")))
-    elif str(key).endswith("Mi") and str(key).strip("Mi").isdigit():
-        return math.ceil(float(str(key).strip("Mi")) / 1024.0)
-    raise ValueError(f"[get_resource_isdigit] Can not parser key:{key}, please check.")
+    except ValueError:
+        pass
+    try:
+        return unicodedata.numeric(key)
+    except (TypeError, ValueError) as e:
+        raise Exception(f"[is_number] Can't parser number: {key} to a number, please check: {e}")
+
+
+def get_resource_isdigit(key):
+    if str(key).endswith("Gi"):
+        return math.ceil(float(is_number(str(key).strip("Gi"))))
+    elif str(key).endswith("Mi"):
+        return math.ceil(float(is_number(str(key).strip("Mi"))) / 1024.0)
+    return is_number(key)
 
 
 def _find_key(resource: dict, key: str, values: list):
@@ -484,6 +494,7 @@ def find_key(resource: dict, key: str, values: list):
 
 def add_resource(resource_dict, key):
     res = find_key(resource_dict, key, [])
+    log.debug(f"[add_resource] Find out all keys: {res}")
     return sum(res)
 
 
@@ -515,18 +526,20 @@ def gen_db_resource(source: dict, class_id: list, db_raw: list, oversold: list):
                 r_l = v["resources"]["limits"]
                 r_r = v["resources"]["requests"]
 
-                if "cpu" in r_l and "memory" in r_l and str(r_l["cpu"]).isdigit() and int(r_l["cpu"]) != 0:
-                    l_cpu = int(r_l["cpu"])
+                # if "cpu" in r_l and "memory" in r_l and str(r_l["cpu"]).isdigit() and int(r_l["cpu"]) != 0:
+                if "cpu" in r_l and "memory" in r_l:
+                    l_cpu = is_number(eval(str(r_l["cpu"]).replace("m", ' / 1000')))
                     # l_memory = eval(str(r_l["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
-                    l_memory = eval(str(r_l["memory"]).replace("Mi", '').replace("Gi", '*1024.0'))
+                    l_memory = is_number(eval(str(r_l["memory"]).replace("Mi", '').replace("Gi", '*1024.0')))
 
-                    fouram_id = "fouram-{0}c{1}g".format(l_cpu, int(l_memory / 1024))
-                    class_id.append((fouram_id, int(l_cpu), int(l_memory)))
-                    db_raw.append((k, int(v["replicas"]), fouram_id, int(l_cpu), int(l_memory)))
-                    if "cpu" in r_r and "memory" in r_r and str(r_r["cpu"]).isdigit() and int(r_r["cpu"]) != 0:
-                        r_cpu = int(r_r["cpu"])
+                    fouram_id = "fouram-{0}c{1}g".format(l_cpu, is_number(l_memory / 1024.0))
+                    class_id.append((fouram_id, l_cpu, l_memory))
+                    db_raw.append((k, int(v["replicas"]), fouram_id, l_cpu, l_memory))
+                    # if "cpu" in r_r and "memory" in r_r and str(r_r["cpu"]).isdigit() and int(r_r["cpu"]) != 0:
+                    if "cpu" in r_r and "memory" in r_r:
+                        r_cpu = is_number(eval(str(r_r["cpu"]).replace("m", ' / 1000')))
                         # r_memory = eval(str(r_r["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
-                        r_memory = eval(str(r_r["memory"]).replace("Mi", '').replace("Gi", '*1024.0'))
+                        r_memory = is_number(eval(str(r_r["memory"]).replace("Mi", '').replace("Gi", '*1024.0')))
                         extend_field = {
                             "requests.cpu": str('%.3f' % r_cpu),
                             "requests.memory": str('%.1f' % r_memory),

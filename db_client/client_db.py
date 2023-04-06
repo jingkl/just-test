@@ -31,6 +31,7 @@ class DBClient:
                 self.influx_db_clients.append(ClientInfluxDB(**v))
             else:
                 log.error("[DBClient] Failed to initialize influxDB client : {}".format(k))
+        log.debug("[DBClient] InfluxDB client V2 numbers: {}".format(len(self.influx_db_clients)))
 
     def _influx_v1(self):
         for k, v in self.config.influx_db_v1_params.items():
@@ -39,6 +40,7 @@ class DBClient:
                 self.influx_db_v1_clients.append(ClientInfluxDBV1(**v))
             else:
                 log.error("[DBClient] Failed to initialize influxDBV1 client : {}".format(k))
+        log.debug("[DBClient] InfluxDB client V1 numbers: {}".format(len(self.influx_db_v1_clients)))
 
     def _mongo_db(self):
         for k, v in self.config.mongo_db_servers.items():
@@ -46,6 +48,7 @@ class DBClient:
                 self.mongo_db_clients.append(ClientMongoDB(v, dbname=self.db_name, collection_name="configs"))
             else:
                 log.error("[DBClient] Failed to initialize MongoDB client : {}".format(k))
+        log.debug("[DBClient] MongoDB client numbers: {}".format(len(self.mongo_db_clients)))
 
     def init_clients(self):
         self._influx_v1()

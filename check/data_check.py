@@ -44,7 +44,7 @@ class DataCheck:
 
     @staticmethod
     def data_parser_format(old_version_format=True):
-        _data_time = r'\[\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\]'
+        _data_time = r'\[\s{0,10}\d+-\d+-\d+\s+\d+:\d+:\d+.\d+\s{0,10}\]'
         _log_level = r'\[\s+INFO\]\s+-\s+'
         _name = r'[a-z]+\s+[a-zA-Z0-9._-]+\s+'
         _int = r'\d+'
