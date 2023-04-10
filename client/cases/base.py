@@ -2,7 +2,7 @@ import time
 import random
 from pprint import pformat
 
-from pymilvus import DefaultConfig
+from pymilvus import DefaultConfig, DataType
 
 from client.client_base import (
     ApiConnectionsWrapper, ApiCollectionWrapper, ApiIndexWrapper, ApiPartitionWrapper, ApiCollectionSchemaWrapper,
@@ -10,14 +10,15 @@ from client.client_base import (
 from client.common.common_func import (
     gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, parser_data_size, loop_files, loop_ids,
     gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, loop_gen_files, remove_list_values,
-    parser_segment_info, gen_scalar_values)
+    parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params)
 from client.common.common_param import TransferNodesParams, TransferReplicasParams
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
 from client.parameters.params import (
     ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, ConcurrentTaskRelease,
     ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest,
-    ConcurrentTaskSceneInsertDeleteFlush, DataClassBase)
+    ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskIterateSearch, ConcurrentTaskLoadSearchRelease,
+    ConcurrentTaskSceneSearchTest)
 from client.parameters.params_name import (
     reset, groups, max_length, dim, transfer_nodes, transfer_replicas, resource_groups)
 from client.util.api_request import func_time_catch
@@ -131,9 +132,9 @@ class Base:
         log.customize(log_level)("[Base] Start flush collection {}".format(collection_obj.name))
         return collection_obj.flush()
 
-    def load_collection(self, replica_number=1, **kwargs):
+    def load_collection(self, replica_number=1, log_level=LogLevel.INFO, **kwargs):
         kwargs = self.get_resource_groups(**kwargs)
-        log.info(
+        log.customize(log_level)(
             f"[Base] Start load collection {self.collection_wrap.name},replica_number:{replica_number},kwargs:{kwargs}")
         return self.collection_wrap.load(replica_number=replica_number, **kwargs)
 
@@ -498,6 +499,31 @@ class Base:
         self.show_collection_replicas()
         self.show_segment_info(collection_name=collection_name, shards_num=shards_num)
 
+    @staticmethod
+    def get_collection_params(collection_obj: ApiCollectionWrapper):
+        field_name = None
+        dim = None
+        metric_type = None
+        index_type = None
+
+        for field in collection_obj.schema.fields:
+            if field.dtype in [DataType.FLOAT_VECTOR, DataType.BINARY_VECTOR]:
+                field_name = field.name
+                dim = field.params.get("dim")
+
+        if collection_obj.has_index().response:
+            metric_type = collection_obj.index().response.params.get("metric_type")
+            index_type = collection_obj.index().response.params.get("index_type")
+
+        log.debug("[Base] Collection {0} field_name: {1}, dim:{2}, metric_type:{3}, index_type:{4}".format(
+            collection_obj.name, field_name, dim, metric_type, index_type))
+        return field_name, dim, metric_type, index_type
+
+    def check_collection_load(self, collection_name: str):
+        res = self.utility_wrap.loading_progress(collection_name, check_task=CheckTasks.ignore_check)
+        result = res.response.get("loading_progress", "") if res.res_result else ""
+        return True if result == "100%" else False
+
     def concurrent_search(self, params: ConcurrentTaskSearch):
         if params.random_data:
             params.data = gen_vectors(nb=len(params.data), dim=len(params.data[0]))
@@ -588,3 +614,83 @@ class Base:
         time.sleep(float(random.randint(1, 20) / 1000.0))
         log.debug("[Base] DataClassBase.obj_params: {}".format(params.obj_params))
         return "[Base] concurrent_debug finished."
+
+    @func_time_catch()
+    def concurrent_iterate_search(self, params: ConcurrentTaskIterateSearch):
+        # only for checking collections that can be searched
+        log_level = LogLevel.DEBUG
+
+        collections = self.utility_wrap.list_collections().response
+        log.customize(log_level)("[Base] Start iterate search over all collections {}".format(collections))
+        for i in collections:
+            if self.check_collection_load(i):
+                c = ApiCollectionWrapper()
+                c.init_collection(i)
+
+                # get collection params
+                params.anns_field, dim, metric_type, index_type = self.get_collection_params(c)
+
+                if params.anns_field and dim and metric_type and index_type:
+                    # set search vectors
+                    params.data = gen_vectors(nb=params.nq, dim=dim)
+                    params.param = update_dict_value(params.param,
+                                                     {"metric_type": metric_type,
+                                                      "params": get_default_search_params(index_type=index_type)})
+
+                    c.search(check_task=CheckTasks.assert_result, **params.obj_params)
+                else:
+                    log.customize(log_level)(f"[Base] Can't get collection: {i} params.")
+        return "[Base] concurrent_iterate_search finished."
+
+    @func_time_catch()
+    def concurrent_load_search_release(self, params: ConcurrentTaskLoadSearchRelease):
+        self.collection_wrap.load(check_task=CheckTasks.assert_result, replica_number=params.replica_number,
+                                  timeout=params.timeout)
+
+        if params.random_data:
+            params.data = gen_vectors(nb=len(params.data), dim=len(params.data[0]))
+        self.collection_wrap.search(check_task=CheckTasks.assert_result, **params.obj_params)
+
+        self.collection_wrap.release(check_task=CheckTasks.assert_result, timeout=params.timeout)
+        return "[Base] concurrent_load_search_release finished."
+
+    @func_time_catch()
+    def concurrent_scene_search_test(self, params: ConcurrentTaskSceneSearchTest):
+        log_level = LogLevel.DEBUG
+        collection_obj = ApiCollectionWrapper()
+        collection_name = gen_unique_str()
+
+        # create collection
+        self.create_collection(collection_obj=collection_obj, collection_name=collection_name,
+                               vector_field_name=params.vector_field_name, dim=params.dim, log_level=log_level)
+        time.sleep(1)
+
+        # insert vectors
+        self.insert(data_type="local", dim=params.dim, size=params.data_size, ni=params.nb,
+                    collection_obj=collection_obj, collection_name=collection_name,
+                    collection_schema=collection_obj.schema.to_dict(), log_level=log_level)
+
+        # flush collection
+        self.flush_collection(collection_obj=collection_obj, log_level=log_level)
+
+        # count vectors
+        self.count_entities(collection_obj=collection_obj, log_level=log_level)
+
+        # build index
+        self.build_index(field_name=params.vector_field_name, index_type=params.index_type,
+                         metric_type=params.metric_type, index_param=params.index_param,
+                         collection_name=collection_name, collection_obj=collection_obj, log_level=log_level)
+
+        # load collection
+        self.load_collection(replica_number=params.replica_number, log_level=log_level)
+
+        # search collection
+        self.collection_wrap.search(gen_vectors(nb=params.nq, dim=params.dim), anns_field=params.vector_field_name,
+                                    param=update_dict_value({"metric_type": params.metric_type}, params.search_param),
+                                    limit=params.top_k, check_task=CheckTasks.assert_result)
+
+        # drop collection
+        log.customize(log_level)("[Base] Drop collection {}.".format(collection_name))
+        self.utility_wrap.drop_collection(collection_name)
+
+        return "[Base] concurrent_scene_search_test finished."

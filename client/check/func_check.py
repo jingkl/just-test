@@ -34,6 +34,9 @@ class ResponseChecker:
             # Connection interface response check
             result = self.check_value_equal(self.response, self.func_name, self.check_items)
 
+        elif self.check_task == CheckTasks.ignore_check:
+            result = self.succ
+
         # Add check_items here if something new need verify
 
         return result

@@ -916,3 +916,16 @@ def check_object(_object, default_value: list = [None]):
     if _object not in default_value:
         return True
     raise Exception(f"[check_object] Object:{_object} check failed in default_value:{default_value}")
+
+
+def get_default_search_params(index_type: str):
+    all_index_types = {
+        pn.IndexTypeName.IVF_SQ8: {"nprobe": 64},
+        pn.IndexTypeName.IVF_FLAT: {"nprobe": 64},
+        pn.IndexTypeName.IVF_PQ: {"nprobe": 64},
+        pn.IndexTypeName.FLAT: {},
+        pn.IndexTypeName.HNSW: {"ef": 64},
+        pn.IndexTypeName.DISKANN: {"search_list": 20},
+        pn.IndexTypeName.AUTOINDEX: {"level": 1}
+    }
+    return all_index_types.get(index_type, {})

@@ -31,15 +31,15 @@ class ParamsBase:
 class ParamsFormat:
     base = {
         dataset_params: {
-                         # collection_name is replaced by collection_name in collection_params
-                         # collection_name: ([type(str())], OPTION),
-                         vector_field_name: ([type(str())], OPTION),
-                         dim: ([type(int())], OPTION),
-                         max_length: ([type(int())], OPTION),
-                         varchar_filled: ([type(bool())], OPTION),
-                         scalars_index: ([type(list())], OPTION),
-                         scalars_params: ([type(dict())], OPTION),
-                         show_resource_groups: ([type(bool())], OPTION)},
+            # collection_name is replaced by collection_name in collection_params
+            # collection_name: ([type(str())], OPTION),
+            vector_field_name: ([type(str())], OPTION),
+            dim: ([type(int())], OPTION),
+            max_length: ([type(int())], OPTION),
+            varchar_filled: ([type(bool())], OPTION),
+            scalars_index: ([type(list())], OPTION),
+            scalars_params: ([type(dict())], OPTION),
+            show_resource_groups: ([type(bool())], OPTION)},
         collection_params: {other_fields: ([type(list())], OPTION),
                             shards_num: ([type(int())], OPTION),
                             varchar_id: ([type(bool())], OPTION),
@@ -410,6 +410,114 @@ class ConcurrentTaskSceneInsertDeleteFlush(DataClassBase):
 
 
 @dataclass
+class ConcurrentInputParamsIterateSearch(DataClassBase):
+    nq: Optional[int] = 1
+    top_k: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {})
+    guarantee_timestamp: Optional[int] = None
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
+class ConcurrentTaskIterateSearch(DataClassBase):
+    nq: Optional[int] = 1
+
+    limit: Optional[int] = 10
+
+    # need to update
+    param: Optional[dict] = field(default_factory=lambda: {})
+    data: Optional[list] = None
+    anns_field: Optional[str] = None
+
+    guarantee_timestamp: Optional[int] = None
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    @property
+    def obj_params(self):
+        _p = copy.deepcopy(self.to_dict)
+        del _p["nq"]
+        if _p["guarantee_timestamp"] is None:
+            del _p["guarantee_timestamp"]
+        return _p
+
+
+@dataclass
+class ConcurrentInputParamsLoadSearchRelease(DataClassBase):
+    nq: int
+    top_k: int
+    search_param: dict
+    expr: Optional[str] = None
+    guarantee_timestamp: Optional[int] = None
+    random_data: Optional[bool] = False
+
+    replica_number: Optional[int] = 1
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+
+@dataclass
+class ConcurrentTaskLoadSearchRelease(DataClassBase):
+    data: list
+    anns_field: str
+    param: dict
+    limit: int
+    expr: Optional[str] = None
+    guarantee_timestamp: Optional[int] = None
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    # for load
+    replica_number: Optional[int] = 1
+
+    # other params
+    random_data: Optional[bool] = False
+
+    @property
+    def obj_params(self):
+        _p = copy.deepcopy(self.to_dict)
+        del _p["random_data"]
+        del _p["replica_number"]
+        if _p["guarantee_timestamp"] is None:
+            del _p["guarantee_timestamp"]
+        return _p
+
+
+@dataclass
+class ConcurrentInputParamsSceneSearchTest(DataClassBase):
+    dim: Optional[int] = DefaultValue.default_dim
+    data_size: Optional[int] = 3000
+    nb: Optional[int] = 3000
+    index_type: Optional[str] = IndexTypeName.IVF_SQ8
+    index_param: Optional[dict] = field(default_factory=lambda: {'nlist': 2048})
+    metric_type: Optional[str] = MetricsTypeName.L2
+
+    # load
+    replica_number: Optional[int] = 1
+
+    # search
+    nq: Optional[int] = 1
+    top_k: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+
+@dataclass
+class ConcurrentTaskSceneSearchTest(DataClassBase):
+    dim: Optional[int] = DefaultValue.default_dim
+    data_size: Optional[int] = 3000
+    nb: Optional[int] = 3000
+    index_type: Optional[str] = IndexTypeName.IVF_SQ8
+    index_param: Optional[dict] = field(default_factory=lambda: {'nlist': 2048})
+    metric_type: Optional[str] = MetricsTypeName.L2
+    vector_field_name: Optional[str] = get_default_field_name()
+
+    # load
+    replica_number: Optional[int] = 1
+
+    # search
+    nq: Optional[int] = 1
+    top_k: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+
+@dataclass
 class ConcurrentObjParams(DataClassBase):
     type: str = ""
     weight: int = 0
@@ -430,6 +538,10 @@ class ConcurrentTasksParams:
     scene_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneTest})
     scene_insert_delete_flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(
         **{"params": ConcurrentTaskSceneInsertDeleteFlush})
+    iterate_search: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskIterateSearch})
+    load_search_release: Optional[ConcurrentObjParams] = ConcurrentObjParams(
+        **{"params": ConcurrentTaskLoadSearchRelease})
+    scene_search_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneSearchTest})
 
     @property
     def all_obj(self):

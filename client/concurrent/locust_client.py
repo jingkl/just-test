@@ -67,3 +67,12 @@ class MyTaskSet(TaskSet):
 
     def scene_insert_delete_flush(self):
         self.client.scene_insert_delete_flush(self.tasks_params.scene_insert_delete_flush.params)
+
+    def iterate_search(self):
+        self.client.iterate_search(self.tasks_params.iterate_search.params)
+
+    def load_search_release(self):
+        self.client.load_search_release(self.tasks_params.load_search_release.params)
+
+    def scene_search_test(self):
+        self.client.scene_search_test(self.tasks_params.scene_search_test.params)

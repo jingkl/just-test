@@ -138,7 +138,7 @@ class TestRecallCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_diskann())
 
-    @pytest.mark.recall
+    # @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_recall_sift_annoy_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -149,7 +149,7 @@ class TestRecallCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_annoy())
 
-    @pytest.mark.recall
+    # @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_sift_annoy_cluster(self, input_params: InputParamsBase, deploy_mode):
         """

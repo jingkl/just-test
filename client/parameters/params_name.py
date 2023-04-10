@@ -24,6 +24,9 @@ insert = "insert"
 delete = "delete"
 scene_test = "scene_test"
 scene_insert_delete_flush = "scene_insert_delete_flush"
+iterate_search = "iterate_search"
+load_search_release = "load_search_release"
+scene_search_test = "scene_search_test"
 
 # all used
 timeout = "timeout"

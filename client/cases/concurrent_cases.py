@@ -19,7 +19,11 @@ from client.parameters.params import (
     ConcurrentTaskInsert, ConcurrentInputParamsInsert,
     ConcurrentTaskDelete, ConcurrentInputParamsDelete,
     ConcurrentTaskSceneTest, ConcurrentInputParamsSceneTest,
-    ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsSceneInsertDeleteFlush)
+    ConcurrentTaskSceneInsertDeleteFlush, ConcurrentInputParamsSceneInsertDeleteFlush,
+    ConcurrentTaskIterateSearch, ConcurrentInputParamsIterateSearch,
+    ConcurrentTaskLoadSearchRelease, ConcurrentInputParamsLoadSearchRelease,
+    ConcurrentTaskSceneSearchTest, ConcurrentInputParamsSceneSearchTest
+)
 
 from utils.util_log import log
 
@@ -151,6 +155,18 @@ class ConcurrentClientBase(CommonCases):
         10. clean all collections or not
         """
 
+    @staticmethod
+    def iterate_search_param_analysis(_search_params: dict):
+        _params = copy.deepcopy(_search_params)
+        top_k = _params.pop(pn.top_k)
+        search_param = _params.pop(pn.search_param)
+
+        result = update_dict_value({
+            "param": {"params": search_param},
+            "limit": top_k,
+        }, _params)
+        return result
+
     def parser_concurrent_params(self):
         return gen_combinations(self.params_obj.concurrent_params)
 
@@ -190,6 +206,21 @@ class ConcurrentClientBase(CommonCases):
 
         elif req_type == pn.load_release:
             return ConcurrentTaskLoadRelease(**ConcurrentInputParamsLoadRelease(**req_params).to_dict)
+
+        elif req_type == pn.iterate_search:
+            params = ConcurrentInputParamsIterateSearch(**req_params)
+            result = self.iterate_search_param_analysis(_search_params=params.to_dict)
+            return ConcurrentTaskIterateSearch(**result)
+
+        elif req_type == pn.load_search_release:
+            params = ConcurrentInputParamsLoadSearchRelease(**req_params)
+            result, nq, top_k, expr, other_params = \
+                self.search_param_analysis(_search_params=params.to_dict, default_field_name=vector_field_name,
+                                           metric_type=metric_type)
+            return ConcurrentTaskLoadSearchRelease(**result)
+
+        elif req_type == pn.scene_search_test:
+            return ConcurrentTaskSceneSearchTest(**ConcurrentInputParamsSceneSearchTest(**req_params).to_dict)
 
         return DataClassBase()
 

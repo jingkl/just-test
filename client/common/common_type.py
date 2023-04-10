@@ -18,6 +18,7 @@ class CheckTasks:
     err_res = "error_response"
     ccr = "check_connection_result"
     assert_result = "assert_result"
+    ignore_check = "ignore_check"
 
 
 class CaseLabel:

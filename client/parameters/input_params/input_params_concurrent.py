@@ -214,6 +214,67 @@ class ConcurrentParams(CommonParams):
                 "params": {"insert_length": insert_length, "delete_length": delete_length,
                            "random_id": random_id, "random_vector": random_vector, "varchar_filled": varchar_filled}}
 
+    @staticmethod
+    def params_iterate_search(weight=1, nq=1, top_k=1, search_param={"ef": 64}, guarantee_timestamp: int = None,
+                              timeout: int = 60):
+        """
+        nq: Optional[int] = 1
+        top_k: Optional[int] = 10
+        search_param: Optional[dict] = field(default_factory=lambda: {})
+        guarantee_timestamp: Optional[int] = None
+        timeout: Optional[int] = DefaultValue.default_timeout
+        """
+        return {"type": "iterate_search", "weight": weight,
+                "params": {"nq": nq, "top_k": top_k, "search_param": search_param,
+                           "guarantee_timestamp": guarantee_timestamp, "timeout": timeout}}
+
+    @staticmethod
+    def params_load_search_release(weight=1, nq=1, top_k=1, search_param={"ef": 64}, expr: str = None,
+                                   guarantee_timestamp: int = None, timeout: int = 60, random_data=True,
+                                   replica_number=1):
+        """
+        nq: int
+        top_k: int
+        search_param: dict
+        expr: Optional[str] = None
+        guarantee_timestamp: Optional[int] = None
+        timeout: Optional[int] = 60
+        random_data: Optional[bool] = False
+
+        # for load
+        replica_number: Optional[int] = 1
+        """
+        return {"type": "load_search_release", "weight": weight,
+                "params": {"nq": nq, "top_k": top_k, "search_param": search_param, "expr": expr,
+                           "guarantee_timestamp": guarantee_timestamp, "timeout": timeout, "random_data": random_data,
+                           "replica_number": replica_number}}
+
+    @staticmethod
+    def params_scene_search_test(weight=1, dim=DefaultValue.default_dim, data_size=3000, nb=3000,
+                                 index_type=pn.IndexTypeName.IVF_SQ8, index_param={'nlist': 2048},
+                                 metric_type=pn.MetricsTypeName.L2, replica_number=1, nq=1, top_k=10,
+                                 search_param={'nprobe': 16}):
+        """
+        dim: Optional[int] = DefaultValue.default_dim
+        data_size: Optional[int] = 3000
+        nb: Optional[int] = 3000
+        index_type: Optional[str] = "IVF_SQ8"
+        index_param: Optional[dict] = field(default_factory=lambda: {'nlist': 2048})
+        metric_type: Optional[str] = "L2"
+
+        # load
+        replica_number: Optional[int] = 1
+
+        # search
+        nq: Optional[int] = 1
+        top_k: Optional[int] = 10
+        search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+        """
+        return {"type": "scene_search_test", "weight": weight,
+                "params": {"dim": dim, "data_size": data_size, "nb": nb, "index_type": index_type,
+                           "index_param": index_param, "metric_type": metric_type, "replica_number": replica_number,
+                           "nq": nq, "top_k": top_k, "search_param": search_param}}
+
     def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
                                 dataset_size="1m", ni_per=50000, other_fields=[],
                                 replica_number=None, resource_groups=None,
@@ -226,7 +287,7 @@ class ConcurrentParams(CommonParams):
         base_default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                         other_fields=other_fields, metric_type=metric_type, index_type=index_type,
                                         index_param=index_param, reset=reset, groups=groups,
-                                        replica_number=replica_number, resource_groups=resource_groups,)
+                                        replica_number=replica_number, resource_groups=resource_groups)
         concurrent_default_params = self.concurrent_base(concurrent_number=concurrent_number, during_time=during_time,
                                                          interval=interval, concurrent_tasks=concurrent_tasks,
                                                          spawn_rate=spawn_rate)
