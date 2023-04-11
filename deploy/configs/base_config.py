@@ -137,3 +137,6 @@ class BaseConfig(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def set_custom_config(self, *args, **kwargs):
         log.debug("[BaseConfig] Set custom config: {}".format(args, kwargs))
+
+    def get_deploy_mode(self, *args, **kwargs):
+        return {}

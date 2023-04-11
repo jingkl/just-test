@@ -225,8 +225,8 @@ class ConcurrentParams(CommonParams):
                 "params": {"data_size": data_size, "ni": ni, "with_flush": with_flush, "timeout": timeout}}
 
     @staticmethod
-    def params_scene_test_partition(weight=1, data_size="3k", ni=3000, nq=1, search_param={"ef": 64}, limit=10, expr=None,
-                                    output_fields=None, guarantee_timestamp=None, timeout: int = 120):
+    def params_scene_test_partition(weight=1, data_size="3k", ni=3000, nq=1, search_param={"ef": 64}, limit=10,
+                                    expr=None, output_fields=None, guarantee_timestamp=None, timeout: int = 120):
         """
         data_size: total insert data_size data into partition
         ni: insert ni into the created partition per time
@@ -278,12 +278,13 @@ class ConcurrentParams(CommonParams):
                            "replica_number": replica_number}}
 
     @staticmethod
-    def params_scene_search_test(weight=1, dim=DefaultValue.default_dim, data_size=3000, nb=3000,
+    def params_scene_search_test(weight=1, dim=DefaultValue.default_dim, shards_num=2, data_size=3000, nb=3000,
                                  index_type=pn.IndexTypeName.IVF_SQ8, index_param={'nlist': 2048},
                                  metric_type=pn.MetricsTypeName.L2, replica_number=1, nq=1, top_k=10,
-                                 search_param={'nprobe': 16}):
+                                 search_param={'nprobe': 16}, search_counts=1, new_connect=False):
         """
         dim: Optional[int] = DefaultValue.default_dim
+        shards_num: Optional[int] = DefaultValue.default_shards_num
         data_size: Optional[int] = 3000
         nb: Optional[int] = 3000
         index_type: Optional[str] = "IVF_SQ8"
@@ -297,14 +298,19 @@ class ConcurrentParams(CommonParams):
         nq: Optional[int] = 1
         top_k: Optional[int] = 10
         search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+        # other
+        search_counts: Optional[int] = 1
+        new_connect: Optional[bool] = False
         """
         return {"type": "scene_search_test", "weight": weight,
-                "params": {"dim": dim, "data_size": data_size, "nb": nb, "index_type": index_type,
-                           "index_param": index_param, "metric_type": metric_type, "replica_number": replica_number,
-                           "nq": nq, "top_k": top_k, "search_param": search_param}}
+                "params": {"dim": dim, "shards_num": shards_num, "data_size": data_size, "nb": nb,
+                           "index_type": index_type, "index_param": index_param, "metric_type": metric_type,
+                           "replica_number": replica_number, "nq": nq, "top_k": top_k, "search_param": search_param,
+                           "search_counts": search_counts, "new_connect": new_connect}}
 
     def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
-                                dataset_size="1m", ni_per=50000, other_fields=[],
+                                dataset_size="1m", ni_per=50000, other_fields=[], shards_num=2,
                                 replica_number=None, resource_groups=None,
                                 reset=False, groups=None,
                                 metric_type=pn.MetricsTypeName.L2, index_type=pn.IndexTypeName.HNSW,
@@ -313,8 +319,8 @@ class ConcurrentParams(CommonParams):
         dataset_size = parser_data_size(dataset_size)
 
         base_default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
-                                        other_fields=other_fields, metric_type=metric_type, index_type=index_type,
-                                        index_param=index_param, reset=reset, groups=groups,
+                                        other_fields=other_fields, shards_num=shards_num, metric_type=metric_type,
+                                        index_type=index_type, index_param=index_param, reset=reset, groups=groups,
                                         replica_number=replica_number, resource_groups=resource_groups)
         concurrent_default_params = self.concurrent_base(concurrent_number=concurrent_number, during_time=during_time,
                                                          interval=interval, concurrent_tasks=concurrent_tasks,

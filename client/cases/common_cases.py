@@ -564,9 +564,8 @@ class Search(CommonCases):
         s_params = self.parser_search_params()
         params_list = []
         for s_p in s_params:
-            search_params, nq, top_k, expr, other_params = self.search_param_analysis(s_p, vector_default_field_name,
-                                                                                      self.params_obj.dataset_params[
-                                                                                          pn.metric_type])
+            search_params, nq, top_k, expr, other_params = self.search_param_analysis(
+                s_p, vector_default_field_name, self.params_obj.dataset_params[pn.metric_type])
 
             actual_params_used = copy.deepcopy(params)
             actual_params_used[pn.search_params] = update_dict_value({

@@ -33,6 +33,7 @@ class ParamsFormat:
         dataset_params: {
             # collection_name is replaced by collection_name in collection_params
             # collection_name: ([type(str())], OPTION),
+            metric_type: ([type(str())], OPTION),
             vector_field_name: ([type(str())], OPTION),
             dim: ([type(int())], OPTION),
             max_length: ([type(int())], OPTION),
@@ -482,10 +483,14 @@ class ConcurrentInputParamsIterateSearch(DataClassBase):
     guarantee_timestamp: Optional[int] = None
     timeout: Optional[int] = DefaultValue.default_timeout
 
+    # other params
+    collection_names: Optional[list] = None
+
 
 @dataclass
 class ConcurrentTaskIterateSearch(DataClassBase):
     nq: Optional[int] = 1
+    collection_names: Optional[list] = None
 
     limit: Optional[int] = 10
 
@@ -501,6 +506,7 @@ class ConcurrentTaskIterateSearch(DataClassBase):
     def obj_params(self):
         _p = copy.deepcopy(self.to_dict)
         del _p["nq"]
+        del _p["collection_names"]
         if _p["guarantee_timestamp"] is None:
             del _p["guarantee_timestamp"]
         return _p
@@ -548,6 +554,7 @@ class ConcurrentTaskLoadSearchRelease(DataClassBase):
 @dataclass
 class ConcurrentInputParamsSceneSearchTest(DataClassBase):
     dim: Optional[int] = DefaultValue.default_dim
+    shards_num: Optional[int] = DefaultValue.default_shards_num
     data_size: Optional[int] = 3000
     nb: Optional[int] = 3000
     index_type: Optional[str] = IndexTypeName.IVF_SQ8
@@ -562,10 +569,15 @@ class ConcurrentInputParamsSceneSearchTest(DataClassBase):
     top_k: Optional[int] = 10
     search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
 
+    # other
+    search_counts: Optional[int] = 1
+    new_connect: Optional[bool] = False
+
 
 @dataclass
 class ConcurrentTaskSceneSearchTest(DataClassBase):
     dim: Optional[int] = DefaultValue.default_dim
+    shards_num: Optional[int] = DefaultValue.default_shards_num
     data_size: Optional[int] = 3000
     nb: Optional[int] = 3000
     index_type: Optional[str] = IndexTypeName.IVF_SQ8
@@ -580,6 +592,10 @@ class ConcurrentTaskSceneSearchTest(DataClassBase):
     nq: Optional[int] = 1
     top_k: Optional[int] = 10
     search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+    # other
+    search_counts: Optional[int] = 1
+    new_connect: Optional[bool] = False
 
 
 @dataclass

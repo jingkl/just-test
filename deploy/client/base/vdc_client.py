@@ -74,17 +74,21 @@ class VDCClient(BaseClient):
             log.info(f"[VDCClient] Upgrade release_name: {release_name}, image_tag: {image_tag}")
             self.client.rm_update_image(image_tag=image_tag)
 
-        if deploy_mode and hasattr(ClassID, deploy_mode):
+        if deploy_mode and hasattr(ClassID, deploy_mode) and eval(f"ClassID.{deploy_mode}"):
             log.info(f"[VDCClient] Upgrade release_name: {release_name}, deploy_mode: {deploy_mode}")
             self.client.modify_instance(class_mode=deploy_mode)
+
+        if milvus_config:
+            log.info(f"[VDCClient] Upgrade release_name: {release_name}, milvus_config: {milvus_config}")
+            self.client.rm_modify_instance_parameters(modify_params_dict=milvus_config)
 
         if server_resource:
             log.info(f"[VDCClient] Upgrade release_name: {release_name}, server_resource: {server_resource}")
             self.client.infra_update_resource(resource=server_resource)
 
-        if milvus_config:
-            log.info(f"[VDCClient] Upgrade release_name: {release_name}, milvus_config: {milvus_config}")
-            self.client.rm_modify_instance_parameters(modify_params_dict=milvus_config)
+        # if milvus_config:
+        #     log.info(f"[VDCClient] Upgrade release_name: {release_name}, milvus_config: {milvus_config}")
+        #     self.client.rm_modify_instance_parameters(modify_params_dict=milvus_config)
 
         log.debug(f"[VDCClient] Release_name: {release_name}, upgrade configs: {body}")
         return True
@@ -160,7 +164,7 @@ class VDCClient(BaseClient):
         self.check_server_and_set_params(release_name=release_name)
 
         # set password
-        param_info.param_secure = True
+        # param_info.param_secure = True
         param_info.param_user = param_info.param_user or 'root'
         param_info.param_password = param_info.param_password or self.client.get_pwd()
 

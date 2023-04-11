@@ -31,7 +31,7 @@ class VDCDeployConfig(BaseConfig):
         if hasattr(ClassID, deploy_mode):
             return deploy_mode
         log.error(f"[VDCDeployConfig] Check deploy mode:{deploy_mode} failed, please check, using:{ClassID.class1cu}")
-        return ClassID.class1cu
+        return get_class_key_name(ClassID, ClassID.class1cu)
 
     def vdc_base_config(self, name=""):
         name = self.release_name or name
@@ -46,6 +46,9 @@ class VDCDeployConfig(BaseConfig):
     def set_image(self, tag=None, repository=DefaultRepository, prefix="nightly-"):
         return {"image_tag": tag,
                 "milvus_tag_prefix": prefix}
+
+    def get_deploy_mode(self, deploy_mode):
+        return {"deploy_mode": self.check_deploy_mode(deploy_mode)}
 
     @staticmethod
     def set_mq(_pulsar: bool = False, _kafka: bool = False):

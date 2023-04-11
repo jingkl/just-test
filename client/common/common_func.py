@@ -286,7 +286,7 @@ def normalize_data(metric_type, X):
         X = preprocessing.normalize(X, axis=1, norm='l2')
         X = X.astype(np.float32)
 
-    elif metric_type == SimilarityMetrics.L2:
+    elif metric_type in [SimilarityMetrics.L2, SimilarityMetrics.COSINE]:
         X = X.astype(np.float32)
 
     elif metric_type in [SimilarityMetrics.Jaccard, SimilarityMetrics.Hamming, SimilarityMetrics.Substructure,
@@ -897,15 +897,15 @@ def parser_segment_info(segment_info, shards_num: int = 2):
         log.warning("[parser_segment_info] The number of segments:%s are less than shards_num:%s" % (
             len(num_rows_list), shards_num))
 
-    _dict = {"count_segment": len(segment_info),
-             "total_vectors": sum(num_rows_list),
-             "max_segment": list_processing(np.max, [num_rows_list], None),
-             "min_segment": list_processing(np.min, [num_rows_list], None),
-             "avg_segment": list_processing(np.mean, [num_rows_list]),
-             "std_segment": list_processing(np.std, [num_rows_list]),
+    _dict = {"segment_counts": len(segment_info),
+             "segment_total_vectors": sum(num_rows_list),
+             "max_segment_raw_count": list_processing(np.max, [num_rows_list], None),
+             "min_segment_raw_count": list_processing(np.min, [num_rows_list], None),
+             "avg_segment_raw_count": list_processing(np.mean, [num_rows_list]),
+             "std_segment_raw_count": list_processing(np.std, [num_rows_list]),
              "shards_num": shards_num,
-             "truncated_avg_segment": list_processing(np.mean, [_num_rows_list]),
-             "truncated_std_segment": list_processing(np.std, [_num_rows_list]),
+             "truncated_avg_segment_raw_count": list_processing(np.mean, [_num_rows_list]),
+             "truncated_std_segment_raw_count": list_processing(np.std, [_num_rows_list]),
              "top_percentile": [{f"TP_{i}": list_processing(np.percentile, [num_rows_list, i])} for i
                                 in [j for j in range(10, 100, 10)]]}
 

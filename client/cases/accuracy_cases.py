@@ -33,10 +33,10 @@ class CommonCases(Base):
         self.params_obj = ParamsBase()
         self.case_report = CasesReport()
 
-    def parsing_file(self, file_name):
+    def parsing_file(self, file_name, metric_type=""):
         src_file = get_source_file(file_name)
         data_set = read_ann_hdf5_file(src_file)
-        metric_type = get_acc_metric_type(file_name)
+        metric_type = metric_type or get_acc_metric_type(file_name)
         vector_type = get_vector_type(file_name.split('-')[0])
 
         self.dataset_neighbors = np.array(data_set[pn.neighbors])
@@ -234,7 +234,9 @@ class AccCases(CommonCases):
         # file parsing
         self.parsing_params(params)
         dataset_file_name = params[pn.dataset_params][pn.dataset_name]
-        metric_type, vector_type = self.parsing_file(dataset_file_name)
+        metric_type, vector_type = self.parsing_file(dataset_file_name,
+                                                     metric_type=self.params_obj.dataset_params.get(pn.metric_type, ""))
+        self.params_obj.dataset_params[pn.metric_type] = metric_type
 
         # prepare collection
         self.prepare_collection(metric_type, vector_type, prepare, rebuild_index, prepare_clean)

@@ -58,24 +58,24 @@ class Base:
     #     log.info("[Base] Start disconnect connection.")
     #     self.remove_connect()
 
-    def connect(self, host=None, port=None, secure=False):
+    def connect(self, host=None, port=None, secure=False, alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
         """ Add a connection and create the connect """
         # remove connect before new connection
-        self.remove_connect()
+        self.remove_connect(alias=alias, log_level=log_level)
         host = host or param_info.param_host
         port = port or param_info.param_port
         secure = secure or param_info.param_secure
 
-        params = {"alias": DefaultConfig.DEFAULT_USING, "host": host, "port": port}
+        params = {"alias": alias, "host": host, "port": port}
         if secure is True:
             params.update({"user": param_info.param_user, "password": param_info.param_password, "secure": True})
-        log.info("[Base] Connection params: {}".format(params))
+        log.customize(log_level)("[Base] Connection params: {}".format(params))
         return self.connection_wrap.connect(**params)
 
-    def remove_connect(self, alias=DefaultConfig.DEFAULT_USING):
+    def remove_connect(self, alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
         """ Disconnect and remove default connect """
         if self.connection_wrap.has_connection(alias=alias).response:
-            log.info("[Base] Disconnect alias: {0}".format(alias))
+            log.customize(log_level)("[Base] Disconnect alias: {0}".format(alias))
             self.connection_wrap.remove_connection(alias=alias)
 
     def create_collection(self, collection_name="", vector_field_name="", schema=None, other_fields=[], shards_num=2,
@@ -133,11 +133,12 @@ class Base:
         log.customize(log_level)("[Base] Start flush collection {}".format(collection_obj.name))
         return collection_obj.flush()
 
-    def load_collection(self, replica_number=1, log_level=LogLevel.INFO, **kwargs):
+    def load_collection(self, replica_number=1, collection_obj: callable = None, log_level=LogLevel.INFO, **kwargs):
+        collection_obj = collection_obj or self.collection_wrap
         kwargs = self.get_resource_groups(**kwargs)
         log.customize(log_level)(
-            f"[Base] Start load collection {self.collection_wrap.name},replica_number:{replica_number},kwargs:{kwargs}")
-        return self.collection_wrap.load(replica_number=replica_number, **kwargs)
+            f"[Base] Start load collection {collection_obj.name},replica_number:{replica_number},kwargs:{kwargs}")
+        return collection_obj.load(replica_number=replica_number, **kwargs)
 
     def release_collection(self):
         log.info("[Base] Start release collection {}".format(self.collection_wrap.name))
@@ -168,12 +169,11 @@ class Base:
         return res.rt
 
     def insert(self, data_type, dim, size, ni, varchar_filled=False, collection_obj: callable = None,
-               collection_schema=None, collection_name="", log_level=LogLevel.INFO,
-               scalars_params={}, **kwargs):
+               collection_schema=None, collection_name="", log_level=LogLevel.INFO, scalars_params={}, **kwargs):
         data_size = parser_data_size(size)
         data_size_format = str(format(data_size, ',d'))
-        ni_cunt = int(data_size / int(ni))
-        last_insert = data_size % int(ni)
+        ni_cunt = int(data_size / int(ni)) if int(ni) != 0 else 0
+        last_insert = data_size % int(ni) if int(ni) != 0 else 0
 
         batch_rt = 0
         last_rt = 0
@@ -189,14 +189,13 @@ class Base:
 
             for i in range(0, ni_cunt):
                 batch_rt += self.insert_batch(gen_vectors(ni, dim), next(_loop_ids), data_size_format, varchar_filled,
-                                              collection_obj, collection_schema, log_level,
-                                              next(insert_scalars_params), **kwargs)
+                                              collection_obj, collection_schema, log_level, next(insert_scalars_params),
+                                              **kwargs)
 
             if last_insert > 0:
                 last_rt = self.insert_batch(
                     gen_vectors(last_insert, dim), next(_loop_ids)[:last_insert], data_size_format,
-                    varchar_filled, collection_obj, collection_schema, log_level,
-                    next(insert_scalars_params), **kwargs)
+                    varchar_filled, collection_obj, collection_schema, log_level, next(insert_scalars_params), **kwargs)
 
         else:
             # files = get_file_list(data_size, dim, data_type)
@@ -214,8 +213,8 @@ class Base:
                         if len(vectors) >= ni:
                             break
                 batch_rt += self.insert_batch(vectors[:ni], next(_loop_ids), data_size_format, varchar_filled,
-                                              collection_obj, collection_schema, log_level,
-                                              next(insert_scalars_params), **kwargs)
+                                              collection_obj, collection_schema, log_level, next(insert_scalars_params),
+                                              **kwargs)
                 vectors = vectors[ni:]
 
             if last_insert > 0:
@@ -229,7 +228,7 @@ class Base:
                     collection_obj, collection_schema, log_level, next(insert_scalars_params), **kwargs)
 
         total_time = round((batch_rt + last_rt), Precision.COMMON_PRECISION)
-        ips = round(int(data_size) / total_time, Precision.INSERT_PRECISION)
+        ips = round(int(data_size) / total_time, Precision.INSERT_PRECISION) if total_time != 0 else 0
         ni_time = round(batch_rt / ni_cunt, Precision.INSERT_PRECISION) if ni_cunt != 0 else 0
         msg = "[Base] Total time of insert: {0}s, average number of vector bars inserted per second: {1}," + \
               " average time to insert {2} vectors per time: {3}s"
@@ -510,6 +509,7 @@ class Base:
         dim = None
         metric_type = None
         index_type = None
+        index_param = None
 
         for field in collection_obj.schema.fields:
             if field.dtype in [DataType.FLOAT_VECTOR, DataType.BINARY_VECTOR]:
@@ -521,7 +521,7 @@ class Base:
             index_type = collection_obj.index().response.params.get("index_type")
             index_param = collection_obj.index().response.params.get("params")
 
-        log.debug("[Base] Collection {0} field_name: {1}, dim:{2}, metric_type:{3}, index_type:{4}, index_param: {5}".format(
+        log.debug("[Base] Collection %s field_name:%s, dim:%s, metric_type:%s, index_type:%s, index_param:%s" % (
             collection_obj.name, field_name, dim, metric_type, index_type, index_param))
         return field_name, dim, metric_type, index_type, index_param
 
@@ -539,7 +539,7 @@ class Base:
     def drop_partition(self, partition_obj: callable = None, log_level=LogLevel.DEBUG):
         partition_obj = partition_obj or self.partition_wrap
         partition_obj.drop()
-        log.customize(log_level)("[Base] Drop partition {0})".format(partition_obj.name))
+        log.customize(log_level)("[Base] Drop partition {0} done.".format(partition_obj.name))
 
     def count_partition_entities(self, partition_obj: callable = None, log_level=LogLevel.DEBUG):
         partition_obj = partition_obj or self.partition_wrap
@@ -664,30 +664,33 @@ class Base:
         partition_name = gen_unique_str("p")
 
         # create partition
-        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj, log_level=log_level)
+        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj=partition_obj,
+                              log_level=log_level)
 
         # insert vectors
         self.insert(data_type="local", dim=_dim, size=params.data_size, ni=params.ni,
                     collection_obj=self.collection_wrap, collection_name=self.collection_wrap.name,
-                    collection_schema=self.collection_schema, log_level=log_level, partition_name=partition_name, **params.obj_params)
+                    collection_schema=self.collection_schema, log_level=log_level, partition_name=partition_name,
+                    **params.obj_params)
 
         if params.with_flush:
             self.flush_partition(partition_obj, log_level)
 
         # drop partition
         self.drop_partition(partition_obj, log_level)
-        # time.sleep(5)
         return "[Base] concurrent_scene_insert_partition finished."
 
     @func_time_catch()
     def concurrent_scene_test_partition(self, params: ConcurrentTaskSceneTestPartition):
         log_level = LogLevel.DEBUG
-        _vector_field_name, _dim, _metric_type, _index_type, _index_param = self.get_collection_params(self.collection_wrap)
+        _vector_field_name, _dim, _metric_type, _index_type, _index_param = self.get_collection_params(
+            self.collection_wrap)
         partition_obj = ApiPartitionWrapper()
         partition_name = gen_unique_str("sp")
 
         # create partition
-        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj, log_level)
+        self.create_partition(self.collection_wrap.collection, partition_name, partition_obj=partition_obj,
+                              log_level=log_level)
 
         # insert vectors
         self.insert(data_type="local", dim=_dim, size=params.data_size, ni=params.ni,
@@ -696,10 +699,10 @@ class Base:
                     **params.obj_params)
 
         # flush partition
-        self.flush_partition(partition_obj, log_level)
+        self.flush_partition(partition_obj, log_level=log_level)
 
         # count vectors
-        self.count_partition_entities(partition_obj, log_level)
+        self.count_partition_entities(partition_obj, log_level=log_level)
 
         # create index again
         self.build_index(field_name=_vector_field_name, index_type=_index_type,
@@ -710,22 +713,19 @@ class Base:
 
         # search partition
         data = gen_vectors(nb=params.nq, dim=_dim)
-        self.search_partition(data=data, anns_field=_vector_field_name,
-                              param=params.search_param, limit=params.limit,
-                              partition_obj=partition_obj,
-                              check_task=CheckTasks.assert_result, log_level=log_level, **params.obj_params)
+        self.search_partition(data=data, anns_field=_vector_field_name, param=params.search_param, limit=params.limit,
+                              partition_obj=partition_obj, check_task=CheckTasks.assert_result, log_level=log_level,
+                              **params.obj_params)
 
         # release partition and search failed
-        self.release_partition(partition_obj, log_level=log_level, timeout=params.timeout, check_task=CheckTasks.assert_result)
-        self.search_partition(data=data, anns_field=_vector_field_name,
-                              param=params.search_param, limit=params.limit,
-                              partition_obj=partition_obj,
-                              check_task=CheckTasks.err_res, check_items={dv.err_code: 0,
-                                                                          dv.err_msg: f"was not loaded into memory"},
+        self.release_partition(partition_obj, log_level=log_level, timeout=params.timeout,
+                               check_task=CheckTasks.assert_result)
+        self.search_partition(data=data, anns_field=_vector_field_name, param=params.search_param, limit=params.limit,
+                              partition_obj=partition_obj, check_task=CheckTasks.err_res,
+                              check_items={dv.err_code: 0, dv.err_msg: f"was not loaded into memory"},
                               log_level=log_level, **params.obj_params)
 
         # drop partition
-        log.customize(log_level)("[Base] Drop partition {}.".format(partition_name))
         self.drop_partition(partition_obj, log_level)
         return "[Base] concurrent_scene_test_partition finished."
 
@@ -742,7 +742,7 @@ class Base:
         # only for checking collections that can be searched
         log_level = LogLevel.DEBUG
 
-        collections = self.utility_wrap.list_collections().response
+        collections = params.collection_names or self.utility_wrap.list_collections().response
         log.customize(log_level)("[Base] Start iterate search over all collections {}".format(collections))
         for i in collections:
             if self.check_collection_load(i):
@@ -761,7 +761,7 @@ class Base:
 
                     c.search(check_task=CheckTasks.assert_result, **params.obj_params)
                 else:
-                    log.customize(log_level)(f"[Base] Can't get collection: {i} params.")
+                    log.warning(f"[Base] Can't get collection: {i} params, please check.")
         return "[Base] concurrent_iterate_search finished."
 
     @func_time_catch()
@@ -782,9 +782,16 @@ class Base:
         collection_obj = ApiCollectionWrapper()
         collection_name = gen_unique_str()
 
+        # connect params
+        connect_using = "default"
+        if params.new_connect:
+            connect_using = collection_name
+            self.connect(alias=connect_using, log_level=log_level)
+
         # create collection
         self.create_collection(collection_obj=collection_obj, collection_name=collection_name,
-                               vector_field_name=params.vector_field_name, dim=params.dim, log_level=log_level)
+                               shards_num=params.shards_num, vector_field_name=params.vector_field_name, dim=params.dim,
+                               using=connect_using, log_level=log_level)
         time.sleep(1)
 
         # insert vectors
@@ -804,15 +811,26 @@ class Base:
                          collection_name=collection_name, collection_obj=collection_obj, log_level=log_level)
 
         # load collection
-        self.load_collection(replica_number=params.replica_number, log_level=log_level)
+        self.load_collection(replica_number=params.replica_number, collection_obj=collection_obj, log_level=log_level)
 
         # search collection
-        self.collection_wrap.search(gen_vectors(nb=params.nq, dim=params.dim), anns_field=params.vector_field_name,
-                                    param=update_dict_value({"metric_type": params.metric_type}, params.search_param),
-                                    limit=params.top_k, check_task=CheckTasks.assert_result)
+        search_results = []
+        log.customize(log_level)("[Base] Search collection {}.".format(collection_obj.name))
+        for i in range(params.search_counts):
+            res = collection_obj.search(
+                gen_vectors(nb=params.nq, dim=params.dim), anns_field=params.vector_field_name,
+                param={"metric_type": params.metric_type, "params": params.search_param},
+                limit=params.top_k, check_task=CheckTasks.assert_result)
+            search_results.append(res.check_result)
 
         # drop collection
         log.customize(log_level)("[Base] Drop collection {}.".format(collection_name))
-        self.utility_wrap.drop_collection(collection_name)
+        self.utility_wrap.drop_collection(collection_name, using=connect_using)
+
+        if params.new_connect:
+            self.remove_connect(alias=connect_using, log_level=log_level)
+
+        if params.search_counts > sum(search_results):
+            raise Exception("[Base] Search of concurrent_scene_search_test failed, please check.")
 
         return "[Base] concurrent_scene_search_test finished."

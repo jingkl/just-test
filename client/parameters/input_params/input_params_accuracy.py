@@ -8,11 +8,12 @@ from utils.util_log import log
 class AccParams:
 
     @staticmethod
-    def base(dataset_name, index_type, index_param, search_param, expr=None, top_k=[10], nq=[10000],
+    def base(dataset_name, index_type, index_param, search_param, expr=None, top_k=[10], nq=[10000], metric_type="",
              guarantee_timestamp=None, other_fields=[], replica_number=1, ni_per=10000, dim=dv.default_dim):
         dataset_params = {pn.dataset_name: dataset_name,
                           pn.ni_per: ni_per,
-                          pn.dim: dim}
+                          pn.dim: dim,
+                          pn.metric_type: metric_type}
         collection_params = {pn.other_fields: other_fields}
         load_params = {pn.replica_number: replica_number}
         index_params = {pn.index_type: index_type,
@@ -128,7 +129,7 @@ class AccParams:
         return default_params
 
     def glove_200_angular_hnsw(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
-                               index_type=pn.IndexTypeName.HNSW, m=36, ef_construction=500, ef=None):
+                               index_type=pn.IndexTypeName.HNSW, m=36, ef_construction=500, ef=None, metric_type=""):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
@@ -136,20 +137,32 @@ class AccParams:
         search_param = {"ef": ef}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param, dim=200)
+                                   search_param=search_param, dim=200, metric_type=metric_type)
         log.debug("[AccParams] Default params of glove_200_angular_hnsw: {0}".format(default_params))
         return default_params
 
     def glove_200_angular_ivf_flat(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
-                                   index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None):
+                                   index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None, metric_type=""):
         index_param = {"nlist": nlist}
 
         nprobe = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512] if nprobe is None else nprobe
         search_param = {"nprobe": nprobe}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param, dim=200)
+                                   search_param=search_param, dim=200, metric_type=metric_type)
         log.debug("[AccParams] Default params of glove_200_angular_ivf_flat: {0}".format(default_params))
+        return default_params
+
+    def glove_200_angular_diskann(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
+                                  index_type=pn.IndexTypeName.DISKANN, search_list=None, metric_type=""):
+        index_param = {}
+
+        search_list = [10, 15, 20, 30, 40, 150, 170, 200, 230, 260] if search_list is None else search_list
+        search_param = {"search_list": search_list}
+
+        default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
+                                   search_param=search_param, dim=200, metric_type=metric_type)
+        log.debug("[AccParams] Default params of glove_200_angular_diskann: {0}".format(default_params))
         return default_params
 
     def glove_200_angular_auto_index(self, dataset_name=pn.AccDatasetsName.glove_200_angular,

@@ -29,8 +29,7 @@ class ApiPartitionWrapper:
     def partition(self, value):
         self._partition = value
 
-    def init_partition(self, collection, name, description="",
-                       check_task=None, check_items=None, **kwargs):
+    def init_partition(self, collection, name, description="", check_task=None, check_items=None, **kwargs):
         """ In order to distinguish the same name of partition """
         func_name = sys._getframe().f_code.co_name
         res, res_result = api_request([Partition, collection, name, description], **kwargs)

@@ -35,6 +35,7 @@ class LogLevel:
 
 class DefaultValue:
     default_dim = 128
+    default_shards_num = 2
     default_max_length = 256  # 65535
     default_desc = ""
 
@@ -64,6 +65,7 @@ class DefaultValue:
 class SimilarityMetrics:
     L2 = "L2"
     IP = "IP"
+    COSINE = "COSINE"
     Jaccard = "JACCARD"
     Tanimoto = "TANIMOTO"
     Hamming = "HAMMING"

@@ -179,7 +179,7 @@ def execute_funcs(funcs: List[tuple]):
 
 def truncated_output(context, row_length=300):
     _str = str(context)
-    return _str[0:row_length] + '......' if len(_str) > row_length else _str
+    return _str[:row_length] + '......' + _str[-row_length:] if len(_str) > row_length * 2 else _str
 
 
 def check_deploy_config(deploy_tool, configs):

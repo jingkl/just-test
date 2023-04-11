@@ -4,6 +4,7 @@ from client.cases import ConcurrentClientBase
 from client.common.common_func import parser_data_size  # do not remove
 from client.common.common_type import DefaultValue as dv
 from client.parameters.input_params import ConcurrentParams
+from client.parameters import params_name as pn
 import client.parameters.input_params.define_params as cdp
 from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar
 from deploy.configs.default_configs import NodeResource, SetDependence
@@ -226,6 +227,40 @@ class TestConcurrentCases(PerfTemplate):
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_ivf_sq8_dql_filter_insert_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "10w"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=1, nq=10, top_k=10, search_param={"nprobe": 16},
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(weight=1, expr="0 < id < 100", ),
+            ConcurrentParams.params_insert(weight=9, nb=5, random_id=True, random_vector=True),
+            ConcurrentParams.params_scene_search_test(weight=9, new_connect=True)
+        ]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[100], during_time="1h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], shards_num=16, **cdp.DefaultIndexParams.IVF_SQ8)
+
+        node_resources = [
+            NodeResource(nodes=[proxy], replicas=16),
+            NodeResource(nodes=[dataNode], replicas=16, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode],
+                         replicas=6).custom_resource(limits_cpu=8, requests_cpu=2, limits_mem=64, requests_mem=8),
+        ]
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources)
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -500,10 +535,118 @@ class TestConcurrentCases(PerfTemplate):
         default_case_params = ConcurrentParams().params_scene_concurrent(
             concurrent_tasks, concurrent_number=[50], during_time="6h", interval=20, dataset_size="10m", reset=True,
             groups=groups, replica_number=3, resource_groups=3, **cdp.DefaultIndexParams.HNSW)
+
         self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.default_mem, queryNode=3,
                                   deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_score_balance_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        Used to check whether the memory usage of queryNodes is balanced.
+
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        concurrent_tasks = [
+            ConcurrentParams.params_scene_search_test(
+                weight=1, shards_num=5, data_size='1w', nb=10000, replica_number=3,
+                index_type=pn.IndexTypeName.FLAT, index_param={}, nq=10, top_k=100, search_param={"nprobe": 16},
+                search_counts=500000)
+        ]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[100], during_time="5h", interval=20, dataset_size=0, ni_per=0,
+            replica_number=1, **cdp.DefaultIndexParams.HNSW)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=3, mem=8),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=4, mem=16),
+            NodeResource(nodes=[queryNode], replicas=4, cpu=4, mem=16),
+        ]
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources)
+
+    @pytest.mark.locust
+    def test_concurrent_locust_insert_partitions(self, input_params: InputParamsBase):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "5k"
+
+        # concurrent tasks
+        concurrent_tasks = [
+            ConcurrentParams.params_scene_insert_partition(
+                weight=10, data_size='2m', ni=5, with_flush=True, timeout=30),
+            ConcurrentParams.params_release(weight=1)
+        ]
+
+        # concurrent params
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[100], during_time="5h", interval=10, dim=128, dataset_size=data_size,
+            ni_per=5000, **cdp.DefaultIndexParams.HNSW)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=CLUSTER,
+                                  old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER, STANDALONE])
+    def test_concurrent_locust_insert_partitions_sync(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "5k"
+
+        # concurrent tasks
+        concurrent_tasks = [
+            ConcurrentParams.params_scene_insert_partition(
+                weight=10, data_size='10w', ni=1000, with_flush=True, timeout=600),
+            ConcurrentParams.params_release(weight=2, timeout=600)
+        ]
+
+        # concurrent params
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[120], during_time="1h", interval=10, dim=128, dataset_size=data_size,
+            ni_per=5000, **cdp.DefaultIndexParams.HNSW)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=deploy_mode,
+                                  old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_partitions_scene_test(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "1k"
+
+        # concurrent tasks
+        concurrent_tasks = [
+            ConcurrentParams.params_scene_test_partition(weight=1, timeout=600)
+        ]
+
+        # concurrent params
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[2], during_time="10m", interval=10, dim=128, dataset_size=data_size,
+            ni_per=1000, **cdp.DefaultIndexParams.HNSW)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=deploy_mode,
+                                  old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+
+    """ Big data """
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
@@ -714,75 +857,3 @@ class TestConcurrentCases(PerfTemplate):
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params,
                                   node_resources=node_resources, set_dependence=set_dependence)
-
-    @pytest.mark.locust
-    def test_concurrent_locust_insert_partitions(self, input_params: InputParamsBase):
-        """
-        :test steps:
-            1. concurrent test and calculation of RT and QPS
-        """
-        data_size = "5k"
-
-        # concurrent tasks
-        concurrent_tasks = [
-            ConcurrentParams.params_scene_insert_partition(weight=10, data_size='2m', ni=5, with_flush=True, timeout=30),
-            ConcurrentParams.params_release(weight=1)
-        ]
-
-        # concurrent params
-        default_case_params = ConcurrentParams().params_scene_concurrent(
-            concurrent_tasks, concurrent_number=[100], during_time="5h", interval=10, dim=128, dataset_size=data_size, ni_per=5000)
-
-        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=CLUSTER, old_version_format=False,
-                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
-                                  default_case_params=default_case_params)
-
-    @pytest.mark.locust
-    @pytest.mark.parametrize("deploy_mode", [CLUSTER, STANDALONE])
-    def test_concurrent_insert_partitions_sync(self, input_params: InputParamsBase, deploy_mode):
-        """
-        :test steps:
-            1. concurrent test and calculation of RT and QPS
-        """
-        data_size = "5k"
-
-        # concurrent tasks
-        concurrent_tasks = [
-            ConcurrentParams.params_scene_insert_partition(weight=10, data_size='10w', ni=1000, with_flush=False, timeout=600),
-            ConcurrentParams.params_release(weight=2, timeout=600)
-        ]
-
-        # concurrent params
-        default_case_params = ConcurrentParams().params_scene_concurrent(
-            concurrent_tasks, concurrent_number=[120], during_time="1h", interval=10, dim=128, dataset_size=data_size,
-            ni_per=5000)
-
-        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=deploy_mode,
-                                  old_version_format=False,
-                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
-                                  default_case_params=default_case_params)
-
-    @pytest.mark.locust
-    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
-    def test_concurrent_partitions_scene_test(self, input_params: InputParamsBase, deploy_mode):
-        """
-        :test steps:
-            1. concurrent test and calculation of RT and QPS
-        """
-        data_size = "1k"
-
-        # concurrent tasks
-        concurrent_tasks = [
-            ConcurrentParams.params_scene_test_partition(weight=10, timeout=600)
-        ]
-
-        # concurrent params
-        default_case_params = ConcurrentParams().params_scene_concurrent(
-            concurrent_tasks, concurrent_number=[2], during_time="10m", interval=10, dim=128, dataset_size=data_size,
-            ni_per=1000, **cdp.DefaultIndexParams.HNSW)
-
-        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=8, deploy_mode=deploy_mode,
-                                  old_version_format=False,
-                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
-                                  default_case_params=default_case_params)
-

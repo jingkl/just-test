@@ -128,6 +128,7 @@ class DatasetsName:
 class MetricsTypeName:
     L2 = "L2"
     IP = "IP"
+    COSINE = "COSINE"
     Jaccard = "Jaccard"
     Tanimoto = "Tanimoto"
     Hamming = "Hamming"

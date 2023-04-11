@@ -1,7 +1,7 @@
 from pymilvus import DefaultConfig
 
 from deploy.client.base.base_client import BaseClient
-from deploy.commons.common_func import gen_release_name
+from deploy.commons.common_func import gen_release_name, check_file_exist
 from deploy.commons.common_params import default_namespace
 
 from parameters.input_params import param_info
@@ -73,9 +73,10 @@ class CliClient(BaseClient):
         """
         release_name = release_name or self.release_name
         chart = chart if chart != "" else self.chart
-        set_params = set_params if set_params == "" else " --set %s " % set_params
+        if set_params != "":
+            set_params = f" -f {set_params}" if check_file_exist(set_params, out_put=False) else f" --set {set_params}"
 
-        _cmd = f" helm upgrade -n {self.ns} {release_name} {set_params} {chart} {params}"
+        _cmd = f" helm upgrade {self.ns} {set_params} {default_params} {params} {release_name} {chart}"
         res_cmd = CmdExe(_cmd).run_cmd()
         return self.release_name if return_release_name else res_cmd
 

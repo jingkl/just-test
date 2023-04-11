@@ -74,15 +74,15 @@ class TransferReplicasParams:
 
 @dataclass
 class SegmentsAnalysis:
-    count_segment: int
-    total_vectors: int
-    max_segment: int
-    min_segment: int
-    avg_segment: float
-    std_segment: float
+    segment_counts: int
+    segment_total_vectors: int
+    max_segment_raw_count: int
+    min_segment_raw_count: int
+    avg_segment_raw_count: float
+    std_segment_raw_count: float
     shards_num: int
-    truncated_avg_segment: float
-    truncated_std_segment: float
+    truncated_avg_segment_raw_count: float
+    truncated_std_segment_raw_count: float
     top_percentile: List[dict]
 
     @property

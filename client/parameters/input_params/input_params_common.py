@@ -10,7 +10,7 @@ class CommonParams:
 
     @staticmethod
     def base(dataset_name, dim, dataset_size, ni_per, metric_type=None, req_run_counts=None,
-             other_fields=None,
+             other_fields=None, shards_num=2,
              replica_number=None, resource_groups=None,
              index_type=None, index_param=None,
              ids=None, query_expr=None, output_fields=None,
@@ -22,7 +22,8 @@ class CommonParams:
                           pn.ni_per: ni_per,
                           pn.metric_type: metric_type,
                           pn.req_run_counts: req_run_counts}
-        collection_params = {pn.other_fields: other_fields}
+        collection_params = {pn.other_fields: other_fields,
+                             pn.shards_num: shards_num}
         load_params = {pn.replica_number: replica_number,
                        pn.resource_groups: resource_groups}
         index_params = {pn.index_type: index_type,

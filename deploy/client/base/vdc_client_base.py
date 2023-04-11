@@ -36,7 +36,7 @@ class VDCClientBase:
     mysql_params = {}
 
     def __init__(self, instance_name="", kubeconfig=EnvVariable.KUBECONFIG, **kwargs):
-        super().__init__()
+        # super().__init__()
         self.kubeconfig = kubeconfig
 
         self.set_all_property()

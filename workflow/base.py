@@ -132,43 +132,54 @@ class Base:
         log.info("[Base] Service deployed successfully:{0}".format(self.deploy_release_name))
         return self.deploy_release_name
 
-    def upgrade_service(self, release_name=None, deploy_tool=Operator, deploy_mode=STANDALONE, upgrade_config=None):
+    def upgrade_service(self, release_name=None, tag=None, repository=None, deploy_tool=Operator,
+                        deploy_mode=STANDALONE, upgrade_config=None):
         release_name = release_name or param_info.release_name
-        if release_name in ["", None]:
-            raise Exception("[Base] Can not upgrade empty release name, please check.")
+        if not release_name:
+            raise Exception(f"[Base] Can not upgrade empty release name:{release_name}, please check.")
+        tag = tag or param_info.milvus_tag
+        repository = repository or param_info.tag_repository
+
+        # parser configs and install server
+        upgrade_configs = parser_input_config(input_content=upgrade_config)
 
         # init server client and default config
         self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode, release_name=release_name)
         config_obj = DefaultConfigs(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
 
-        # parser configs and install server
-        upgrade_configs = parser_input_config(input_content=upgrade_config)
+        # get image tag from cmd
+        set_image = config_obj.set_image(tag=tag, repository=repository, prefix="") if tag else {}
+        get_deploy_mode = config_obj.get_deploy_mode(deploy_mode=deploy_mode)
+
+        # merge configs
+        upgrade_configs = update_dict_value(update_dict_value(set_image, get_deploy_mode), upgrade_configs)
 
         # format upgrade_config helm -> str, operator -> dict
-        format_upgrade_config = config_obj.config_conversion(upgrade_configs,
-                                                             update_helm_file=param_info.update_helm_file)
+        format_upgrade_config = config_obj.config_conversion(
+            upgrade_configs, update_helm_file=param_info.update_helm_file, upgrade=True)
         self.upgrade_config = [format_upgrade_config, upgrade_configs]
 
-        # check upgrade config and upgrade service
-        server_upgrade_params = check_deploy_config(deploy_tool=deploy_tool, configs=self.upgrade_config[0])
-        log.info("[Base] upgrade configs: {}".format(server_upgrade_params))
-        self.deploy_client.upgrade(server_upgrade_params)
-
-        # wait healthy and get endpoint
-        # wait_time_after_scale = 10
-        # time.sleep(wait_time_after_scale)
-        self.deploy_client.wait_for_healthy(release_name=release_name)
-        # endpoint = self.deploy_client.endpoint(release_name=release_name)
-
-        # display server values
+        # get init status
         log.debug(self.deploy_client.get_all_values(release_name=release_name))
         self.deploy_initial_state = self.deploy_client.get_pods(release_name=release_name)
 
-        # set global host and port
-        # self.parser_endpoint_to_global(endpoint)
-        self.set_global_function_before_test(release_name=self.deploy_release_name)
+        # check upgrade config and upgrade service
+        server_upgrade_params = check_deploy_config(deploy_tool=deploy_tool, configs=self.upgrade_config[0])
+        log.info("[Base] upgrade configs: {}".format(upgrade_configs))
+        self.deploy_client.upgrade(server_upgrade_params)
 
-        log.info("[Base] Service upgraded successfully:{0}".format(self.deploy_release_name))
+        # wait for healthy
+        self.deploy_client.wait_for_healthy(release_name=release_name)
+
+        # display server values
+        log.debug(self.deploy_client.get_all_values(release_name=release_name))
+        log.info("[Base] Get pods after upgrade...")
+        self.deploy_end_state = self.deploy_client.get_pods(release_name=release_name)
+
+        # set global host and port
+        self.set_global_function_before_test(release_name=release_name)
+
+        log.info("[Base] Service upgraded successfully:{0}".format(release_name))
         return server_upgrade_params
 
     def deploy_delete(self, deploy_client=None, deploy_release_name="", deploy_retain_pvc=False, deploy_uninstall=True):

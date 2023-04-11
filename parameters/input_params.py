@@ -78,9 +78,9 @@ param_info = ParamInfo()
 class InputParamsBase:
     deploy_tool: Optional[str] = Helm
     deploy_mode: Optional[str] = ""
-    deploy_config: Union[str, dict] = str
-    upgrade_config: Optional[Union[str, dict]] = str
-    case_params: Union[str, dict] = str
+    deploy_config: Union[str, dict] = ""
+    upgrade_config: Optional[Union[str, dict]] = ""
+    case_params: Union[str, dict] = ""
     case_skip_prepare: Optional[bool] = False
     case_skip_prepare_clean: Optional[bool] = False
     case_skip_build_index: Optional[bool] = False

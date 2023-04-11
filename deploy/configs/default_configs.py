@@ -4,7 +4,8 @@ from deploy.configs import get_config_obj
 from deploy.commons.common_params import (
     CLUSTER, STANDALONE, Helm, Operator, VDC, DefaultRepository, pulsar, kafka,
     ClassID, ClassIDMemCluster, ClassIDMemStandalone, ClassIDDiskCluster, ClassIDDiskStandalone)
-from deploy.commons.common_func import server_resource_check, gen_server_config_name, update_dict_value
+from deploy.commons.common_func import (
+    server_resource_check, gen_server_config_name, update_dict_value, write_yaml_file, modify_file)
 
 from parameters.input_params import param_info
 from commons.common_params import EnvVariable
@@ -102,6 +103,9 @@ class DefaultConfigs:
     def set_image(self, tag=None, repository=DefaultRepository, prefix="master-"):
         return self.obj.set_image(tag=tag, repository=repository, prefix=prefix)
 
+    def get_deploy_mode(self, deploy_mode):
+        return self.obj.get_deploy_mode(deploy_mode=deploy_mode)
+
     def custom_resource(self, limits_cpu=None, requests_cpu=None, limits_mem=None, requests_mem=None):
         _resource = self.obj.custom_resource(limits_cpu=limits_cpu, requests_cpu=requests_cpu,
                                              limits_mem=limits_mem, requests_mem=requests_mem)
@@ -166,9 +170,14 @@ class DefaultConfigs:
         log.debug("[DefaultConfigs] server resource: \n {}".format(_configs))
         return self.config_conversion(_configs, update_helm_file, values_file_path), config_name, _configs
 
-    def config_conversion(self, config, update_helm_file=False, values_file_path=''):
+    def config_conversion(self, config, update_helm_file=False, values_file_path='', upgrade=False):
         if self.deploy_tool == Helm:
             if update_helm_file:
+                if upgrade:
+                    file_path = values_file_path or EnvVariable.FOURAM_HELM_CHART_PATH + "/upgrade_values.yaml"
+                    modify_file(file_path=file_path)  # create file
+                    return write_yaml_file(file_path=file_path, values_dict=config)
+                values_file_path = values_file_path or EnvVariable.FOURAM_HELM_CHART_PATH + "/values.yaml"
                 self.obj.update_values_file(values_file_path, config)
                 return config
             else:

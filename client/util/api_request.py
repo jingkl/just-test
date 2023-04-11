@@ -45,11 +45,12 @@ def time_catch():
                 return (res, rt), True
             except Exception as e:
                 rt = time.perf_counter() - start
-                log.error(traceback.format_exc())
+                log.debug(traceback.format_exc())
                 log.error("(api_response) : %s" % truncated_output(e, info_logout.log_row_length))
                 return (e, rt), False
 
         return inner_wrapper
+
     return wrapper
 
 
@@ -112,9 +113,11 @@ def func_time_catch():
                 return InterfaceResponse(res, rt, True, True)
             except Exception as e:
                 rt = time.perf_counter() - start
-                log.error(traceback.format_exc())
+                log.debug(traceback.format_exc())
                 log.error("[func_time_catch] : %s" % truncated_output(e, info_logout.log_row_length))
                 # return (e, rt), False
                 return InterfaceResponse(e, rt, False, False)
+
         return inner_wrapper
+
     return wrapper

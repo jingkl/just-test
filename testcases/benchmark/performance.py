@@ -3,6 +3,7 @@ import pytest
 from client.cases import AccCases, InsertBatch, BuildIndex, Load, Query, Search, SearchRecall, GoBenchCases
 from client.parameters.input_params import (
     AccParams, InsertBatchParams, BuildIndexParams, LoadParams, QueryParams, SearchParams, GoBenchParams)
+from client.parameters import params_name as pn
 from deploy.commons.common_params import (
     CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar, ClassID)
 from deploy.configs.default_configs import NodeResource, SetDependence
@@ -58,6 +59,20 @@ class TestServerDeploy(PerfTemplate):
         self.server_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
                              deploy_mode=get_default_deploy_mode(input_params.deploy_tool),
                              deploy_skip=True, deploy_uninstall=False)
+
+    def test_server_rolling_upgrade_instance(self, input_params: InputParamsBase):
+        """
+        :steps:
+            1. upgrade_config or deploy_config: config file for upgrade
+            2. release_name: instance's release name
+            3. milvus_tag: instance's tag
+            4. tag_repository: repository for tag
+            5. deploy_mode: cluster and standalone for helm and operator; class-id for vdc
+                operator: must pass in deploy_mode
+                vdc: pass in "classnone" will not upgrade class mode
+        """
+        self.upgrade_server_template(input_params=input_params,
+                                     deploy_mode=get_default_deploy_mode(input_params.deploy_tool))
 
 
 class TestRecallCases(PerfTemplate):
@@ -280,6 +295,30 @@ class TestRecallCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_hnsw())
 
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_recall_glove_hnsw_cosine_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_hnsw(
+                                 metric_type=pn.MetricsTypeName.COSINE))
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_recall_glove_hnsw_cosine_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_hnsw(
+                                 metric_type=pn.MetricsTypeName.COSINE))
+
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_recall_glove_ivf_flat_standalone(self, input_params: InputParamsBase, deploy_mode):
@@ -301,6 +340,80 @@ class TestRecallCases(PerfTemplate):
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_ivf_flat())
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_recall_glove_ivf_flat_cosine_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_ivf_flat(
+                                 metric_type=pn.MetricsTypeName.COSINE))
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_recall_glove_ivf_flat_cosine_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_ivf_flat(
+                                 metric_type=pn.MetricsTypeName.COSINE))
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_recall_glove_diskann_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                             deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_diskann())
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_recall_glove_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                             deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_diskann())
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_recall_glove_diskann_cosine_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                             deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_diskann(
+                                 metric_type=pn.MetricsTypeName.COSINE))
+
+    # @pytest.mark.recall
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_recall_glove_diskann_cosine_cluster(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. serial search and calculation of RT and recall
+        """
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                             deploy_mode=deploy_mode,
+                             case_callable_obj=AccCases().scene_recall,
+                             default_case_params=AccParams().glove_200_angular_diskann(
+                                 metric_type=pn.MetricsTypeName.COSINE))
 
     @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
     def test_recall_glove_auto_index(self, input_params: InputParamsBase, deploy_mode):

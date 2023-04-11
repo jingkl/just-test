@@ -52,25 +52,29 @@ default_namespace = "qa-milvus"
 ephemeral_storage = "ephemeral-storage"
 
 
-class ClassIDMemStandalone:
+class ClassIDBase:
+    classnone = ""  # use for not upgrade instance
+
+
+class ClassIDMemStandalone(ClassIDBase):
     # Need to remove the uppercase configuration
-    Free = "class-0000"  # 2c8g
-    Small = "class-0001"  # 2c8g
-    Middle = "class-0002"  # 4c16g
-    Large = "class-0003"  # 8c32g
-    XLarge = "class-0004"  # 16c64g
-
-    Class1CU = "class-1"
-    Class2CU = "class-2"
-    Class4CU = "class-4"
-    Class8CU = "class-8"
-
-    # new config
-    free = "class-0000"  # 2c8g
-    small = "class-0001"  # 2c8g
-    middle = "class-0002"  # 4c16g
-    large = "class-0003"  # 8c32g
-    xlarge = "class-0004"  # 16c64g
+    # Free = "class-0000"  # 2c8g
+    # Small = "class-0001"  # 2c8g
+    # Middle = "class-0002"  # 4c16g
+    # Large = "class-0003"  # 8c32g
+    # XLarge = "class-0004"  # 16c64g
+    #
+    # Class1CU = "class-1"
+    # Class2CU = "class-2"
+    # Class4CU = "class-4"
+    # Class8CU = "class-8"
+    #
+    # # new config
+    # free = "class-0000"  # 2c8g
+    # small = "class-0001"  # 2c8g
+    # middle = "class-0002"  # 4c16g
+    # large = "class-0003"  # 8c32g
+    # xlarge = "class-0004"  # 16c64g
 
     class1cu = "class-1"
     class2cu = "class-2"
@@ -78,20 +82,20 @@ class ClassIDMemStandalone:
     class8cu = "class-8"
 
 
-class ClassIDMemCluster:
+class ClassIDMemCluster(ClassIDBase):
     # Need to remove the uppercase configuration
-    XXLarge = "class-0005"  # 32c128g cluster
-
-    Class12CU = "class-12"  # cluster
-    Class16CU = "class-16"
-    Class20CU = "class-20"
-    Class24CU = "class-24"
-    Class28CU = "class-28"
-    Class32CU = "class-32"
-    Class128CU = "class-128"
-
-    # new config
-    xxlarge = "class-0005"  # 32c128g cluster
+    # XXLarge = "class-0005"  # 32c128g cluster
+    #
+    # Class12CU = "class-12"  # cluster
+    # Class16CU = "class-16"
+    # Class20CU = "class-20"
+    # Class24CU = "class-24"
+    # Class28CU = "class-28"
+    # Class32CU = "class-32"
+    # Class128CU = "class-128"
+    #
+    # # new config
+    # xxlarge = "class-0005"  # 32c128g cluster
 
     class12cu = "class-12"  # cluster
     class16cu = "class-16"
@@ -106,25 +110,25 @@ class ClassIDMem(ClassIDMemStandalone, ClassIDMemCluster):
     pass
 
 
-class ClassIDDiskStandalone:
+class ClassIDDiskStandalone(ClassIDBase):
     # Need to remove the uppercase configuration
-    FreeDisk = "class-0000-disk"  # 2c8g
-    SmallDisk = "class-0001-disk"  # 2c8g
-    MiddleDisk = "class-0002-disk"  # 4c16g
-    LargeDisk = "class-0003-disk"  # 8c32g
-    XLargeDisk = "class-0004-disk"  # 16c64g
-
-    Class1CUDisk = "class-1-disk"
-    Class2CUDisk = "class-2-disk"
-    Class4CUDisk = "class-4-disk"
-    Class8CUDisk = "class-8-disk"
-
-    # new config
-    freedisk = "class-0000-disk"  # 2c8g
-    smalldisk = "class-0001-disk"  # 2c8g
-    middledisk = "class-0002-disk"  # 4c16g
-    largedisk = "class-0003-disk"  # 8c32g
-    xlargedisk = "class-0004-disk"  # 16c64g
+    # FreeDisk = "class-0000-disk"  # 2c8g
+    # SmallDisk = "class-0001-disk"  # 2c8g
+    # MiddleDisk = "class-0002-disk"  # 4c16g
+    # LargeDisk = "class-0003-disk"  # 8c32g
+    # XLargeDisk = "class-0004-disk"  # 16c64g
+    #
+    # Class1CUDisk = "class-1-disk"
+    # Class2CUDisk = "class-2-disk"
+    # Class4CUDisk = "class-4-disk"
+    # Class8CUDisk = "class-8-disk"
+    #
+    # # new config
+    # freedisk = "class-0000-disk"  # 2c8g
+    # smalldisk = "class-0001-disk"  # 2c8g
+    # middledisk = "class-0002-disk"  # 4c16g
+    # largedisk = "class-0003-disk"  # 8c32g
+    # xlargedisk = "class-0004-disk"  # 16c64g
 
     class1cudisk = "class-1-disk"
     class2cudisk = "class-2-disk"
@@ -132,19 +136,19 @@ class ClassIDDiskStandalone:
     class8cudisk = "class-8-disk"
 
 
-class ClassIDDiskCluster:
+class ClassIDDiskCluster(ClassIDBase):
     # Need to remove the uppercase configuration
-    XXLargeDisk = "class-0005-disk"  # 32c128g cluster
-
-    Class12CUDisk = "class-12-disk"  # cluster
-    Class16CUDisk = "class-16-disk"
-    Class20CUDisk = "class-20-disk"
-    Class24CUDisk = "class-24-disk"
-    Class28CUDisk = "class-28-disk"
-    Class32CUDisk = "class-32-disk"
-
-    # new config
-    xxlargedisk = "class-0005-disk"  # 32c128g cluster
+    # XXLargeDisk = "class-0005-disk"  # 32c128g cluster
+    #
+    # Class12CUDisk = "class-12-disk"  # cluster
+    # Class16CUDisk = "class-16-disk"
+    # Class20CUDisk = "class-20-disk"
+    # Class24CUDisk = "class-24-disk"
+    # Class28CUDisk = "class-28-disk"
+    # Class32CUDisk = "class-32-disk"
+    #
+    # # new config
+    # xxlargedisk = "class-0005-disk"  # 32c128g cluster
 
     class12cudisk = "class-12-disk"  # cluster
     class16cudisk = "class-16-disk"

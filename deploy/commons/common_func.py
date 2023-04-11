@@ -163,6 +163,31 @@ def write_yaml_file(file_path, values_dict):
     except Exception as e:
         log.error("[write_yaml_file] Can not open yaml file({0}), error: {1}".format(file_path, e))
 
+    return file_path
+
+
+def modify_file(file_path, input_content: str = '', is_modify=False):
+    folder_path, file_name = os.path.split(file_path)
+    if not os.path.isdir(folder_path):
+        log.debug("[modify_file] folder(%s) is not exist." % folder_path)
+        os.makedirs(folder_path)
+
+    if not os.path.isfile(file_path):
+        log.debug("[modify_file] file(%s) is not exist." % file_path)
+        open(file_path, "a").close()
+    else:
+        if is_modify is True:
+            log.debug("[modify_file] start modifying file(%s)..." % file_path)
+            with open(file_path, "r+") as f:
+                f.seek(0)
+                f.truncate()
+                f.write(input_content)
+                f.close()
+        else:
+            with open(file_path, "a+") as f:
+                f.write(input_content + '\n')
+                f.close()
+
 
 def get_token(url):
     rep = requests.get(url)
@@ -586,5 +611,13 @@ def get_default_deploy_mode(deploy_tool: Union[Helm, Operator, OP, VDC]):
     if deploy_tool in [Helm, Operator, OP]:
         return CLUSTER
     elif deploy_tool in [VDC]:
-        return get_class_key_name(ClassID, ClassID.Class1CU)
+        return get_class_key_name(ClassID, ClassID.class1cu)
     return STANDALONE
+
+
+def check_file_exist(file_dir, out_put=True):
+    if not os.path.isfile(file_dir):
+        if out_put:
+            log.info("[check_file_exist] File not exist:{}".format(file_dir))
+        return False
+    return True

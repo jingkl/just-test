@@ -152,6 +152,9 @@ class PerfTemplate(Base):
     def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE, deploy_skip=False,
                         node_resources=None, set_dependence=None, deploy_uninstall=True, input_configs: dict = {},
                         **kwargs):
+        # clear self.teardown_funcs
+        self.teardown_funcs = []
+
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
 
@@ -169,5 +172,17 @@ class PerfTemplate(Base):
         if not param_info.deploy_retain:
             self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
 
+    def upgrade_server_template(self, input_params: InputParamsBase, release_name=None, deploy_mode=STANDALONE,
+                                upgrade_config: str = ""):
         # clear self.teardown_funcs
         self.teardown_funcs = []
+
+        log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
+        input_params = copy.deepcopy(input_params)
+
+        # server
+        input_params.deploy_mode = input_params.deploy_mode or deploy_mode
+        upgrade_config = upgrade_config or input_params.upgrade_config or input_params.deploy_config
+
+        self.upgrade_service(release_name=release_name, deploy_tool=input_params.deploy_tool,
+                             deploy_mode=input_params.deploy_mode, upgrade_config=upgrade_config)
