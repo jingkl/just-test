@@ -14,13 +14,13 @@ from utils.util_log import log
 
 
 class ApiCollectionWrapper:
-    # collection = None
     _collection = None
 
     @property
     def collection(self):
         if not isinstance(self._collection, Collection):
-            raise Exception("[ApiCollectionWrapper] Collection object:None may not be initialized yet, please check!")
+            msg = "[ApiCollectionWrapper] Collection object:%s may not be initialized yet, please check!"
+            raise Exception(msg % self._collection)
         return self._collection
 
     @collection.setter
@@ -30,17 +30,16 @@ class ApiCollectionWrapper:
     def __init__(self):
         pass
 
-    def init_collection(self, name, schema=None, using="default", shards_num=2, check_task=None, check_items=None,
-                        **kwargs):
+    def init_collection(self, name, schema=None, using="default", check_task=None, check_items=None, **kwargs):
         # consistency_level = kwargs.get("consistency_level", CONSISTENCY_STRONG)
         # kwargs.update({"consistency_level": consistency_level})
 
         """ In order to distinguish the same name of collection """
         func_name = sys._getframe().f_code.co_name
-        res, res_result = api_request([Collection, name, schema, using, shards_num], **kwargs)
+        res, res_result = api_request([Collection, name, schema, using], **kwargs)
         self.collection = res[0] if res_result else None
-        check_result = ResponseChecker(res, func_name, check_task, check_items, res_result,
-                                       name=name, schema=schema, using=using, shards_num=shards_num, **kwargs).run()
+        check_result = ResponseChecker(res, func_name, check_task, check_items, res_result, name=name, schema=schema,
+                                       using=using, **kwargs).run()
         return InterfaceResponse(*res, res_result, check_result)
 
     @property
@@ -112,7 +111,7 @@ class ApiCollectionWrapper:
         start = time.perf_counter()
         _res = self.collection.num_entities
         rt = time.perf_counter() - start
-        return InterfaceResponse(_res, rt,  True, True)
+        return InterfaceResponse(_res, rt, True, True)
 
     def flush(self, check_task=None, check_items=None, **kwargs):
         if not hasattr(self.collection, "flush"):

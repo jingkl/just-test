@@ -34,6 +34,7 @@ class LogLevel:
 
 
 class DefaultValue:
+    default_dataset = "local"
     default_dim = 128
     default_shards_num = 2
     default_max_length = 256  # 65535
@@ -60,6 +61,11 @@ class DefaultValue:
 
     default_timeout = 60
     default_resource_group = "__default_resource_group"
+    default_database = "default"
+    default_rbac_user = "root"
+    default_rbac_password = "Milvus"
+    default_rbac_role_name = "admin"
+    default_backup_alias = "backup_alias"
 
 
 class SimilarityMetrics:

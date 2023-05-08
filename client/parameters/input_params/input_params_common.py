@@ -15,7 +15,7 @@ class CommonParams:
              index_type=None, index_param=None,
              ids=None, query_expr=None, output_fields=None,
              search_param=None, search_expr=None, top_k=None, nq=None, guarantee_timestamp=None,
-             reset=False, groups=None):
+             reset_rg=False, groups=None, reset_rbac=False, reset_db=False):
         dataset_params = {pn.dataset_name: dataset_name,
                           pn.dim: dim,
                           pn.dataset_size: dataset_size,
@@ -39,8 +39,10 @@ class CommonParams:
                          # "guarantee_timestamp": 1,
                          # "expr": ["float1 > -1 && float1 < 10", "float1 > 0 && float1 < 20"],
                          }
-        resource_groups_params = {pn.reset: reset,
+        resource_groups_params = {pn.reset: reset_rg,
                                   pn.groups: groups}
+        database_user_params = {pn.reset_rbac: reset_rbac,
+                               pn.reset_db: reset_db}
 
         return dict_recursive_key({
             pn.dataset_params: dataset_params,
@@ -50,6 +52,7 @@ class CommonParams:
             pn.query_params: query_params,
             pn.search_params: search_params,
             pn.resource_groups_params: resource_groups_params,
+            pn.database_user_params: database_user_params,
         })
 
 

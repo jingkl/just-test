@@ -5,6 +5,7 @@ from locust import User, events
 from locust.stats import print_stats, print_percentile_stats, StatsEntry
 from locust.env import Environment
 
+from client.cases.case_report import CasesReport
 from client.common.common_func import get_spawn_rate
 from client.common.common_type import Precision
 from client.parameters.params import ConcurrentTasksParams, ConcurrentObjParams, DataClassBase
@@ -110,7 +111,7 @@ class LocustRunner:
         t = threading.Timer(during_time, func)
         t.start()
 
-    def start_runner(self):
+    def start_runner(self, report_obj: CasesReport = CasesReport()):
         MyUser.client = ClientTask(self.obj, request_type=self.request_type)
         MyUser.tasks_params = self.obj_params
         self.get_client_tasks()
@@ -138,4 +139,4 @@ class LocustRunner:
         tick_stats.stop_print_stats()
 
         result = True if api_result[env.stats.total.name]["Fails"] == float(0) else False
-        return api_result, result
+        return report_obj.add_attr(**{"Locust": api_result}).to_dict(), result

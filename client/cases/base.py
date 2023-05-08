@@ -1,23 +1,23 @@
 import time
 import random
+import copy
 from pprint import pformat
 
 from pymilvus import DefaultConfig, DataType
 
 from client.client_base import (
     ApiConnectionsWrapper, ApiCollectionWrapper, ApiIndexWrapper, ApiPartitionWrapper, ApiCollectionSchemaWrapper,
-    ApiFieldSchemaWrapper, ApiUtilityWrapper)
+    ApiFieldSchemaWrapper, ApiUtilityWrapper, ApiRoleWrapper, ApiDBWrapper)
 from client.common.common_func import (
     gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, parser_data_size, loop_files, loop_ids,
     gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, loop_gen_files, remove_list_values,
-    parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params)
+    parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params, parser_search_params_expr)
 from client.common.common_param import TransferNodesParams, TransferReplicasParams
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
 from client.parameters.params import (
     ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, ConcurrentTaskRelease,
     ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest,
-    ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskSceneInsertPartition,
     ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskIterateSearch, ConcurrentTaskLoadSearchRelease,
     ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition)
 from client.parameters.params_name import (
@@ -42,7 +42,12 @@ except ImportError as e:
 class Base:
     shards_num = 2
 
+    # new objects
+    _role_wrap = None
+    _db_wrap = None
+
     def __init__(self):
+        """ Do not initialize any new incompatible objects here """
         self.connection_wrap = ApiConnectionsWrapper()
         self.utility_wrap = ApiUtilityWrapper()
         self.collection_wrap = ApiCollectionWrapper()
@@ -58,19 +63,151 @@ class Base:
     #     log.info("[Base] Start disconnect connection.")
     #     self.remove_connect()
 
-    def connect(self, host=None, port=None, secure=False, alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+    @property
+    def role_wrap(self) -> ApiRoleWrapper:
+        if not isinstance(self._role_wrap, ApiRoleWrapper):
+            self._role_wrap = ApiRoleWrapper()
+            self._role_wrap.init_role(name=dv.default_rbac_role_name)  # use default role name `admin`
+        return self._role_wrap
+
+    @property
+    def db_wrap(self) -> ApiDBWrapper:
+        if not isinstance(self._role_wrap, ApiDBWrapper):
+            self._db_wrap = ApiDBWrapper()
+        return self._db_wrap
+
+    @staticmethod
+    def init_role(role_name=dv.default_rbac_role_name, using=DefaultConfig.DEFAULT_USING) -> ApiRoleWrapper:
+        _role_obj = ApiRoleWrapper()
+        _role_obj.init_role(name=role_name, using=using)
+        return _role_obj
+
+    def get_all_users(self, include_role_info=True, using=DefaultConfig.DEFAULT_USING):
+        return [u.username for u in
+                self.utility_wrap.list_users(include_role_info=include_role_info, using=using).response.groups]
+
+    def get_all_users_roles(self, include_role_info=True, using=DefaultConfig.DEFAULT_USING):
+        _all_users = {}
+        for u in self.utility_wrap.list_users(include_role_info=include_role_info, using=using).response.groups:
+            _all_users[u.username] = u.roles
+        return _all_users
+
+    def get_all_db_and_collections(self, using=DefaultConfig.DEFAULT_USING):
+        """ Only for serial option """
+        _all_db = {}
+        for db in self.db_wrap.list_database(using=using).response:
+            self.db_wrap.using_database(db_name=db, using=using)
+            _all_db[db] = self.utility_wrap.list_collections(using=using).response
+        self.db_wrap.using_database(db_name=dv.default_database, using=using)
+        return _all_db
+
+    def create_user_role(self, user, password=dv.default_rbac_password, role_name=dv.default_rbac_role_name,
+                         using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+        # create user
+        if user not in self.get_all_users(using=using):
+            self.utility_wrap.create_user(user=user, password=password, using=using)
+            log.customize(log_level)(f"[Base] Create user:{user}, password:{password} done.")
+
+        # create role and set to user
+        _role_obj = self.init_role(role_name=role_name, using=using)
+        if user not in _role_obj.get_users().response:
+            _role_obj.add_user(username=user)
+            log.customize(log_level)(f"[Base] Add user:{user} to role:{role_name}")
+
+    def delete_user_from_role(self, user, role_name=dv.default_rbac_role_name, using=DefaultConfig.DEFAULT_USING,
+                              log_level=LogLevel.INFO):
+        # delete user from role before delete user
+        _role_obj = self.init_role(role_name=role_name, using=using)
+        if user in _role_obj.get_users().response:
+            _role_obj.remove_user(username=user)
+            log.customize(log_level)(f"[Base] Remove user:{user} from role:{role_name}")
+
+    def delete_users(self, user, using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+        # delete user
+        if user in self.get_all_users(using=using):
+            self.utility_wrap.delete_user(user=user, using=using)
+            log.customize(log_level)(f"[Base] Delete user:{user}")
+
+    def create_db(self, db_name: str, using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+        """ Only for serial option """
+        if db_name not in self.db_wrap.list_database(using=using).response:
+            self.db_wrap.create_database(db_name=db_name, using=using)
+            log.customize(log_level)(f"[Base] Create database:{db_name} done.")
+
+    def drop_db(self, db_name: str, using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+        """ Only for serial option """
+        if db_name in self.db_wrap.list_database(using=using).response:
+            self.db_wrap.drop_database(db_name=db_name, using=using)
+            log.customize(log_level)(f"[Base] Drop database:{db_name} done.")
+
+    def clean_all_rbac(self, reset_rbac=False, using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+        if reset_rbac:
+            # get all users and roles
+            all_users = self.get_all_users_roles(using=using)
+
+            # delete users from all roles, except default user `root`
+            for _user in remove_list_values(list(all_users.keys()), dv.default_rbac_user):
+                for _role in all_users[_user]:
+                    self.delete_user_from_role(user=_user, role_name=_role, using=using, log_level=LogLevel.DEBUG)
+                self.delete_users(user=_user, using=using, log_level=LogLevel.DEBUG)
+            log.customize(log_level)(f"[Base] Cleaned all RBAC:{all_users}")
+
+    def clean_all_db_and_collection(self, reset_db=False, clean=True, log_level=LogLevel.INFO):
+        """ Only for serial option """
+        if reset_db and clean:
+            log.customize(log_level)(
+                f"[Base] Show all databases and collections:{self.get_all_db_and_collections()}")
+
+            # clean all collections
+            for db in self.db_wrap.list_database().response:
+                self.db_wrap.using_database(db_name=db)
+                self.clean_all_collection(clean=True, log_level=LogLevel.DEBUG)
+
+            self.db_wrap.using_database(db_name=dv.default_database)
+            # clean all databases, except default db `default`
+            for db in remove_list_values(self.db_wrap.list_database().response, dv.default_database):
+                self.db_wrap.drop_database(db_name=db)
+
+            log.customize(log_level)(f"[Base] Cleaned all databases and collections:{self.get_all_db_and_collections()}")
+
+    def connect(self, host=None, port=None, secure=False, user="", password="", db_name="",
+                alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO, **kwargs):
         """ Add a connection and create the connect """
         # remove connect before new connection
         self.remove_connect(alias=alias, log_level=log_level)
         host = host or param_info.param_host
         port = port or param_info.param_port
         secure = secure or param_info.param_secure
+        user = user or param_info.param_user
+        password = password or param_info.param_password
+        db_name = db_name or param_info.param_db_name
 
-        params = {"alias": alias, "host": host, "port": port}
-        if secure is True:
-            params.update({"user": param_info.param_user, "password": param_info.param_password, "secure": True})
+        params = {"alias": alias, "host": host, "port": port, "secure": secure, "user": user, "password": password,
+                  "db_name": db_name}
+        params.update(kwargs)
+
+        # create user and password if secure is False, which means testing for RBAC
+        # todo need to check the legitimacy of the user and password
+        if not secure and (user and password):
+            _p = copy.deepcopy(params)
+            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password})
+            self.check_backup_connect(**_p)
+            self.create_user_role(user=user, password=password, using=dv.default_backup_alias)
+
+        # create database before connecting if database does not exist
+        if db_name:
+            _p = copy.deepcopy(params)
+            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password})
+            self.check_backup_connect(**_p)
+            self.create_db(db_name=db_name, using=dv.default_backup_alias)
+
         log.customize(log_level)("[Base] Connection params: {}".format(params))
         return self.connection_wrap.connect(**params)
+
+    def check_backup_connect(self, **kwargs):
+        if not self.connection_wrap.has_connection(alias=dv.default_backup_alias).response:
+            kwargs.update({"alias": dv.default_backup_alias})
+            self.connection_wrap.connect(**kwargs)
 
     def remove_connect(self, alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
         """ Disconnect and remove default connect """
@@ -100,13 +237,13 @@ class Base:
         log.info("[Base] Connect collection {}".format(self.collection_name))
         return self.collection_wrap.init_collection(self.collection_name)
 
-    def clean_all_collection(self, clean=True):
+    def clean_all_collection(self, clean=True, log_level=LogLevel.INFO):
         """ Drop all collections in the database """
         if not clean:
             # self.remove_connect()
             return
         collections = self.utility_wrap.list_collections().response
-        log.info("[Base] Start clean all collections {}".format(collections))
+        log.customize(log_level)("[Base] Start clean all collections {}".format(collections))
         for i in collections:
             self.utility_wrap.drop_collection(i)
 
@@ -330,7 +467,7 @@ class Base:
             _expr = "id in %s" % str(ids)
 
         elif expr is not None:
-            _expr = expr
+            _expr = parser_search_params_expr(expr)
 
         log.info("[Base] expr of query: \"{0}\", kwargs:{1}".format(_expr, kwargs))
         return self.collection_wrap.query(expr=_expr, **kwargs)
@@ -378,8 +515,8 @@ class Base:
 
     def _transfer_replicas(self, source: str, target: str, collection_name: str, num_replica: int):
         if num_replica > 0:
-            self.utility_wrap.transfer_replica(source=source, target=target, collection_name=collection_name,
-                                               num_replica=num_replica)
+            self.utility_wrap.transfer_replica(
+                source=source, target=target, collection_name=collection_name, num_replica=num_replica)
         else:
             log.warning("[Base] Can't transfer replica %s from %s to %s, collection_name: %s" % (
                 num_replica, source, target, collection_name))
@@ -479,6 +616,11 @@ class Base:
             kwargs.update({resource_groups: _rg})
         return kwargs
 
+    def show_all_db_user(self, _flag=False):
+        if _flag:
+            log.info(f"[Base] Select all users and roles: {self.get_all_users_roles()}")
+            log.info(f"[Base] Select all databases and collections: {self.get_all_db_and_collections()}")
+
     def show_resource_groups(self, _flag=True):
         if RESOURCE_GROUPS_FLAG and _flag:
             lrg = self.utility_wrap.list_resource_groups().response
@@ -498,7 +640,8 @@ class Base:
         res_seg = parser_segment_info(segment_info=res, shards_num=shards_num)
         log.info(f"[Base] Parser segment info: \n{pformat(res_seg, sort_dicts=False)}")
 
-    def show_all_resource(self, collection_name="", shards_num=2, show_resource_groups=True):
+    def show_all_resource(self, collection_name="", shards_num=2, show_resource_groups=True, show_db_user=False):
+        # self.show_all_db_user(_flag=show_db_user)
         self.show_resource_groups(_flag=show_resource_groups)
         self.show_collection_replicas()
         self.show_segment_info(collection_name=collection_name, shards_num=shards_num)
@@ -780,13 +923,17 @@ class Base:
     def concurrent_scene_search_test(self, params: ConcurrentTaskSceneSearchTest):
         log_level = LogLevel.DEBUG
         collection_obj = ApiCollectionWrapper()
-        collection_name = gen_unique_str()
+        collection_name, user, password, role_name = gen_unique_str(), "", "", ""
 
         # connect params
-        connect_using = "default"
+        connect_using = DefaultConfig.DEFAULT_USING
         if params.new_connect:
             connect_using = collection_name
-            self.connect(alias=connect_using, log_level=log_level)
+            # create new user, role
+            if params.new_user:
+                user, password, role_name = collection_name, dv.default_rbac_password, dv.default_rbac_role_name
+                self.create_user_role(user=user, password=password, role_name=role_name, log_level=log_level)
+            self.connect(user=user, password=password, alias=connect_using, log_level=log_level)
 
         # create collection
         self.create_collection(collection_obj=collection_obj, collection_name=collection_name,
@@ -795,7 +942,7 @@ class Base:
         time.sleep(1)
 
         # insert vectors
-        self.insert(data_type="local", dim=params.dim, size=params.data_size, ni=params.nb,
+        self.insert(data_type=params.dataset, dim=params.dim, size=params.data_size, ni=params.nb,
                     collection_obj=collection_obj, collection_name=collection_name,
                     collection_schema=collection_obj.schema.to_dict(), log_level=log_level)
 
@@ -827,7 +974,12 @@ class Base:
         log.customize(log_level)("[Base] Drop collection {}.".format(collection_name))
         self.utility_wrap.drop_collection(collection_name, using=connect_using)
 
+        # remove connect
         if params.new_connect:
+            # delete role, user
+            if params.new_user:
+                self.delete_user_from_role(user=user, role_name=role_name, log_level=log_level)
+                self.delete_users(user=user, log_level=log_level)
             self.remove_connect(alias=connect_using, log_level=log_level)
 
         if params.search_counts > sum(search_results):

@@ -4,6 +4,8 @@ from client.client_base.index_wrapper import ApiIndexWrapper
 from client.client_base.partition_wrapper import ApiPartitionWrapper
 from client.client_base.schema_wrapper import ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper
 from client.client_base.utility_wrapper import ApiUtilityWrapper
+from client.client_base.role_wrapper import ApiRoleWrapper
+from client.client_base.db_wrapper import ApiDBWrapper
 
 __all__ = [ApiConnectionsWrapper, ApiCollectionWrapper, ApiIndexWrapper, ApiPartitionWrapper,
-           ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper, ApiUtilityWrapper]
+           ApiCollectionSchemaWrapper, ApiFieldSchemaWrapper, ApiUtilityWrapper, ApiRoleWrapper, ApiDBWrapper]

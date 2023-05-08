@@ -12,6 +12,7 @@ go_search_params = "go_search_params"
 concurrent_params = "concurrent_params"
 concurrent_tasks = "concurrent_tasks"
 resource_groups_params = "resource_groups_params"
+database_user_params = "database_user_params"
 
 # request type
 search = "search"
@@ -44,6 +45,7 @@ varchar_filled = "varchar_filled"
 scalars_index = "scalars_index"
 scalars_params = "scalars_params"
 show_resource_groups = "show_resource_groups"
+show_db_user = "show_db_user"
 
 # common
 metric_type = "metric_type"
@@ -70,6 +72,7 @@ nlist = "nlist"
 # query
 ids = "ids"
 expression = "expression"
+ignore_growing = "ignore_growing"
 
 # search
 top_k = "top_k"
@@ -93,6 +96,8 @@ groups = "groups"
 reset = "reset"
 transfer_replicas = "transfer_replicas"
 transfer_nodes = "transfer_nodes"
+reset_rbac = "reset_rbac"
+reset_db = "reset_db"
 
 # hdf5
 neighbors = "neighbors"
@@ -148,13 +153,14 @@ class IndexTypeName:
       8. ANNOY
     """
     FLAT = "FLAT"
-    IVF_FLAT = "IVF_FLAT"
-    IVF_SQ8 = "IVF_SQ8"
-    NSG = "NSG"
+    IVF_FLAT = "IVF_FLAT"  # nlist=[1, 65536], nprobe=CPU: [1, nlist], GPU: [1, min(2048, nlist)]
+    IVF_SQ8 = "IVF_SQ8"  # nlist=[1, 65536], nprobe=CPU: [1, nlist], GPU: [1, min(2048, nlist)]
+    IVF_PQ = "IVF_PQ"  # nlist=[1, 65536], m:dim % m = 0, nbits: 8, nprobe=CPU: [1, nlist], GPU: [1, min(2048, nlist)]
     # IVF_SQ8_HYBRID = "IVF_SQ8_HYBRID"
-    IVF_PQ = "IVF_PQ"
-    HNSW = "HNSW"
-    ANNOY = "ANNOY"
+    NSG = "NSG"
+    RNSG = "RNSG"
+    HNSW = "HNSW"  # M=[4, 64], efConstruction=[8, 512], ef=[top_k, 32768]
+    ANNOY = "ANNOY"  # n_trees=[1, 1024], search_k={-1} ∪ [top_k, n × n_trees]
     BIN_FLAT = "BIN_FLAT"
     BIN_IVF_FLAT = "BIN_IVF_FLAT"
     RHNSW_FLAT = "RHNSW_FLAT"
@@ -162,6 +168,6 @@ class IndexTypeName:
     RHNSW_SQ = "RHNSW_SQ"
     IVF_HNSW = "IVF_HNSW"
     DISKANN = "DISKANN"
-    AUTOINDEX = "AUTOINDEX"  # level
+    AUTOINDEX = "AUTOINDEX"  # level=[1, 2, 3]
 
 

@@ -16,8 +16,9 @@ class ParamInfo:
         self.param_port = DefaultConfig.DEFAULT_PORT
         self.param_handler = ""
         self.param_secure = False
-        self.param_user = ""
-        self.param_password = ""
+        self.param_user = ""  # root
+        self.param_password = ""  # Milvus
+        self.param_db_name = ""  # default
         self.run_id = None
         self.param_replica_num = dp.default_replica_num
         self.milvus_tag = None
@@ -39,8 +40,8 @@ class ParamInfo:
     def prepare_param_info(self, client_version, host, port, handler="", secure="", replica_num=1, milvus_tag=None,
                            tag_repository=None, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False,
                            milvus_tag_prefix="", update_helm_file=False, client_test_skip=False, release_name_prefix="",
-                           release_name="", run_id=None, sync_report=False, async_report=False, param_user="root",
-                           param_password="Milvus123", vdc_user="", vdc_env="", vdc_region_id=""):
+                           release_name="", run_id=None, sync_report=False, async_report=False, param_user="",
+                           param_password="", param_db_name="", vdc_user="", vdc_env="", vdc_region_id=""):
         self.client_version = client_version
         self.param_host = host
         self.param_port = port
@@ -48,6 +49,7 @@ class ParamInfo:
         self.param_secure = secure
         self.param_user = param_user
         self.param_password = param_password
+        self.param_db_name = param_db_name
         self.run_id = int(run_id) if str(run_id).isdigit() else None
         self.param_replica_num = replica_num
         self.milvus_tag = milvus_tag or self.milvus_tag

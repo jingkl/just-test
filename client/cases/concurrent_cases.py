@@ -104,7 +104,8 @@ class GoBenchCases(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
         # search
         s_params = self.parser_search_params()
@@ -299,7 +300,8 @@ class ConcurrentClientBase(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
         # set output log
         info_logout.reset_output()
@@ -320,7 +322,7 @@ class ConcurrentClientBase(CommonCases):
                 pn.interval: c_p[pn.interval],
                 pn.spawn_rate: spawn_rate
             }
-            p = CaseIterParams(callable_object=con_client.start_runner,
+            p = CaseIterParams(callable_object=con_client.start_runner, object_args=[self.case_report],
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
         yield params_list

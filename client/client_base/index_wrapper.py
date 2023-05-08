@@ -8,13 +8,12 @@ from client.common.common_param import InterfaceResponse
 
 
 class ApiIndexWrapper:
-    # index = None
     _index = None
 
     @property
     def index(self):
         if not isinstance(self._index, Index):
-            raise Exception("[ApiIndexWrapper] Index object:None may not be initialized yet, please check!")
+            raise Exception(f"[ApiIndexWrapper] Index object:{self._index} may not be initialized yet, please check!")
         return self._index
 
     @index.setter

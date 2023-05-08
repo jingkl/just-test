@@ -533,7 +533,7 @@ class TestConcurrentCases(PerfTemplate):
         #     [ConcurrentParams.transfer_nodes(dp.default_resource_group, f"RG_{i}", 1) for i in list(range(3))])
         groups = [1, 1, 1]
         default_case_params = ConcurrentParams().params_scene_concurrent(
-            concurrent_tasks, concurrent_number=[50], during_time="6h", interval=20, dataset_size="10m", reset=True,
+            concurrent_tasks, concurrent_number=[50], during_time="6h", interval=20, dataset_size="10m", reset_rg=True,
             groups=groups, replica_number=3, resource_groups=3, **cdp.DefaultIndexParams.HNSW)
 
         self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.default_mem, queryNode=3,
@@ -764,6 +764,42 @@ class TestConcurrentCases(PerfTemplate):
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_ivf_sq8_ddl_dql_filter_output_kafka_cluster(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"nprobe": 16}, output_fields=["float_1", "float_vector"],
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(
+                weight=10,
+                expr=eval("{'float_1': {'GT': parser_data_size(data_size) * 0.5, 'LT': parser_data_size(data_size)}}")),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.IVF_SQ8_2048)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=1, cpu=8, mem=64),
+        ]
+        set_dependence = SetDependence(mq_type=kafka)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources,
+                                  set_dependence=set_dependence)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_concurrent_locust_100m_hnsw_ddl_dql_filter_kafka_cluster(
             self, input_params: InputParamsBase, deploy_mode):
         """
@@ -777,6 +813,42 @@ class TestConcurrentCases(PerfTemplate):
                 weight=20, nq=10, top_k=10, search_param={"ef": 16},
                 expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
             ConcurrentParams.params_query(weight=10, ids=[i for i in range(10)]),
+            ConcurrentParams.params_load(weight=1),
+            ConcurrentParams.params_scene_test(weight=2)]
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            concurrent_tasks, concurrent_number=[20], during_time="12h", interval=20, dataset_size=data_size,
+            other_fields=["float_1"], **cdp.DefaultIndexParams.HNSW)
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], replicas=1, mem=4),
+            NodeResource(nodes=[indexNode], replicas=1, cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], replicas=2, cpu=4, mem=64),
+        ]
+        set_dependence = SetDependence(mq_type=kafka)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params, node_resources=node_resources,
+                                  set_dependence=set_dependence)
+
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [CLUSTER])
+    def test_concurrent_locust_100m_hnsw_ddl_dql_filter_output_kafka_cluster(
+            self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        data_size = "100m"
+
+        concurrent_tasks = [
+            ConcurrentParams.params_search(
+                weight=20, nq=10, top_k=10, search_param={"ef": 16}, output_fields=["float_1", "float_vector"],
+                expr=eval("{'float_1': {'GT': -1.0, 'LT': parser_data_size(data_size) * 0.5}}")),
+            ConcurrentParams.params_query(
+                weight=10,
+                expr=eval("{'float_1': {'GT': parser_data_size(data_size) * 0.5, 'LT': parser_data_size(data_size)}}")),
             ConcurrentParams.params_load(weight=1),
             ConcurrentParams.params_scene_test(weight=2)]
         default_case_params = ConcurrentParams().params_scene_concurrent(

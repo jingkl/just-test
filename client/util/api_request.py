@@ -64,9 +64,8 @@ def api_request(_list, **kwargs):
                 for a in _list[1:]:
                     arg.append(a)
 
-            log.debug("(api_request)  : [%s] args: %s, kwargs: %s" % (func.__qualname__,
-                                                                      truncated_output(arg, info_logout.log_row_length),
-                                                                      str(kwargs)))
+            log.debug("(api_request)  : [%s] args: %s, kwargs: %s" % (
+                func.__qualname__, truncated_output(arg, info_logout.log_row_length), str(kwargs)))
 
             return func(*arg, **kwargs)
     return (False, 0), False

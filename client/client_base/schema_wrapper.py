@@ -8,14 +8,13 @@ from client.common.common_param import InterfaceResponse
 
 
 class ApiCollectionSchemaWrapper:
-    # collection_schema = None
     _collection_schema = None
 
     @property
     def collection_schema(self):
         if not isinstance(self._collection_schema, CollectionSchema):
-            msg = "[ApiCollectionSchemaWrapper] CollectionSchema object:None may not be initialized yet, please check!"
-            raise Exception(msg)
+            msg = "[ApiCollectionSchemaWrapper] CollectionSchema object:%s may not be initialized yet, please check!"
+            raise Exception(msg % self._collection_schema)
         return self._collection_schema
 
     @collection_schema.setter
@@ -49,13 +48,13 @@ class ApiCollectionSchemaWrapper:
 
 
 class ApiFieldSchemaWrapper:
-    # field_schema = None
     _field_schema = None
 
     @property
     def field_schema(self):
         if not isinstance(self._field_schema, FieldSchema):
-            raise Exception("[ApiFieldSchemaWrapper] FieldSchema object:None may not be initialized yet, please check!")
+            msg = "[ApiFieldSchemaWrapper] FieldSchema object:%s may not be initialized yet, please check!"
+            raise Exception(msg % self._field_schema)
         return self._field_schema
 
     @field_schema.setter

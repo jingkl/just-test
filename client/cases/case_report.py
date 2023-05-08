@@ -11,6 +11,7 @@ class CasesReport:
                 setattr(self, k, v)
             else:
                 self.__dict__[k] = v if not update else update_dict_value(v, self.__dict__[k])
+        return self
 
     def to_dict(self):
         return self.__dict__

@@ -31,6 +31,10 @@ class ApiConnectionsWrapper:
         return InterfaceResponse(*res, res_result, check_result)
 
     def connect(self, alias=DefaultConfig.DEFAULT_USING, check_task=None, check_items=None, **kwargs):
+        """
+        user="", password="", db_name=""
+        To be compatible with the old version, the newly added parameters have been moved to kwargs
+        """
         func_name = sys._getframe().f_code.co_name
         res, res_result = api_request([self.connection.connect, alias], **kwargs)
         check_result = ResponseChecker(res, func_name, check_task, check_items, res_result, alias=alias, **kwargs).run()

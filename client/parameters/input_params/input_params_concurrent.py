@@ -94,30 +94,37 @@ class ConcurrentParams(CommonParams):
 
     @staticmethod
     def params_search(weight=1, nq=1, top_k=1, search_param={"ef": 64}, expr: str = None,
-                      guarantee_timestamp: int = None, timeout: int = 60, random_data=True):
+                      guarantee_timestamp: int = None, output_fields: list = None, ignore_growing: bool = False,
+                      timeout: int = 60, random_data=True):
         """
         nq: int
         top_k: int
         search_param: dict
         expr: Optional[str] = None
         guarantee_timestamp: Optional[int] = None
+        output_fields: Optional[list] = None
+        ignore_growing: Optional[bool] = False
         timeout: Optional[int] = 60
         random_data: Optional[bool] = False
         """
         return {"type": "search", "weight": weight,
                 "params": {"nq": nq, "top_k": top_k, "search_param": search_param, "expr": expr,
-                           "guarantee_timestamp": guarantee_timestamp, "timeout": timeout, "random_data": random_data}}
+                           "guarantee_timestamp": guarantee_timestamp, "output_fields": output_fields,
+                           "ignore_growing": ignore_growing, "timeout": timeout, "random_data": random_data}}
 
     @staticmethod
-    def params_query(weight=1, ids: list = None, expr: str = None, output_fields: list = None, timeout: int = 60):
+    def params_query(weight=1, ids: list = None, expr: str = None, output_fields: list = None,
+                     ignore_growing: bool = False, timeout: int = 60):
         """
         ids: Optional[list] = None
         expr: Optional[str] = None
         output_fields: Optional[list] = None
+        ignore_growing: Optional[bool] = False
         timeout: Optional[int] = 60
         """
         return {"type": "query", "weight": weight,
-                "params": {"ids": ids, "expr": expr, "output_fields": output_fields, "timeout": timeout}}
+                "params": {"ids": ids, "expr": expr, "output_fields": output_fields, "ignore_growing": ignore_growing,
+                           "timeout": timeout}}
 
     @staticmethod
     def params_flush(weight=1, timeout: int = 30):
@@ -278,11 +285,13 @@ class ConcurrentParams(CommonParams):
                            "replica_number": replica_number}}
 
     @staticmethod
-    def params_scene_search_test(weight=1, dim=DefaultValue.default_dim, shards_num=2, data_size=3000, nb=3000,
+    def params_scene_search_test(weight=1, dataset=DefaultValue.default_dataset, dim=DefaultValue.default_dim,
+                                 shards_num=2, data_size=3000, nb=3000,
                                  index_type=pn.IndexTypeName.IVF_SQ8, index_param={'nlist': 2048},
                                  metric_type=pn.MetricsTypeName.L2, replica_number=1, nq=1, top_k=10,
-                                 search_param={'nprobe': 16}, search_counts=1, new_connect=False):
+                                 search_param={'nprobe': 16}, search_counts=1, new_connect=False, new_user=False):
         """
+        dataset: Optional[str] = DefaultValue.default_dataset
         dim: Optional[int] = DefaultValue.default_dim
         shards_num: Optional[int] = DefaultValue.default_shards_num
         data_size: Optional[int] = 3000
@@ -302,17 +311,20 @@ class ConcurrentParams(CommonParams):
         # other
         search_counts: Optional[int] = 1
         new_connect: Optional[bool] = False
+
+        # use user
+        new_user: Optional[bool] = False
         """
         return {"type": "scene_search_test", "weight": weight,
-                "params": {"dim": dim, "shards_num": shards_num, "data_size": data_size, "nb": nb,
+                "params": {"dataset": dataset, "dim": dim, "shards_num": shards_num, "data_size": data_size, "nb": nb,
                            "index_type": index_type, "index_param": index_param, "metric_type": metric_type,
                            "replica_number": replica_number, "nq": nq, "top_k": top_k, "search_param": search_param,
-                           "search_counts": search_counts, "new_connect": new_connect}}
+                           "search_counts": search_counts, "new_connect": new_connect, "new_user": new_user}}
 
     def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
                                 dataset_size="1m", ni_per=50000, other_fields=[], shards_num=2,
                                 replica_number=None, resource_groups=None,
-                                reset=False, groups=None,
+                                reset_rg=False, groups=None, reset_rbac=False, reset_db=False,
                                 metric_type=pn.MetricsTypeName.L2, index_type=pn.IndexTypeName.HNSW,
                                 index_param={"M": 8, "efConstruction": 200}, concurrent_number=[20],
                                 during_time=120, interval=20, spawn_rate=None):
@@ -320,8 +332,9 @@ class ConcurrentParams(CommonParams):
 
         base_default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
                                         other_fields=other_fields, shards_num=shards_num, metric_type=metric_type,
-                                        index_type=index_type, index_param=index_param, reset=reset, groups=groups,
-                                        replica_number=replica_number, resource_groups=resource_groups)
+                                        index_type=index_type, index_param=index_param, reset_rg=reset_rg, groups=groups,
+                                        replica_number=replica_number, resource_groups=resource_groups,
+                                        reset_rbac=reset_rbac, reset_db=reset_db)
         concurrent_default_params = self.concurrent_base(concurrent_number=concurrent_number, during_time=during_time,
                                                          interval=interval, concurrent_tasks=concurrent_tasks,
                                                          spawn_rate=spawn_rate)

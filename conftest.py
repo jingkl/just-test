@@ -17,6 +17,7 @@ def pytest_addoption(parser):
     parser.addoption('--secure', action='store_true', default=False, help="using secure when connection server")
     parser.addoption("--user", action="store", default="", help="enable secure and set user name")
     parser.addoption("--password", action="store", default="", help="enable secure and set user password")
+    parser.addoption("--db_name", action="store", default="", help="database name use for connect")
     parser.addoption("--run_id", action="store", default=None, help="run id for client test")
     parser.addoption('--err_msg', action='store', default="err_msg", help="error message of test")
     parser.addoption("--vdc_user", action="store", default="default", help="vdc user name")
@@ -78,6 +79,7 @@ def initialize_env(request):
     secure = request.config.getoption("--secure")
     user = request.config.getoption("--user")
     password = request.config.getoption("--password")
+    db_name = request.config.getoption("--db_name")
     run_id = request.config.getoption("--run_id")
     milvus_tag = request.config.getoption("--milvus_tag")
     milvus_tag_prefix = request.config.getoption("--milvus_tag_prefix")
@@ -114,7 +116,7 @@ def initialize_env(request):
         deploy_retain_pvc=deploy_retain_pvc, run_id=run_id, client_test_skip=client_test_skip,
         update_helm_file=update_helm_file, release_name_prefix=release_name_prefix, release_name=release_name,
         sync_report=sync_report, async_report=async_report, param_user=user, param_password=password,
-        vdc_user=vdc_user, vdc_env=vdc_env, vdc_region_id=vdc_region_id)
+        param_db_name=db_name, vdc_user=vdc_user, vdc_env=vdc_env, vdc_region_id=vdc_region_id)
     log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
     # yield
     # if param_info.test_status is False:

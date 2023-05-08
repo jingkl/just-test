@@ -16,13 +16,13 @@ TIMEOUT = None
 
 
 class ApiPartitionWrapper:
-    # partition = None
     _partition = None
 
     @property
     def partition(self):
         if not isinstance(self._partition, Partition):
-            raise Exception("[ApiPartitionWrapper] Partition object:None may not be initialized yet, please check!")
+            raise Exception(
+                f"[ApiPartitionWrapper] Partition object:{self._partition} may not be initialized yet, please check!")
         return self._partition
 
     @partition.setter

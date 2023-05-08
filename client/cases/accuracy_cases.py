@@ -57,9 +57,12 @@ class CommonCases(Base):
                                                            self.params_obj.dataset_params.get(pn.vector_field_name, ""))
         self.connect()
         self.set_resource_groups(**self.params_obj.resource_groups_params)
+        self.clean_all_rbac(reset_rbac=self.params_obj.database_user_params.get(pn.reset_rbac, False))
 
         if prepare:
             self.clean_all_collection(clean=prepare_clean)
+            self.clean_all_db_and_collection(
+                reset_db=self.params_obj.database_user_params.get(pn.reset_db, False), clean=prepare_clean)
 
             # create collection
             _collection_params = update_dict_value({
@@ -125,7 +128,8 @@ class CommonCases(Base):
         counts = self.collection_wrap.num_entities
         log.info("[AccCases] Number of vectors in the collection({0}): {1}".format(self.collection_wrap.name, counts))
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
     def parser_search_params(self):
         search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))

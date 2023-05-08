@@ -1,8 +1,10 @@
 import copy
+import random
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union, List
 
-from client.common.common_func import gen_combinations, update_dict_value, loop_ids, gen_vectors, get_default_field_name
+from client.common.common_func import (
+    gen_combinations, update_dict_value, loop_ids, gen_vectors, get_default_field_name, gen_unique_str)
 from client.common.common_type import concurrent_global_params, DefaultValue
 from client.parameters.params_name import *
 
@@ -19,6 +21,7 @@ class ParamsBase:
     concurrent_params: Optional[dict] = field(default_factory=lambda: {})
     concurrent_tasks: Optional[list] = field(default_factory=lambda: [])
     resource_groups_params: Optional[dict] = field(default_factory=lambda: {})
+    database_user_params: Optional[dict] = field(default_factory=lambda: {})
 
     @staticmethod
     def search_params_parser(_params):
@@ -40,7 +43,9 @@ class ParamsFormat:
             varchar_filled: ([type(bool())], OPTION),
             scalars_index: ([type(list())], OPTION),
             scalars_params: ([type(dict())], OPTION),
-            show_resource_groups: ([type(bool())], OPTION)},
+            show_resource_groups: ([type(bool())], OPTION),
+            show_db_user: ([type(bool())], OPTION)
+        },
         collection_params: {other_fields: ([type(list())], OPTION),
                             shards_num: ([type(int())], OPTION),
                             varchar_id: ([type(bool())], OPTION),
@@ -48,15 +53,19 @@ class ParamsFormat:
         load_params: {replica_number: ([type(int())], OPTION),
                       refresh: ([type(bool())], OPTION),
                       resource_groups: ([type(int()), type(list())], OPTION)},
-        query_params: {output_fields: ([type(list()), type(None)], OPTION)},
+        query_params: {output_fields: ([type(list()), type(None)], OPTION),
+                       ignore_growing: ([type(bool())], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int())], OPTION),
             output_fields: ([type(list()), type(None)], OPTION),
+            ignore_growing: ([type(bool())], OPTION),
             timeout: ([type(int())], OPTION),
         },
         resource_groups_params: {groups: ([type(list()), type(dict()), type(None)], OPTION),
-                                 reset: ([type(bool())], OPTION)}
+                                 reset: ([type(bool())], OPTION)},
+        database_user_params: {reset_rbac: ([type(bool())], OPTION),
+                               reset_db: ([type(bool())], OPTION)}
     }
 
     acc_scene_recall = update_dict_value({
@@ -177,6 +186,8 @@ class ConcurrentInputParamsSearch(DataClassBase):
     search_param: dict
     expr: Optional[str] = None
     guarantee_timestamp: Optional[int] = None
+    output_fields: Optional[list] = None
+    ignore_growing: Optional[bool] = False
     timeout: Optional[int] = DefaultValue.default_timeout
     random_data: Optional[bool] = False
 
@@ -189,6 +200,8 @@ class ConcurrentTaskSearch(DataClassBase):
     limit: int
     expr: Optional[str] = None
     guarantee_timestamp: Optional[int] = None
+    output_fields: Optional[list] = None
+    ignore_growing: Optional[bool] = False
     timeout: Optional[int] = DefaultValue.default_timeout
 
     # other params
@@ -200,6 +213,8 @@ class ConcurrentTaskSearch(DataClassBase):
         del _p["random_data"]
         if _p["guarantee_timestamp"] is None:
             del _p["guarantee_timestamp"]
+        if _p["ignore_growing"] not in [True]:
+            del _p["ignore_growing"]
         return _p
 
 
@@ -208,6 +223,7 @@ class ConcurrentInputParamsQuery(DataClassBase):
     ids: Optional[list] = None
     expr: Optional[str] = None
     output_fields: Optional[list] = None
+    ignore_growing: Optional[bool] = False
     timeout: Optional[int] = DefaultValue.default_timeout
 
 
@@ -215,7 +231,15 @@ class ConcurrentInputParamsQuery(DataClassBase):
 class ConcurrentTaskQuery(DataClassBase):
     expr: str
     output_fields: Optional[list] = None
+    ignore_growing: Optional[bool] = False
     timeout: Optional[int] = DefaultValue.default_timeout
+
+    @property
+    def obj_params(self):
+        _p = copy.deepcopy(self.to_dict)
+        if _p["ignore_growing"] not in [True]:
+            del _p["ignore_growing"]
+        return _p
 
 
 @dataclass
@@ -299,8 +323,8 @@ class ConcurrentTaskInsert(DataClassBase):
             _ids = next(self._loop_ids)
             concurrent_global_params.put_data_to_insert_queue(concurrent_global_params.concurrent_insert_ids, _ids)
             return _ids
-        concurrent_global_params.put_data_to_insert_queue(concurrent_global_params.concurrent_insert_ids,
-                                                          self.fixed_ids)
+        concurrent_global_params.put_data_to_insert_queue(
+            concurrent_global_params.concurrent_insert_ids, self.fixed_ids)
         return self.fixed_ids
 
     @property
@@ -327,8 +351,8 @@ class ConcurrentTaskDelete(DataClassBase):
 
     @property
     def get_ids(self):
-        return concurrent_global_params.get_data_from_insert_queue(concurrent_global_params.concurrent_insert_ids,
-                                                                   self.delete_length)
+        return concurrent_global_params.get_data_from_insert_queue(
+            concurrent_global_params.concurrent_insert_ids, self.delete_length)
 
     @property
     def obj_params(self):
@@ -391,11 +415,11 @@ class ConcurrentTaskSceneInsertDeleteFlush(DataClassBase):
     def get_insert_ids(self):
         if self.random_id:
             _ids = next(self._loop_ids)
-            concurrent_global_params.put_data_to_insert_queue(concurrent_global_params.concurrent_insert_delete_flush,
-                                                              _ids)
+            concurrent_global_params.put_data_to_insert_queue(
+                concurrent_global_params.concurrent_insert_delete_flush, _ids)
             return _ids
-        concurrent_global_params.put_data_to_insert_queue(concurrent_global_params.concurrent_insert_delete_flush,
-                                                          self.fixed_ids)
+        concurrent_global_params.put_data_to_insert_queue(
+            concurrent_global_params.concurrent_insert_delete_flush, self.fixed_ids)
         return self.fixed_ids
 
     @property
@@ -553,6 +577,7 @@ class ConcurrentTaskLoadSearchRelease(DataClassBase):
 
 @dataclass
 class ConcurrentInputParamsSceneSearchTest(DataClassBase):
+    dataset: Optional[str] = DefaultValue.default_dataset
     dim: Optional[int] = DefaultValue.default_dim
     shards_num: Optional[int] = DefaultValue.default_shards_num
     data_size: Optional[int] = 3000
@@ -573,9 +598,13 @@ class ConcurrentInputParamsSceneSearchTest(DataClassBase):
     search_counts: Optional[int] = 1
     new_connect: Optional[bool] = False
 
+    # use db and user
+    new_user: Optional[bool] = False
+
 
 @dataclass
 class ConcurrentTaskSceneSearchTest(DataClassBase):
+    dataset: Optional[str] = DefaultValue.default_dataset
     dim: Optional[int] = DefaultValue.default_dim
     shards_num: Optional[int] = DefaultValue.default_shards_num
     data_size: Optional[int] = 3000
@@ -596,6 +625,9 @@ class ConcurrentTaskSceneSearchTest(DataClassBase):
     # other
     search_counts: Optional[int] = 1
     new_connect: Optional[bool] = False
+
+    # use user
+    new_user: Optional[bool] = False
 
 
 @dataclass

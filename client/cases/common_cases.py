@@ -29,9 +29,12 @@ class CommonCases(Base):
     def prepare_collection(self, vector_field_name, prepare, prepare_clean=True):
         self.connect()
         self.set_resource_groups(**self.params_obj.resource_groups_params)
+        self.clean_all_rbac(reset_rbac=self.params_obj.database_user_params.get(pn.reset_rbac, False))
 
         if prepare:
             self.clean_all_collection(clean=prepare_clean)
+            self.clean_all_db_and_collection(
+                reset_db=self.params_obj.database_user_params.get(pn.reset_db, False), clean=prepare_clean)
 
             # create collection
             _collection_params = update_dict_value({
@@ -199,7 +202,7 @@ class CommonCases(Base):
             _expr = "id in %s" % str(ids)
 
         elif expr is not None:
-            _expr = expr
+            _expr = parser_search_params_expr(expr)
         kwargs.update(expr=_expr)
         return kwargs
 
@@ -459,7 +462,8 @@ class Query(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
         # query
         def run():
@@ -550,7 +554,8 @@ class Search(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
         # search
         def run(run_s_p: dict):
@@ -646,7 +651,8 @@ class SearchRecall(CommonCases):
         self.prepare_load(**self.params_obj.load_params)
 
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
-                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True))
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
 
         # search
         def run(_nq, _top_k, run_s_p: dict):
