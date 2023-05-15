@@ -258,6 +258,10 @@ def gen_values(data_type, vectors, ids, varchar_filled=False, field={}, default_
             for i in range(int(_len / len(_str))):
                 _s += _str
             values = [''.join(random.sample(_s, _len - 1)) for i in ids]
+    elif data_type in [DataType.BOOL]:
+        values = [bool(sum(np.fromstring(str(_id), dtype=np.uint8)) & 1) for _id in ids]
+    elif hasattr(DataType, "JSON") and data_type in [DataType.JSON]:
+        values = [{"id": i} for i in ids]
     return values
 
 

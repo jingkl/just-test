@@ -190,14 +190,16 @@ class Base:
         # todo need to check the legitimacy of the user and password
         if not secure and (user and password):
             _p = copy.deepcopy(params)
-            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password})
+            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password,
+                       "db_name": dv.default_database})
             self.check_backup_connect(**_p)
             self.create_user_role(user=user, password=password, using=dv.default_backup_alias)
 
         # create database before connecting if database does not exist
         if db_name:
             _p = copy.deepcopy(params)
-            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password})
+            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password,
+                       "db_name": dv.default_database})
             self.check_backup_connect(**_p)
             self.create_db(db_name=db_name, using=dv.default_backup_alias)
 

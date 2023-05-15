@@ -149,6 +149,9 @@ class PerfTemplate(Base):
 
         # todo server status check
 
+
+class ServerTemplate(Base):
+
     def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE, deploy_skip=False,
                         node_resources=None, set_dependence=None, deploy_uninstall=True, input_configs: dict = {},
                         **kwargs):

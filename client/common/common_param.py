@@ -22,7 +22,8 @@ DatasetPath = {
 
 ScalarDatasetPath = {
     "laion2b_url": NAS.SCALAR_DATA_DIR + "laion2b_url/",
-    "laion2b_int64": NAS.SCALAR_DATA_DIR + "laion2b_int64/"
+    "laion2b_int64": NAS.SCALAR_DATA_DIR + "laion2b_int64/",
+    "laion2b_json": NAS.SCALAR_DATA_DIR + "laion2b_json/",
 }
 
 MetricsToIndexType = {

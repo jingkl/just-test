@@ -79,7 +79,7 @@ class ClientInfluxDB(ClientBase):
             p.time(time)
 
         log.debug("[InfluxDB API] Insert data tags:%s, fields:%s, into measurement:%s bucket:%s, time: %s"
-                 % (p._tags, p._fields, p._name, self.bucket, p._time))
+                  % (p._tags, p._fields, p._name, self.bucket, p._time))
         self.write_api.write(bucket=bucket, org=org, record=p)
 
     @influxdb_try_catch()
@@ -92,7 +92,7 @@ class ClientInfluxDB(ClientBase):
 
         _time = datetime.now() - timedelta(**time) if time is not None else datetime.now()
         log.debug("[InfluxDB API] Start deleting data in the database: bucket:%s, org:%s, time:%s, predicate:%s "
-                 % (bucket, org, str(time), predicate))
+                  % (bucket, org, str(time), predicate))
         self.delete_api.delete(start=_time, stop=datetime.now(), predicate=predicate, bucket=bucket, org=org)
 
     def params_value(self, bucket=None, org=None, measurement=None):

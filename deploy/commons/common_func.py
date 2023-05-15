@@ -607,11 +607,12 @@ def get_class_key_name(class_name, value):
         f"[get_class_key_name] Can't get value: {value} from class_name: {class_name}, type: {type(class_name)}")
 
 
-def get_default_deploy_mode(deploy_tool: Union[Helm, Operator, OP, VDC]):
+def get_default_deploy_mode(deploy_tool: Union[Helm, Operator, OP, VDC], deploy_upgrade: bool = False):
     if deploy_tool in [Helm, Operator, OP]:
         return CLUSTER
     elif deploy_tool in [VDC]:
-        return get_class_key_name(ClassID, ClassID.class1cu)
+        class_id = ClassID.classnone if deploy_upgrade else ClassID.class1cu
+        return get_class_key_name(ClassID, class_id)
     return STANDALONE
 
 

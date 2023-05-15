@@ -45,9 +45,8 @@ class ClientMongoDB(ClientBase):
     @mongodb_try_catch()
     def insert(self, insert_data, collection=None):
         collection = self.collection if collection is None else collection
-        log.debug("[MongoDB API] MongoDB insert data: %s, DB name: %s, collection name: %s" % (str(insert_data),
-                                                                                               self.dbname,
-                                                                                               self.collection_name))
+        log.debug("[MongoDB API] MongoDB insert data: %s, DB name: %s, collection name: %s" % (
+            str(insert_data), self.dbname, self.collection_name))
         res = collection.insert_one(insert_data)
         return res.inserted_id
 

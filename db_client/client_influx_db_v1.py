@@ -66,8 +66,8 @@ class ClientInfluxDBV1(ClientBase):
         measurement = measurement or self.measurement
         insert_json = self.insert_json_body(measurement=measurement, tags=tags, fields=fields, time=time)
 
-        log.debug("[InfluxDBV1 API] Insert data: {0}, DB name:{1}, measurement:{2}".format(insert_json, self.database,
-                                                                                          self.measurement))
+        log.debug("[InfluxDBV1 API] Insert data: {0}, DB name:{1}, measurement:{2}".format(
+            insert_json, self.database, self.measurement))
         res = self.client.write_points(insert_json, database=database)
         return res
 

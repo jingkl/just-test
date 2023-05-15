@@ -13,7 +13,9 @@ def mysql_try_catch():
             except:
                 log.error("[MySql Exception] %s" % str(traceback.format_exc()))
                 return False
+
         return inner_wrapper
+
     return wrapper
 
 

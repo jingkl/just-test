@@ -9,12 +9,12 @@ from deploy.commons.common_params import (
 from deploy.configs.default_configs import NodeResource, SetDependence
 from deploy.commons.common_func import get_class_key_name, get_default_deploy_mode
 
-from workflow.performance_template import PerfTemplate
+from workflow.performance_template import PerfTemplate, ServerTemplate
 from parameters.input_params import param_info, InputParamsBase
 from commons.common_type import DefaultParams as dp
 
 
-class TestServerDeploy(PerfTemplate):
+class TestServerDeploy(ServerTemplate):
     """
     For server deployment
     Author: ting.wang@zilliz.com
@@ -35,6 +35,10 @@ class TestServerDeploy(PerfTemplate):
     def test_server_custom_parameters(self, input_params: InputParamsBase):
         """
         :steps:
+            release_name: instance's release name
+            deploy_mode: cluster and standalone for helm and operator; class-id for vdc
+                operator: it's better to specify deploy_mode from cmd
+
             1. deploy_skip: skip deploy server and delete the instance you pass from the cmd
             2. deploy_retain: deploy server and retain the server
             3. both: do nothing
@@ -53,6 +57,8 @@ class TestServerDeploy(PerfTemplate):
     def test_server_only_delete_pvc(self, input_params: InputParamsBase):
         """
         :steps:
+            release_name: instance's release name
+
             1. deploy_retain:  do nothing, retain the server and not delete pvc
             2. deploy_retain_pvc: do nothing
         """
@@ -63,16 +69,16 @@ class TestServerDeploy(PerfTemplate):
     def test_server_rolling_upgrade_instance(self, input_params: InputParamsBase):
         """
         :steps:
-            1. upgrade_config or deploy_config: config file for upgrade
-            2. release_name: instance's release name
+            1. release_name: instance's release name
+            2. upgrade_config or deploy_config: config file for upgrade
             3. milvus_tag: instance's tag
             4. tag_repository: repository for tag
             5. deploy_mode: cluster and standalone for helm and operator; class-id for vdc
                 operator: must pass in deploy_mode
-                vdc: pass in "classnone" will not upgrade class mode
+                vdc: pass in `classnone` will not upgrade class mode, and default value is `classnone`
         """
         self.upgrade_server_template(input_params=input_params,
-                                     deploy_mode=get_default_deploy_mode(input_params.deploy_tool))
+                                     deploy_mode=get_default_deploy_mode(input_params.deploy_tool, deploy_upgrade=True))
 
 
 class TestRecallCases(PerfTemplate):
