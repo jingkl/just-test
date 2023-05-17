@@ -106,7 +106,6 @@ class ClassIDMemCluster(ClassIDBase):
     class24cu = "class-24"
     class28cu = "class-28"
     class32cu = "class-32"
-    class64cu = "class-64"
     class128cu = "class-128"
 
 
@@ -191,42 +190,41 @@ CLASS_RESOURCES_MAP = {
     # limits.memory of class-8, class-8-disk are temporarily uncertain
 
     # standalone-memory
-    "class-1": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-pul": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-ro": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-kfk": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-2": {"cpu": "3", "memory": "12Gi", "replicas": 1, "component": STANDALONE},
-    "class-4": {"cpu": "6", "memory": "24Gi", "replicas": 1, "component": STANDALONE},
-    "class-8": {"cpu": "12", "memory": "48Gi", "replicas": 1, "component": STANDALONE},
+    "class-1": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-pul": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-ro": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-kfk": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-2": {"cpu": "4", "memory": "16Gi", "replicas": 1, "component": STANDALONE},
+    "class-4": {"cpu": "8", "memory": "32Gi", "replicas": 1, "component": STANDALONE},
+    "class-8": {"cpu": "16", "memory": "64Gi", "replicas": 1, "component": STANDALONE},
     # cluster-memory
-    "class-12": {"cpu": "6", "memory": "24Gi", "replicas": 3, "component": querynode},
-    "class-16": {"cpu": "6", "memory": "24Gi", "replicas": 4, "component": querynode},
-    "class-20": {"cpu": "6", "memory": "24Gi", "replicas": 5, "component": querynode},
-    "class-24": {"cpu": "6", "memory": "24Gi", "replicas": 6, "component": querynode},
-    "class-28": {"cpu": "6", "memory": "24Gi", "replicas": 7, "component": querynode},
-    "class-32": {"cpu": "6", "memory": "24Gi", "replicas": 8, "component": querynode},
-    "class-64": {"cpu": "12", "memory": "48Gi", "replicas": 8, "component": querynode},
-    "class-128": {"cpu": "12", "memory": "48Gi", "replicas": 16, "component": querynode},
+    "class-12": {"cpu": "8", "memory": "32Gi", "replicas": 3, "component": querynode},
+    "class-16": {"cpu": "8", "memory": "32Gi", "replicas": 4, "component": querynode},
+    "class-20": {"cpu": "8", "memory": "32Gi", "replicas": 5, "component": querynode},
+    "class-24": {"cpu": "8", "memory": "32Gi", "replicas": 6, "component": querynode},
+    "class-28": {"cpu": "8", "memory": "32Gi", "replicas": 7, "component": querynode},
+    "class-32": {"cpu": "8", "memory": "32Gi", "replicas": 8, "component": querynode},
+    "class-128": {"cpu": "8", "memory": "32Gi", "replicas": 32, "component": querynode},
     # standalone-disk
-    "class-1-disk": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-disk-pul": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-disk-kfk": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-1-disk-ro": {"cpu": "1.5", "memory": "7Gi", "replicas": 1, "component": STANDALONE},
-    "class-2-disk": {"cpu": "3", "memory": "12Gi", "replicas": 1, "component": STANDALONE},
-    "class-4-disk": {"cpu": "6", "memory": "24Gi", "replicas": 1, "component": STANDALONE},
-    "class-8-disk": {"cpu": "12", "memory": "48Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-disk": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-disk-pul": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-disk-kfk": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-disk-ro": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
+    "class-2-disk": {"cpu": "4", "memory": "16Gi", "replicas": 1, "component": STANDALONE},
+    "class-4-disk": {"cpu": "8", "memory": "32Gi", "replicas": 1, "component": STANDALONE},
+    "class-8-disk": {"cpu": "16", "memory": "64Gi", "replicas": 1, "component": STANDALONE},
      # standalone-disk-cost
-    "class-1-disk-cost": {"cpu": "1", "memory": "5Gi", "replicas": 1, "component": STANDALONE},
+    "class-1-disk-cost": {"cpu": "1", "memory": "4Gi", "replicas": 1, "component": STANDALONE},
     "class-2-disk-cost": {"cpu": "2", "memory": "8Gi", "replicas": 1, "component": STANDALONE},
     "class-4-disk-cost": {"cpu": "4", "memory": "16Gi", "replicas": 1, "component": STANDALONE},
     "class-8-disk-cost": {"cpu": "8", "memory": "32Gi", "replicas": 1, "component": STANDALONE},
     # cluster-disk
-    "class-12-disk": {"cpu": "6", "memory": "24Gi", "replicas": 3, "component": querynode},
-    "class-16-disk": {"cpu": "6", "memory": "24Gi", "replicas": 4, "component": querynode},
-    "class-20-disk": {"cpu": "6", "memory": "24Gi", "replicas": 5, "component": querynode},
-    "class-24-disk": {"cpu": "6", "memory": "24Gi", "replicas": 6, "component": querynode},
-    "class-28-disk": {"cpu": "6", "memory": "24Gi", "replicas": 7, "component": querynode},
-    "class-32-disk": {"cpu": "6", "memory": "24Gi", "replicas": 8, "component": querynode},
+    "class-12-disk": {"cpu": "8", "memory": "32Gi", "replicas": 3, "component": querynode},
+    "class-16-disk": {"cpu": "8", "memory": "32Gi", "replicas": 4, "component": querynode},
+    "class-20-disk": {"cpu": "8", "memory": "32Gi", "replicas": 5, "component": querynode},
+    "class-24-disk": {"cpu": "8", "memory": "32Gi", "replicas": 6, "component": querynode},
+    "class-28-disk": {"cpu": "8", "memory": "32Gi", "replicas": 7, "component": querynode},
+    "class-32-disk": {"cpu": "8", "memory": "32Gi", "replicas": 8, "component": querynode},
      # cluster-disk-cost
     "class-12-disk-cost": {"cpu": "4", "memory": "16Gi", "replicas": 3, "component": querynode},
     "class-16-disk-cost": {"cpu": "4", "memory": "16Gi", "replicas": 4, "component": querynode},

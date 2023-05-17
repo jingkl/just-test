@@ -10,7 +10,7 @@ from client.util.params_check import check_params
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_func import (
     get_source_file, read_ann_hdf5_file, normalize_data, get_acc_metric_type, gen_combinations, update_dict_value,
-    get_vector_type, get_default_field_name, get_search_ids, get_recall_value)
+    get_vector_type, get_default_field_name, get_search_ids, get_recall_value, get_input_params)
 
 from utils.util_log import log
 
@@ -53,11 +53,12 @@ class CommonCases(Base):
         self.params_obj = ParamsBase(**params)
 
     def prepare_collection(self, metric_type, vector_type, prepare, rebuild_index=False, prepare_clean=True):
-        vector_default_field_name = get_default_field_name(vector_type,
-                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+        vector_default_field_name = get_default_field_name(
+            vector_type, self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+
+        self.clean_all_rbac(reset_rbac=self.params_obj.database_user_params.get(pn.reset_rbac, False))
         self.connect()
         self.set_resource_groups(**self.params_obj.resource_groups_params)
-        self.clean_all_rbac(reset_rbac=self.params_obj.database_user_params.get(pn.reset_rbac, False))
 
         if prepare:
             self.clean_all_collection(clean=prepare_clean)
@@ -79,19 +80,11 @@ class CommonCases(Base):
                                          scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
             self.case_report.add_attr(**res_insert)
 
-            # flush collection
-            self.flush_collection()
+            if self.params_obj.flush_params.get(pn.prepare_flush, True):
+                # flush collection
+                self.flush_collection()
 
-            # build index
-            _index_params = update_dict_value({
-                pn.field_name: vector_default_field_name,
-                pn.metric_type: metric_type
-            }, self.params_obj.index_params)
-            self.clean_index()
-
-            res_index = self.build_index(**_index_params)
-            self.case_report.add_attr(**{"index": {"build_time": round(res_index.rt, Precision.INDEX_PRECISION)}})
-
+            self.rebuild_index(vector_default_field_name, metric_type)
             self.show_index()
 
             # load collection
@@ -108,21 +101,10 @@ class CommonCases(Base):
             self.get_collection_schema()
             self.show_index()
 
-            if rebuild_index is True:
-                _index_params = update_dict_value({
-                    pn.field_name: vector_default_field_name,
-                    pn.metric_type: metric_type
-                }, self.params_obj.index_params)
-                self.clean_index()
-
-                res_index = self.build_index(**_index_params)
-                self.case_report.add_attr(
-                    **{"index": {"build_time": round(res_index.rt, Precision.INDEX_PRECISION)}})
-
+            if rebuild_index:
+                self.rebuild_index(vector_default_field_name, metric_type)
                 self.show_index()
 
-            # self.collection_wrap.release()
-            self.release_collection()
             self.load_collection(**self.params_obj.load_params)
 
         counts = self.collection_wrap.num_entities
@@ -130,6 +112,42 @@ class CommonCases(Base):
         self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
                                show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
                                show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
+
+    def rebuild_index(self, vector_default_field_name, metric_type):
+        self.release_collection()
+        self.clean_index()
+
+        _index_params = update_dict_value({
+            pn.field_name: vector_default_field_name,
+            pn.metric_type: metric_type
+        }, self.params_obj.index_params)
+        res_index = self.build_index(**_index_params)
+        self.case_report.add_attr(**{"index": {"build_time": round(res_index.rt, Precision.INDEX_PRECISION)}})
+
+        self.prepare_scalars_index()
+
+    def prepare_scalars_index(self, update_report_data=True):
+        scalars = self.params_obj.dataset_params.get(pn.scalars_index, [])
+        if len(scalars) == 0:
+            log.info("[AccCases] No scalars need to be indexed.")
+            return True
+
+        other_fields = self.params_obj.collection_params.get(pn.other_fields, [])
+        for scalar in scalars:
+            if scalar not in other_fields:
+                log.error("[AccCases] The scalar {0} is not in the collection {1}.".format(scalar, other_fields))
+                return False
+
+        self.show_index()
+
+        for scalar in scalars:
+            result = self.build_scalar_index(scalar)
+            rt = round(result.rt, Precision.INDEX_PRECISION)
+            # set report data
+            self.case_report.add_attr(update_report_data, **{"index": {scalar: {"RT": rt}}})
+            log.info("[AccCases] RT of build scalar index {1}: {0}s".format(rt, scalar))
+        self.describe_collection_index()
+        log.info("[AccCases] Prepare scalars {0} index done.".format(scalars))
 
     def parser_search_params(self):
         search_params = copy.deepcopy(self.params_obj.search_params_parser(self.params_obj.search_params))
@@ -228,18 +246,14 @@ class AccCases(CommonCases):
         :return:
         """
         # params prepare
-        params = kwargs.get("params", None)
-        prepare = kwargs.get("prepare", True)
-        prepare_clean = kwargs.get("prepare_clean", True)
-        rebuild_index = kwargs.get("rebuild_index", True)
-        clean_collection = kwargs.get("clean_collection", True)
+        params, prepare, prepare_clean, rebuild_index, clean_collection = get_input_params(**kwargs)
         log.info("[AccCases] The detailed test steps are as follows: {}".format(self))
 
         # file parsing
         self.parsing_params(params)
         dataset_file_name = params[pn.dataset_params][pn.dataset_name]
-        metric_type, vector_type = self.parsing_file(dataset_file_name,
-                                                     metric_type=self.params_obj.dataset_params.get(pn.metric_type, ""))
+        metric_type, vector_type = self.parsing_file(
+            dataset_file_name, metric_type=self.params_obj.dataset_params.get(pn.metric_type, ""))
         self.params_obj.dataset_params[pn.metric_type] = metric_type
 
         # prepare collection

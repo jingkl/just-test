@@ -25,7 +25,7 @@ class TestScaleOutInCases(ScaleTemplate):
             case_params: Union[str, dict] = str
             case_skip_prepare: Optional[bool] = False
             case_skip_prepare_clean: Optional[bool] = False
-            case_skip_build_index: Optional[bool] = False
+            case_rebuild_index: Optional[bool] = False
             case_skip_clean_collection: Optional[bool] = False
         :type input_params: InputParamsBase
         

@@ -2,7 +2,8 @@ import copy
 
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_func import (
-    gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, parser_time, update_dict_value)
+    gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, parser_time, update_dict_value,
+    get_input_params)
 from client.util.params_check import check_params
 from client.util.api_request import info_logout
 from client.cases.common_cases import CommonCases
@@ -28,6 +29,7 @@ from client.parameters.params import (
 )
 
 from utils.util_log import log
+from parameters.input_params import param_info
 
 
 class GoBenchCases(CommonCases):
@@ -65,26 +67,24 @@ class GoBenchCases(CommonCases):
             params: dict
             prepare: bool
             prepare_clean: bool
+            rebuild_index: bool
             clean_collection: bool
         :return:
         """
 
         # params prepare
-        params = kwargs.get("params", None)
-        prepare = kwargs.get("prepare", True)
-        prepare_clean = kwargs.get("prepare_clean", True)
-        clean_collection = kwargs.get("clean_collection", True)
+        params, prepare, prepare_clean, rebuild_index, clean_collection = get_input_params(**kwargs)
         log.info("[GoBenchCases] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type,
-                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+        vector_default_field_name = get_default_field_name(
+            vector_type, self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
-        if prepare is True:
+        if prepare:
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type],
                                clean_index_before=True)
@@ -93,13 +93,16 @@ class GoBenchCases(CommonCases):
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
             self.prepare_flush()
-            self.count_entities()
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
-            self.prepare_scalars_index()
-        # else:
-        #     self.release_collection()
+        else:
+            # if pass in rebuild_index, indexes of collection will be dropped before building index
+            if rebuild_index:
+                self.prepare_index(vector_field_name=vector_default_field_name,
+                                   metric_type=self.params_obj.dataset_params[pn.metric_type],
+                                   clean_index_before=rebuild_index)
 
+        self.count_entities()
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
@@ -252,35 +255,34 @@ class ConcurrentClientBase(CommonCases):
             params: dict
             prepare: bool
             prepare_clean: bool
+            rebuild_index: bool
             clean_collection: bool
         :return:
         """
         from gevent import monkey
-        monkey.patch_all()
+        _patch_params = {} if param_info.locust_patch_switch else {"ssl": False}
+        monkey.patch_all(**_patch_params)
         # from requests.packages.urllib3.util.ssl_ import create_urllib3_context; create_urllib3_context()
         import grpc.experimental.gevent as grpc_gevent
         grpc_gevent.init_gevent()
         from client.concurrent.locust_runner import LocustRunner
 
         # params prepare
-        params = kwargs.get("params", None)
-        prepare = kwargs.get("prepare", True)
-        prepare_clean = kwargs.get("prepare_clean", True)
-        clean_collection = kwargs.get("clean_collection", True)
+        params, prepare, prepare_clean, rebuild_index, clean_collection = get_input_params(**kwargs)
         log.info("[ConcurrentClientBase] The detailed test steps are as follows: {}".format(self))
 
         # params parsing
         self.parsing_params(params)
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
-        vector_default_field_name = get_default_field_name(vector_type,
-                                                           self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+        vector_default_field_name = get_default_field_name(
+            vector_type, self.params_obj.dataset_params.get(pn.vector_field_name, ""))
 
         obj_params = self.parser_concurrent_tasks(self.params_obj.concurrent_tasks, vector_default_field_name,
                                                   self.params_obj.dataset_params[pn.metric_type])
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
-        if prepare is True:
+        if prepare:
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type],
                                clean_index_before=True)
@@ -289,13 +291,16 @@ class ConcurrentClientBase(CommonCases):
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
             self.prepare_flush()
-            self.count_entities()
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type])
-            self.prepare_scalars_index()
-        # else:
-        #     self.release_collection()
+        else:
+            # if pass in rebuild_index, indexes of collection will be dropped before building index
+            if rebuild_index:
+                self.prepare_index(vector_field_name=vector_default_field_name,
+                                   metric_type=self.params_obj.dataset_params[pn.metric_type],
+                                   clean_index_before=rebuild_index)
 
+        self.count_entities()
         # load collection
         self.prepare_load(**self.params_obj.load_params)
 
@@ -326,6 +331,9 @@ class ConcurrentClientBase(CommonCases):
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
         yield params_list
+
+        # recover output log
+        info_logout.recover_output()
 
         # clear env
         self.clear_collections(clean_collection=clean_collection)

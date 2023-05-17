@@ -18,8 +18,8 @@ class ReportMetrics(object):
         self.result.clear_property()
 
     def update_server(self, deploy_tool: str = "", deploy_mode: str = "", config_name: str = "", config: dict = {},
-                      host: str = ""):
-        self.server.update(deploy_tool, deploy_mode, config_name, config, host)
+                      host: str = "", port: str = "", uri: str = ""):
+        self.server.update(deploy_tool, deploy_mode, config_name, config, host, port, uri)
 
     def update_client(self, test_case_type: str = "", test_case_name: str = "", test_case_params: dict = {}):
         self.client.update(test_case_type, test_case_name, test_case_params)

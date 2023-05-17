@@ -933,3 +933,12 @@ def get_default_search_params(index_type: str):
         pn.IndexTypeName.AUTOINDEX: {"level": 1}
     }
     return all_index_types.get(index_type, {})
+
+
+def get_input_params(**kwargs):
+    _params = kwargs.get("params", None)
+    _prepare = kwargs.get("prepare", True)
+    _prepare_clean = kwargs.get("prepare_clean", True)
+    _rebuild_index = kwargs.get("rebuild_index", False)
+    _clean_collection = kwargs.get("clean_collection", True)
+    return _params, _prepare, _prepare_clean, _rebuild_index, _clean_collection

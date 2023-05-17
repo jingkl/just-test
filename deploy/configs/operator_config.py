@@ -2,7 +2,7 @@ from deploy.configs.base_config import BaseConfig
 from deploy.commons.common_func import get_latest_tag, get_image_tag, gen_release_name, update_dict_value
 from deploy.commons.common_params import (
     Milvus, etcd, storage, pulsar, kafka, rocksmq, DefaultRepository, dataNode, queryNode, indexNode, all_pods,
-    standalone, ephemeral_storage)
+    standalone, ephemeral_storage, STANDALONE, CLUSTER)
 
 from utils.util_log import log
 
@@ -64,8 +64,8 @@ class OperatorConfig(BaseConfig):
 
     def op_base_config(self, name="", api_version=None, kind=None):
         name = self.release_name or name or gen_release_name('fouram-op')
-        api_version = api_version if api_version is not None else self.api_version
-        kind = kind if kind is not None else self.kind
+        api_version = api_version or self.api_version
+        kind = kind or self.kind
         base_config = {"apiVersion": api_version,
                        "kind": kind,
                        "metadata": {"name": name}}
@@ -75,27 +75,37 @@ class OperatorConfig(BaseConfig):
             }, base_config)
         else:
             return update_dict_value({
-                "spec": {"dependencies": {etcd: {"inCluster": {"values": {"replicaCount": 1}}},
-                                          storage: {"inCluster": {"values": {"mode": "standalone"}}},
-                                          rocksmq: {"persistence": {"enabled": True}}}}
+                "spec": {"dependencies": {
+                    etcd: {"inCluster": {"values": {"replicaCount": 1}}},
+                    storage: {"inCluster": {"values": {"mode": "standalone"}}},
+                    rocksmq: {"persistence": {"enabled": True}}}}
             }, base_config)
+
+    def get_deploy_mode(self, deploy_mode, set_base_config=True):
+        base_config = {"apiVersion": self.api_version,
+                       "kind": self.kind} if set_base_config else {}
+        if deploy_mode == CLUSTER:
+            return update_dict_value({"spec": {"mode": "cluster"}}, base_config)
+        return base_config
 
     def delete_pvc_instance(self, pvc_deletion=True, deletion_policy="Delete"):
         if self.cluster:
-            return {"spec": {"dependencies": {etcd: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                   "pvcDeletion": pvc_deletion}},
-                                              pulsar: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                     "pvcDeletion": pvc_deletion}},
-                                              kafka: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                    "pvcDeletion": pvc_deletion}},
-                                              storage: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                      "pvcDeletion": pvc_deletion}}}}}
+            return {"spec": {"dependencies": {
+                etcd: {"inCluster": {"deletionPolicy": deletion_policy,
+                                     "pvcDeletion": pvc_deletion}},
+                pulsar: {"inCluster": {"deletionPolicy": deletion_policy,
+                                       "pvcDeletion": pvc_deletion}},
+                kafka: {"inCluster": {"deletionPolicy": deletion_policy,
+                                      "pvcDeletion": pvc_deletion}},
+                storage: {"inCluster": {"deletionPolicy": deletion_policy,
+                                        "pvcDeletion": pvc_deletion}}}}}
         else:
-            return {"spec": {"dependencies": {etcd: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                   "pvcDeletion": pvc_deletion}},
-                                              rocksmq: {"persistence": {"pvcDeletion": pvc_deletion}},
-                                              storage: {"inCluster": {"deletionPolicy": deletion_policy,
-                                                                      "pvcDeletion": pvc_deletion}}}}}
+            return {"spec": {"dependencies": {
+                etcd: {"inCluster": {"deletionPolicy": deletion_policy,
+                                     "pvcDeletion": pvc_deletion}},
+                rocksmq: {"persistence": {"pvcDeletion": pvc_deletion}},
+                storage: {"inCluster": {"deletionPolicy": deletion_policy,
+                                        "pvcDeletion": pvc_deletion}}}}}
 
     # common funcs
     def set_image(self, tag=None, repository=DefaultRepository, prefix="master"):

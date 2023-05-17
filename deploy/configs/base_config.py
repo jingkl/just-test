@@ -18,7 +18,7 @@ class BaseConfig(metaclass=abc.ABCMeta):
         # minio local-path and metrics
         self.storage_dict = {"persistence": {"storageClass": "local-path"},
                              # "nodeSelector": {"disk": "large"},
-                             "metrics": {"serviceMonitor": {"enabled": False}},
+                             "metrics": {"podMonitor": {"enabled": True}},
                              }
 
         # etcd local-path and metrics

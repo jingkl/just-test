@@ -2,7 +2,7 @@ from deploy.configs.base_config import BaseConfig
 from deploy.commons.common_func import get_latest_tag, get_image_tag, update_dict_value
 from deploy.commons.common_params import (
     IDC_NAS_URL, dataNode, queryNode, indexNode, all_pods, minio, etcd, pulsar, kafka, standalone, DefaultRepository,
-    ephemeral_storage)
+    ephemeral_storage, STANDALONE, CLUSTER)
 
 from utils.util_log import log
 
@@ -28,7 +28,8 @@ class HelmConfig(BaseConfig):
 
         # etcd local-path and metrics
         self.etcd_local_path = {etcd: self.etcd_dict,
-                                "metrics": {"serviceMonitor": {"enabled": True}}}
+                                "metrics": {"serviceMonitor": {"enabled": True}}  # milvus's metrics
+                                }
 
         # etcd node selector
         self.etcd_node_selector = self.set_etcd_node_selector(self.escape)
@@ -61,6 +62,13 @@ class HelmConfig(BaseConfig):
                 "etcd": {"replicaCount": 1},
                 "minio": {"mode": "standalone"},
                 "pulsar": {"enabled": False}} if cluster is False else {"cluster": {"enabled": True}}
+
+    def get_deploy_mode(self, deploy_mode):
+        if deploy_mode == STANDALONE:
+            return {"cluster": {"enabled": False}}
+        elif deploy_mode == CLUSTER:
+            return {"cluster": {"enabled": True}}
+        return {}
 
     def set_etcd_node_selector(self, escape=None):
         escape = escape if escape is not None else self.escape

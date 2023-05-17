@@ -91,7 +91,7 @@ class ScaleTemplate(PerfTemplate):
                                              default_case_params=default_case_params,
                                              case_params=input_params.case_params,
                                              case_prepare=not input_params.case_skip_prepare,
-                                             case_rebuild_index=not input_params.case_skip_build_index,
+                                             case_rebuild_index=input_params.case_rebuild_index,
                                              case_clean_collection=not input_params.case_skip_clean_collection,
                                              case_prepare_clean=not input_params.case_skip_prepare_clean)
         for case in next(run_client_case):

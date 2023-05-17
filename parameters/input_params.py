@@ -9,11 +9,13 @@ from commons.common_type import DefaultParams as dp
 
 class ParamInfo:
     """ global params """
+
     def __init__(self):
         self.test_status = True
         self.client_version = ""
         self.param_host = DefaultConfig.DEFAULT_HOST
         self.param_port = DefaultConfig.DEFAULT_PORT
+        self.param_uri = "tcp://127.0.0.1:19530"  # DefaultConfig.GRPC_URI
         self.param_handler = ""
         self.param_secure = False
         self.param_user = ""  # root
@@ -21,6 +23,7 @@ class ParamInfo:
         self.param_db_name = ""  # default
         self.run_id = None
         self.param_replica_num = dp.default_replica_num
+        self.locust_patch_switch = False
         self.milvus_tag = None
         self.milvus_tag_prefix = ""
         self.tag_repository = DefaultRepository
@@ -37,36 +40,53 @@ class ParamInfo:
         self.vdc_env = "UAT3"
         self.vdc_region_id = ""
 
-    def prepare_param_info(self, client_version, host, port, handler="", secure="", replica_num=1, milvus_tag=None,
-                           tag_repository=None, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False,
-                           milvus_tag_prefix="", update_helm_file=False, client_test_skip=False, release_name_prefix="",
-                           release_name="", run_id=None, sync_report=False, async_report=False, param_user="",
-                           param_password="", param_db_name="", vdc_user="", vdc_env="", vdc_region_id=""):
+    def prepare_param_info(
+            self, client_version, host, port,
+            uri="", handler="", secure="", param_user="", param_password="", param_db_name="",
+            vdc_user="", vdc_env="", vdc_region_id="",
+            milvus_tag=None, milvus_tag_prefix="", tag_repository=None, release_name_prefix="", release_name="",
+            update_helm_file=False, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False,
+            client_test_skip=False, replica_num=1,
+            run_id=None, sync_report=False, async_report=False,
+            locust_patch_switch=False):
         self.client_version = client_version
         self.param_host = host
         self.param_port = port
+
+        self.param_uri = uri
         self.param_handler = handler
         self.param_secure = secure
         self.param_user = param_user
         self.param_password = param_password
         self.param_db_name = param_db_name
-        self.run_id = int(run_id) if str(run_id).isdigit() else None
-        self.param_replica_num = replica_num
+
+        # vdc
+        self.vdc_user = vdc_user
+        self.vdc_env = vdc_env
+        self.vdc_region_id = vdc_region_id
+
+        # deploy
         self.milvus_tag = milvus_tag or self.milvus_tag
         self.milvus_tag_prefix = milvus_tag_prefix or self.milvus_tag_prefix
         self.tag_repository = tag_repository or self.tag_repository
+        self.release_name_prefix = release_name_prefix
+        self.release_name = release_name
         self.update_helm_file = update_helm_file or self.update_helm_file
         self.deploy_skip = deploy_skip or self.deploy_skip
         self.deploy_retain = deploy_retain or self.deploy_retain
         self.deploy_retain_pvc = deploy_retain_pvc or self.deploy_retain_pvc
+
+        # client
         self.client_test_skip = client_test_skip or self.client_test_skip
-        self.release_name_prefix = release_name_prefix
-        self.release_name = release_name
+        self.param_replica_num = replica_num
+
+        # report
+        self.run_id = int(run_id) if str(run_id).isdigit() else None
         self.sync_report = sync_report
         self.async_report = async_report
-        self.vdc_user = vdc_user
-        self.vdc_env = vdc_env
-        self.vdc_region_id = vdc_region_id
+
+        # for monkey patch
+        self.locust_patch_switch = locust_patch_switch
 
     def to_dict(self):
         return vars(self)
@@ -85,5 +105,5 @@ class InputParamsBase:
     case_params: Union[str, dict] = ""
     case_skip_prepare: Optional[bool] = False
     case_skip_prepare_clean: Optional[bool] = False
-    case_skip_build_index: Optional[bool] = False
+    case_rebuild_index: Optional[bool] = False
     case_skip_clean_collection: Optional[bool] = False

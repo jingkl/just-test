@@ -10,11 +10,15 @@ from utils.util_log import log
 
 
 class InfoLogout:
-    log_output = ["Collection.insert", "Index", "Collection.load", "Collection.search", "Collection.query"]
+    _log_output = ["Collection.insert", "Index", "Collection.load", "Collection.search", "Collection.query"]
+    log_output = _log_output
     log_row_length = 3000
 
     def reset_output(self, output: list = []):
         self.log_output = output
+
+    def recover_output(self, output: list = None):
+        self.log_output = output or self._log_output
 
     def reset_log_row_length(self, log_row_length: int = 3000):
         self.log_row_length = log_row_length

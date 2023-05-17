@@ -140,8 +140,10 @@ class Base:
             self.db_wrap.drop_database(db_name=db_name, using=using)
             log.customize(log_level)(f"[Base] Drop database:{db_name} done.")
 
-    def clean_all_rbac(self, reset_rbac=False, using=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
+    def clean_all_rbac(self, reset_rbac=False, using=dv.default_backup_alias, log_level=LogLevel.INFO):
         if reset_rbac:
+            self.check_backup_connect(host=param_info.param_host, port=param_info.param_port, uri=param_info.param_uri,
+                                      secure=param_info.param_secure)
             # get all users and roles
             all_users = self.get_all_users_roles(using=using)
 
@@ -177,39 +179,37 @@ class Base:
         self.remove_connect(alias=alias, log_level=log_level)
         host = host or param_info.param_host
         port = port or param_info.param_port
+        uri = kwargs.get("uri", "") or param_info.param_uri
         secure = secure or param_info.param_secure
         user = user or param_info.param_user
         password = password or param_info.param_password
         db_name = db_name or param_info.param_db_name
 
-        params = {"alias": alias, "host": host, "port": port, "secure": secure, "user": user, "password": password,
-                  "db_name": db_name}
+        params = {"alias": alias, "host": host, "port": port, "uri": uri,
+                  "secure": secure, "user": user, "password": password, "db_name": db_name}
         params.update(kwargs)
 
         # create user and password if secure is False, which means testing for RBAC
         # todo need to check the legitimacy of the user and password
         if not secure and (user and password):
-            _p = copy.deepcopy(params)
-            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password,
-                       "db_name": dv.default_database})
-            self.check_backup_connect(**_p)
+            self.check_backup_connect(**params)
             self.create_user_role(user=user, password=password, using=dv.default_backup_alias)
 
         # create database before connecting if database does not exist
         if db_name:
-            _p = copy.deepcopy(params)
-            _p.update({"user": dv.default_rbac_user, "password": dv.default_rbac_password,
-                       "db_name": dv.default_database})
-            self.check_backup_connect(**_p)
+            self.check_backup_connect(**params)
             self.create_db(db_name=db_name, using=dv.default_backup_alias)
 
         log.customize(log_level)("[Base] Connection params: {}".format(params))
         return self.connection_wrap.connect(**params)
 
     def check_backup_connect(self, **kwargs):
+        _kwargs = copy.deepcopy(kwargs)
+        _kwargs.update({"alias": dv.default_backup_alias, "user": dv.default_rbac_user,
+                        "password": dv.default_rbac_password, "db_name": dv.default_database})
+
         if not self.connection_wrap.has_connection(alias=dv.default_backup_alias).response:
-            kwargs.update({"alias": dv.default_backup_alias})
-            self.connection_wrap.connect(**kwargs)
+            self.connection_wrap.connect(**_kwargs)
 
     def remove_connect(self, alias=DefaultConfig.DEFAULT_USING, log_level=LogLevel.INFO):
         """ Disconnect and remove default connect """
@@ -420,8 +420,8 @@ class Base:
         collection_name = collection_name or self.collection_name
 
         log.customize(log_level)(
-            "[Base] Start build index of {0} for collection {1}, params:{2}".format(index_type, collection_name,
-                                                                                    index_params))
+            "[Base] Start build index of {0} for collection {1}, params:{2}".format(
+                index_type, collection_name, index_params))
         collection_obj = collection_obj or self.collection_wrap
         return self.index_wrap.init_index(collection_obj.collection, field_name, index_params)
 
@@ -430,10 +430,12 @@ class Base:
         return self.index_wrap.init_index(self.collection_wrap.collection, field_name, index_params={})
 
     def show_index(self):
-        if self.collection_wrap.has_index().response:
-            index_params = self.collection_wrap.index().response.params
-            log.info("[Base] Params of index: {}".format(index_params))
-            return index_params
+        check_indexes = self.collection_wrap.indexes
+        if check_indexes:
+            _indexes_result = [{i.field_name: i.params} for i in check_indexes]
+            log.info("[Base] Params of index: {}".format(_indexes_result))
+            return _indexes_result
+
         log.info("[Base] Collection:{0} is not building index".format(self.collection_wrap.name))
         return {}
 
@@ -443,19 +445,22 @@ class Base:
         return indexes
 
     def clean_index(self):
-        if self.collection_wrap.has_index().response:
-            self.collection_wrap.drop_index()
-            if self.collection_wrap.has_index().response:
-                log.error("[Base] Index of collection {0} can not be cleaned.".format(self.collection_wrap.name))
-                return False
+        _indexes = self.collection_wrap.indexes
+        for _index_obj in _indexes:
+            self.collection_wrap.drop_index(index_name=_index_obj.index_name)
+
+        check_indexes = self.collection_wrap.indexes
+        if check_indexes:
+            _check_result = [i.field_name for i in check_indexes]
+            log.error(f"[Base] Indexes:{_check_result} of collection:{self.collection_wrap.name} can not be cleaned.")
+            return False
         log.info("[Base] Clean all index done.")
         return True
 
     def count_entities(self, collection_obj: callable = None, log_level=LogLevel.INFO):
         collection_obj = collection_obj or self.collection_wrap
         counts = collection_obj.num_entities
-        log.customize(log_level)("[Base] Number of vectors in the collection({0}): {1}".format(collection_obj.name,
-                                                                                               counts))
+        log.customize(log_level)(f"[Base] Number of vectors in the collection({collection_obj.name}): {counts}")
 
     def query(self, ids=None, expr=None, **kwargs):
         """
@@ -942,6 +947,17 @@ class Base:
                                shards_num=params.shards_num, vector_field_name=params.vector_field_name, dim=params.dim,
                                using=connect_using, log_level=log_level)
         time.sleep(1)
+
+        # prepare before inserting
+        if params.prepare_before_insert:
+            # build index
+            self.build_index(field_name=params.vector_field_name, index_type=params.index_type,
+                             metric_type=params.metric_type, index_param=params.index_param,
+                             collection_name=collection_name, collection_obj=collection_obj, log_level=log_level)
+
+            # load collection
+            self.load_collection(replica_number=params.replica_number, collection_obj=collection_obj,
+                                 log_level=log_level)
 
         # insert vectors
         self.insert(data_type=params.dataset, dim=params.dim, size=params.data_size, ni=params.nb,

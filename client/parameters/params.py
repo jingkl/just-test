@@ -14,6 +14,7 @@ class ParamsBase:
     dataset_params: Optional[dict] = field(default_factory=lambda: {})
     collection_params: Optional[dict] = field(default_factory=lambda: {})
     load_params: Optional[dict] = field(default_factory=lambda: {})
+    flush_params: Optional[dict] = field(default_factory=lambda: {})
     index_params: Optional[dict] = field(default_factory=lambda: {})
     search_params: Optional[dict] = field(default_factory=lambda: {})
     query_params: Optional[dict] = field(default_factory=lambda: {})
@@ -53,6 +54,7 @@ class ParamsFormat:
         load_params: {replica_number: ([type(int())], OPTION),
                       refresh: ([type(bool())], OPTION),
                       resource_groups: ([type(int()), type(list())], OPTION)},
+        flush_params: {prepare_flush: ([type(bool())], OPTION)},
         query_params: {output_fields: ([type(list()), type(None)], OPTION),
                        ignore_growing: ([type(bool())], OPTION)},
         search_params: {
@@ -595,6 +597,7 @@ class ConcurrentInputParamsSceneSearchTest(DataClassBase):
     search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
 
     # other
+    prepare_before_insert: Optional[bool] = False
     search_counts: Optional[int] = 1
     new_connect: Optional[bool] = False
 
@@ -623,6 +626,7 @@ class ConcurrentTaskSceneSearchTest(DataClassBase):
     search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
 
     # other
+    prepare_before_insert: Optional[bool] = False
     search_counts: Optional[int] = 1
     new_connect: Optional[bool] = False
 

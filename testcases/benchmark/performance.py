@@ -96,7 +96,7 @@ class TestRecallCases(PerfTemplate):
             case_params: Union[str, dict]
             case_skip_prepare: Optional[bool]
             case_skip_prepare_clean: Optional[bool]
-            case_skip_build_index: Optional[bool]
+            case_rebuild_index: Optional[bool]
             case_skip_clean_collection: Optional[bool]
         :type input_params: InputParamsBase
         
@@ -122,7 +122,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_hnsw())
 
@@ -133,9 +133,12 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=8)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_hnsw())
+                             default_case_params=AccParams().sift_128_euclidean_hnsw(), node_resources=node_resources)
 
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -144,7 +147,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_diskann())
 
@@ -155,9 +158,13 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=8)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_diskann())
+                             default_case_params=AccParams().sift_128_euclidean_diskann(),
+                             node_resources=node_resources)
 
     # @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -188,7 +195,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_flat())
 
@@ -199,9 +206,12 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[queryNode], cpu=8, mem=4)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_flat())
+                             default_case_params=AccParams().sift_128_euclidean_flat(), node_resources=node_resources)
 
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -210,7 +220,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=12, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_flat())
 
@@ -221,9 +231,16 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [
+            NodeResource(nodes=[indexNode], cpu=4, mem=8),
+            NodeResource(nodes=[queryNode], cpu=8, mem=6)
+        ]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_ivf_flat())
+                             default_case_params=AccParams().sift_128_euclidean_ivf_flat(),
+                             node_resources=node_resources)
 
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -232,7 +249,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=8, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_sq8())
 
@@ -243,9 +260,13 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[queryNode], cpu=8)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_ivf_sq8())
+                             default_case_params=AccParams().sift_128_euclidean_ivf_sq8(),
+                             node_resources=node_resources)
 
     @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -254,7 +275,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=6, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_pq())
 
@@ -265,9 +286,12 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=4)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().sift_128_euclidean_ivf_pq())
+                             default_case_params=AccParams().sift_128_euclidean_ivf_pq(), node_resources=node_resources)
 
     @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
     def test_recall_sift_auto_index(self, input_params: InputParamsBase, deploy_mode):
@@ -286,7 +310,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=6, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_hnsw())
 
@@ -297,9 +321,12 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=6)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().glove_200_angular_hnsw())
+                             default_case_params=AccParams().glove_200_angular_hnsw(), node_resources=node_resources)
 
     # @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
@@ -343,9 +370,16 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [
+            NodeResource(nodes=[indexNode], cpu=8, mem=16),
+            NodeResource(nodes=[queryNode], cpu=8, mem=4)
+        ]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
-                             default_case_params=AccParams().glove_200_angular_ivf_flat())
+                             default_case_params=AccParams().glove_200_angular_ivf_flat(),
+                             node_resources=node_resources)
 
     # @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -469,6 +503,7 @@ class TestPerformanceCases(PerfTemplate):
             case_params: Union[str, dict]
             case_skip_prepare: Optional[bool]
             case_skip_prepare_clean: Optional[bool]
+            case_rebuild_index: Optional[bool]
             case_skip_clean_collection: Optional[bool]
         :type input_params: InputParamsBase
 
@@ -494,7 +529,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. batch insert and calculation of insert time
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=6, deploy_mode=deploy_mode,
                              case_callable_obj=InsertBatch().scene_insert_batch,
                              default_case_params=InsertBatchParams().params_insert_batch())
 
@@ -505,9 +540,13 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. batch insert and calculation of insert time
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[dataNode], mem=6)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=InsertBatch().scene_insert_batch,
-                             default_case_params=InsertBatchParams().params_insert_batch())
+                             default_case_params=InsertBatchParams().params_insert_batch(),
+                             node_resources=node_resources)
 
     def test_build_index_custom_parameters(self, input_params: InputParamsBase):
         """
@@ -604,7 +643,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of query time
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_expr,
                              default_case_params=QueryParams().params_scene_query_expr_sift())
 
@@ -615,9 +654,13 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of query time
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
+
+        node_resources = [NodeResource(nodes=[indexNode], mem=4)]
+
+        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_ids,
-                             default_case_params=QueryParams().params_scene_query_ids_sift())
+                             default_case_params=QueryParams().params_scene_query_ids_sift(),
+                             node_resources=node_resources)
 
     @pytest.mark.query
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -626,7 +669,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of query time
         """
-        self.serial_template(input_params=input_params, cpu=32, mem=128, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=8, mem=128, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_ids,
                              default_case_params=QueryParams().params_scene_query_ids_local())
 
@@ -656,9 +699,16 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time
         """
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], cpu=2, mem=4),
+            NodeResource(nodes=[indexNode], mem=20)
+        ]
+
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search_ivf_flat())
+                             default_case_params=SearchParams().params_scene_search_ivf_flat(),
+                             node_resources=node_resources)
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
@@ -669,9 +719,8 @@ class TestPerformanceCases(PerfTemplate):
         """
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search_ivf_flat(other_fields=[],
-                                                                                             search_expr=None,
-                                                                                             req_run_counts=30))
+                             default_case_params=SearchParams().params_scene_search_ivf_flat(
+                                 other_fields=[], search_expr=None, req_run_counts=30))
 
     @pytest.mark.search
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
@@ -680,11 +729,16 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time
         """
+
+        node_resources = [
+            NodeResource(nodes=[dataNode], cpu=2, mem=4),
+            NodeResource(nodes=[indexNode], mem=16)
+        ]
+
         self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search_ivf_flat(other_fields=[],
-                                                                                             search_expr=None,
-                                                                                             req_run_counts=30))
+                             default_case_params=SearchParams().params_scene_search_ivf_flat(
+                                 other_fields=[], search_expr=None, req_run_counts=30), node_resources=node_resources)
 
     @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
     def test_auto_index_search_filter(self, input_params: InputParamsBase, deploy_mode):
@@ -704,9 +758,8 @@ class TestPerformanceCases(PerfTemplate):
         """
         self.serial_template(input_params=input_params, cpu=None, mem=None, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
-                             default_case_params=SearchParams().params_scene_search_auto_index(other_fields=[],
-                                                                                               search_expr=None,
-                                                                                               req_run_counts=30))
+                             default_case_params=SearchParams().params_scene_search_auto_index(
+                                 other_fields=[], search_expr=None, req_run_counts=30))
 
     def test_search_recall_custom_parameters(self, input_params: InputParamsBase):
         """
@@ -722,9 +775,9 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time and recall
         """
-        case_params = SearchParams().params_scene_search_ivf_flat(dataset_size="1m", top_k=[10, 100], nq=10000,
-                                                                  search_param={"nprobe": [8, 32, 64]}, other_fields=[],
-                                                                  search_expr=None, req_run_counts=None)
+        case_params = SearchParams().params_scene_search_ivf_flat(
+            dataset_size="1m", top_k=[10, 100], nq=10000, search_param={"nprobe": [8, 32, 64]}, other_fields=[],
+            search_expr=None, req_run_counts=None)
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=SearchRecall().scene_search_recall, default_case_params=case_params)
 
@@ -734,9 +787,9 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time and recall
         """
-        case_params = SearchParams().params_scene_search_ivf_flat(dataset_size="1m", top_k=[10, 100], nq=10000,
-                                                                  search_param={"nprobe": [8, 32, 64]}, other_fields=[],
-                                                                  search_expr=None, req_run_counts=None)
+        case_params = SearchParams().params_scene_search_ivf_flat(
+            dataset_size="1m", top_k=[10, 100], nq=10000, search_param={"nprobe": [8, 32, 64]}, other_fields=[],
+            search_expr=None, req_run_counts=None)
         self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=SearchRecall().scene_search_recall, default_case_params=case_params)
 
@@ -756,6 +809,7 @@ class TestGoBenchCases(PerfTemplate):
             case_params: Union[str, dict]
             case_skip_prepare: Optional[bool]
             case_skip_prepare_clean: Optional[bool]
+            case_rebuild_index: Optional[bool]
             case_skip_clean_collection: Optional[bool]
         :type input_params: InputParamsBase
 

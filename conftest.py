@@ -12,6 +12,7 @@ def pytest_addoption(parser):
     parser.addoption("--client_version", action="store", default="2.2", help="client version")
     parser.addoption("--host", action="store", default="localhost", help="service's ip")
     parser.addoption("--port", action="store", default=19530, help="service's port")
+    parser.addoption("--uri", action="store", default="", help="service's uri")
     parser.addoption("--tag", action="store", default="all", help="only run tests matching the tag.")
     parser.addoption('--clean_log', action='store_true', default=False, help="clean log before testing")
     parser.addoption('--secure', action='store_true', default=False, help="using secure when connection server")
@@ -23,6 +24,9 @@ def pytest_addoption(parser):
     parser.addoption("--vdc_user", action="store", default="default", help="vdc user name")
     parser.addoption("--vdc_env", action="store", default="UAT3", help="vdc env")
     parser.addoption("--vdc_region_id", action="store", default="", help="vdc region id")
+
+    # others
+    parser.addoption('--locust_patch_switch', action='store_true', default=False, help="rollback locust patch")
 
     # deploy
     parser.addoption("--milvus_tag", action="store", default=None, help="Milvus container tag")
@@ -52,7 +56,8 @@ def pytest_addoption(parser):
     parser.addoption('--case_skip_prepare', action='store_true', default=False, help="skip prepare collection")
     parser.addoption('--case_skip_prepare_clean', action='store_true', default=False,
                      help="skip clean collection before test")
-    parser.addoption('--case_skip_build_index', action='store_true', default=False, help="skip rebuild index")
+    parser.addoption('--case_rebuild_index', action='store_true', default=False,
+                     help="rebuild index if case_skip_prepare")
     parser.addoption('--case_skip_clean_collection', action='store_true', default=False, help="skip remove collection")
 
 
@@ -76,26 +81,6 @@ def initialize_env(request):
     host = request.config.getoption("--host")
     port = request.config.getoption("--port")
     clean_log = request.config.getoption("--clean_log")
-    secure = request.config.getoption("--secure")
-    user = request.config.getoption("--user")
-    password = request.config.getoption("--password")
-    db_name = request.config.getoption("--db_name")
-    run_id = request.config.getoption("--run_id")
-    milvus_tag = request.config.getoption("--milvus_tag")
-    milvus_tag_prefix = request.config.getoption("--milvus_tag_prefix")
-    tag_repository = request.config.getoption("--tag_repository")
-    update_helm_file = request.config.getoption("--update_helm_file")
-    deploy_skip = request.config.getoption("--deploy_skip")
-    deploy_retain = request.config.getoption("--deploy_retain")
-    deploy_retain_pvc = request.config.getoption("--deploy_retain_pvc")
-    client_test_skip = request.config.getoption("--client_test_skip")
-    release_name_prefix = request.config.getoption("--release_name_prefix")
-    release_name = request.config.getoption("--release_name")
-    sync_report = request.config.getoption("--sync_report")
-    async_report = request.config.getoption("--async_report")
-    vdc_user = request.config.getoption("--vdc_user")
-    vdc_env = request.config.getoption("--vdc_env")
-    vdc_region_id = request.config.getoption("--vdc_region_id")
     # release_name_prefix = getattr(request.config.option, "release_name_prefix")
 
     """ params check """
@@ -111,12 +96,43 @@ def initialize_env(request):
     log.info("#" * 80)
     log.info("[initialize_milvus] Log cleaned up, start testing...")
     param_info.prepare_param_info(
-        client_version, host, port, secure=secure, milvus_tag=milvus_tag, milvus_tag_prefix=milvus_tag_prefix,
-        tag_repository=tag_repository, deploy_skip=deploy_skip, deploy_retain=deploy_retain,
-        deploy_retain_pvc=deploy_retain_pvc, run_id=run_id, client_test_skip=client_test_skip,
-        update_helm_file=update_helm_file, release_name_prefix=release_name_prefix, release_name=release_name,
-        sync_report=sync_report, async_report=async_report, param_user=user, param_password=password,
-        param_db_name=db_name, vdc_user=vdc_user, vdc_env=vdc_env, vdc_region_id=vdc_region_id)
+        client_version, host, port,
+        uri=request.config.getoption("--uri"),
+        # secure
+        secure=request.config.getoption("--secure"),
+        param_user=request.config.getoption("--user"),
+        param_password=request.config.getoption("--password"),
+        param_db_name=request.config.getoption("--db_name"),
+
+        # vdc
+        vdc_user=request.config.getoption("--vdc_user"),
+        vdc_env=request.config.getoption("--vdc_env"),
+        vdc_region_id=request.config.getoption("--vdc_region_id"),
+
+        # deploy
+        deploy_skip=request.config.getoption("--deploy_skip"),
+        deploy_retain=request.config.getoption("--deploy_retain"),
+        deploy_retain_pvc=request.config.getoption("--deploy_retain_pvc"),
+        update_helm_file=request.config.getoption("--update_helm_file"),
+        # release name
+        release_name_prefix=request.config.getoption("--release_name_prefix"),
+        release_name=request.config.getoption("--release_name"),
+        # image
+        milvus_tag=request.config.getoption("--milvus_tag"),
+        milvus_tag_prefix=request.config.getoption("--milvus_tag_prefix"),
+        tag_repository=request.config.getoption("--tag_repository"),
+
+        # client
+        client_test_skip=request.config.getoption("--client_test_skip"),
+
+        # report
+        run_id=request.config.getoption("--run_id"),
+        sync_report=request.config.getoption("--sync_report"),
+        async_report=request.config.getoption("--async_report"),
+
+        # for monkey patch
+        locust_patch_switch=request.config.getoption("--locust_patch_switch")
+    )
     log.info("[initialize_milvus] Global parameters: {0}".format(param_info.to_dict()))
     # yield
     # if param_info.test_status is False:
@@ -137,7 +153,7 @@ def input_params(request) -> InputParamsBase:
         "case_params": request.config.getoption("--case_params"),
         "case_skip_prepare": request.config.getoption("--case_skip_prepare"),
         "case_skip_prepare_clean": request.config.getoption("--case_skip_prepare_clean"),
-        "case_skip_build_index": request.config.getoption("--case_skip_build_index"),
+        "case_rebuild_index": request.config.getoption("--case_rebuild_index"),
         "case_skip_clean_collection": request.config.getoption("--case_skip_clean_collection")
     })
 
@@ -154,7 +170,6 @@ def clear_env(request):
             log.error(e)
 
     request.addfinalizer(fin)
-
 
 # for test exit in the future
 # @pytest.hookimpl(hookwrapper=True, tryfirst=True)

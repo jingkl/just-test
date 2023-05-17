@@ -289,7 +289,8 @@ class ConcurrentParams(CommonParams):
                                  shards_num=2, data_size=3000, nb=3000,
                                  index_type=pn.IndexTypeName.IVF_SQ8, index_param={'nlist': 2048},
                                  metric_type=pn.MetricsTypeName.L2, replica_number=1, nq=1, top_k=10,
-                                 search_param={'nprobe': 16}, search_counts=1, new_connect=False, new_user=False):
+                                 search_param={'nprobe': 16}, search_counts=1,
+                                 prepare_before_insert=False, new_connect=False, new_user=False):
         """
         dataset: Optional[str] = DefaultValue.default_dataset
         dim: Optional[int] = DefaultValue.default_dim
@@ -309,6 +310,7 @@ class ConcurrentParams(CommonParams):
         search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
 
         # other
+        prepare_before_insert: Optional[bool] = False
         search_counts: Optional[int] = 1
         new_connect: Optional[bool] = False
 
@@ -319,7 +321,8 @@ class ConcurrentParams(CommonParams):
                 "params": {"dataset": dataset, "dim": dim, "shards_num": shards_num, "data_size": data_size, "nb": nb,
                            "index_type": index_type, "index_param": index_param, "metric_type": metric_type,
                            "replica_number": replica_number, "nq": nq, "top_k": top_k, "search_param": search_param,
-                           "search_counts": search_counts, "new_connect": new_connect, "new_user": new_user}}
+                           "search_counts": search_counts, "prepare_before_insert": prepare_before_insert,
+                           "new_connect": new_connect, "new_user": new_user}}
 
     def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
                                 dataset_size="1m", ni_per=50000, other_fields=[], shards_num=2,

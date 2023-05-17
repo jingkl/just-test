@@ -72,7 +72,8 @@ class TickStatsPrinter:
                 "RT_max": round(obj.max_response_time, Precision.CONCURRENT_PRECISION),
                 "RT_avg": round(obj.avg_response_time, Precision.CONCURRENT_PRECISION),
                 "TP50": round(obj.get_response_time_percentile(0.5), Precision.CONCURRENT_PRECISION),
-                "TP99": round(obj.get_response_time_percentile(0.99), Precision.CONCURRENT_PRECISION),}
+                "TP99": round(obj.get_response_time_percentile(0.99), Precision.CONCURRENT_PRECISION),
+                }
 
 
 class MyUser(User):
@@ -111,7 +112,16 @@ class LocustRunner:
         t = threading.Timer(during_time, func)
         t.start()
 
+    @staticmethod
+    def reset_my_user_params():
+        MyUser.tasks.clear()
+        MyUser.client = None
+        MyUser.tasks_params = None
+        log.debug(
+            f"[LocustRunner] Reset tasks:{MyUser.tasks}, client:{MyUser.client}, tasks_params:{MyUser.tasks_params}")
+
     def start_runner(self, report_obj: CasesReport = CasesReport()):
+        self.reset_my_user_params()
         MyUser.client = ClientTask(self.obj, request_type=self.request_type)
         MyUser.tasks_params = self.obj_params
         self.get_client_tasks()

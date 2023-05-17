@@ -21,15 +21,21 @@ class CloudServiceApi:
         self.req = Request()
 
         self.current_time = time.perf_counter()
-        self.TOKEN = self.get_token()
+        # self.TOKEN = self.get_token()
+
+    # @property
+    # def headers(self):
+    #     if self.TOKEN is None or time.perf_counter() - self.current_time >= 1800:
+    #         log.info("[CloudServiceApi] Refresh token.")
+    #         self.TOKEN = self.get_token()
+    #     return {
+    #         "Authorization": "Bearer " + self.TOKEN
+    #     }
 
     @property
     def headers(self):
-        if self.TOKEN is None or time.perf_counter() - self.current_time >= 1800:
-            log.info("[CloudServiceApi] Refresh token.")
-            self.TOKEN = self.get_token()
         return {
-            "Authorization": "Bearer " + self.TOKEN
+            "UserId": self.UserId
         }
 
     @request_catch()

@@ -42,7 +42,7 @@ class CommonParams:
         resource_groups_params = {pn.reset: reset_rg,
                                   pn.groups: groups}
         database_user_params = {pn.reset_rbac: reset_rbac,
-                               pn.reset_db: reset_db}
+                                pn.reset_db: reset_db}
 
         return dict_recursive_key({
             pn.dataset_params: dataset_params,

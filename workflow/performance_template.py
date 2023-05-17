@@ -44,7 +44,8 @@ class PerfTemplate(Base):
                 self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
                 self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
-        Report_Metric_Object.update_server(host=param_info.param_host)
+        Report_Metric_Object.update_server(
+            host=param_info.param_host, port=param_info.param_port, uri=param_info.param_uri)
 
         if param_info.client_test_skip:
             log.info("[PerfTemplate] Skip client test, display server host:{0}, port:{1}".format(param_info.param_host,
@@ -56,7 +57,7 @@ class PerfTemplate(Base):
                                            default_case_params=default_case_params,
                                            case_params=input_params.case_params,
                                            case_prepare=not input_params.case_skip_prepare,
-                                           case_rebuild_index=not input_params.case_skip_build_index,
+                                           case_rebuild_index=input_params.case_rebuild_index,
                                            case_clean_collection=not input_params.case_skip_clean_collection,
                                            case_prepare_clean=not input_params.case_skip_prepare_clean)
         for case in next(run_perf_case):
@@ -103,7 +104,8 @@ class PerfTemplate(Base):
                 self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
                 self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
-        Report_Metric_Object.update_server(host=param_info.param_host)
+        Report_Metric_Object.update_server(
+            host=param_info.param_host, port=param_info.param_port, uri=param_info.param_uri)
 
         if param_info.client_test_skip:
             log.info("[PerfTemplate] Skip client test, display server host:{0}, port:{1}".format(param_info.param_host,
@@ -123,7 +125,7 @@ class PerfTemplate(Base):
                                            default_case_params=default_case_params,
                                            case_params=input_params.case_params,
                                            case_prepare=not input_params.case_skip_prepare,
-                                           case_rebuild_index=not input_params.case_skip_build_index,
+                                           case_rebuild_index=input_params.case_rebuild_index,
                                            case_clean_collection=not input_params.case_skip_clean_collection,
                                            case_prepare_clean=not input_params.case_skip_prepare_clean)
         for case in next(run_perf_case):
