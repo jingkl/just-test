@@ -17,3 +17,8 @@ class CloudServiceTestApi:
     def get_root_pwd(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/cloud/v1/test/getRootPwd?instanceId={0}".format(instance_id)
         return self.req.get(url=url, headers=self.headers, log_level=log_level)
+
+    @request_catch()
+    def delete_instance(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+        url = self.host + "/cloud/v1/test/deleteInstance?instanceId={0}".format(instance_id)
+        return self.req.get(url=url, headers=self.headers, log_level=log_level)

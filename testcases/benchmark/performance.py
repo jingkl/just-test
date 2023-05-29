@@ -58,6 +58,8 @@ class TestServerDeploy(ServerTemplate):
         """
         :steps:
             release_name: instance's release name
+            deploy_mode: cluster and standalone for helm and operator; class-id for vdc
+                operator: it's better to specify deploy_mode from cmd
 
             1. deploy_retain:  do nothing, retain the server and not delete pvc
             2. deploy_retain_pvc: do nothing
@@ -73,8 +75,8 @@ class TestServerDeploy(ServerTemplate):
             2. upgrade_config or deploy_config: config file for upgrade
             3. milvus_tag: instance's tag
             4. tag_repository: repository for tag
-            5. deploy_mode: cluster and standalone for helm and operator; class-id for vdc
-                operator: must pass in deploy_mode
+            5. deploy_mode [Required]: cluster and standalone for helm and operator; class-id for vdc
+                helm and operator: deploy_mode must be passed in, which support Standalone upgrade to Cluster
                 vdc: pass in `classnone` will not upgrade class mode, and default value is `classnone`
         """
         self.upgrade_server_template(input_params=input_params,
@@ -405,7 +407,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().glove_200_angular_ivf_flat(
                                  metric_type=pn.MetricsTypeName.COSINE))
 
-    # @pytest.mark.recall
+    @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
     def test_recall_glove_diskann_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -417,7 +419,7 @@ class TestRecallCases(PerfTemplate):
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_diskann())
 
-    # @pytest.mark.recall
+    @pytest.mark.recall
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_glove_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
         """

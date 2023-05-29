@@ -190,9 +190,12 @@ def gen_scalar_file_name(file_id, dataset_name):
 
 
 def parser_data_size(data_size):
-    return eval(
-        str(data_size).replace("k", "*1000").replace("w", "*10000").replace("m", "*1000000").replace("b",
-                                                                                                     "*1000000000"))
+    return eval(str(data_size)
+                .replace("k", "*1000")
+                .replace("w", "*10000")
+                .replace("m", "*1000000")
+                .replace("b", "*1000000000")
+                )
 
 
 def parser_time(_time):
@@ -942,3 +945,20 @@ def get_input_params(**kwargs):
     _rebuild_index = kwargs.get("rebuild_index", False)
     _clean_collection = kwargs.get("clean_collection", True)
     return _params, _prepare, _prepare_clean, _rebuild_index, _clean_collection
+
+
+def hide_value(source, keys):
+    for key, value in source.items():
+        if isinstance(value, dict) and key not in keys:
+            hide_value(source[key], keys)
+        if key in keys and not isinstance(value, dict) and value:
+            source[key] = "***"
+    return source
+
+
+def hide_dict_value(source, keys):
+    if not isinstance(source, dict) or not isinstance(keys, list):
+        return source
+    _s = copy.deepcopy(source)
+    target = hide_value(_s, keys)
+    return target

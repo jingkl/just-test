@@ -4,7 +4,7 @@ from yaml import full_load
 import copy
 from typing import List
 
-from deploy.commons.common_params import Helm, Operator, OP, VDC
+from deploy.commons.common_params import Helm, Operator, OP, VDC, CLUSTER, STANDALONE, ClassID, ClassIDBase
 
 from utils.util_log import log
 from utils.util_catch import func_request
@@ -235,6 +235,21 @@ def check_deploy_tool(deploy_tool: str):
     elif deploy_tool in [VDC]:
         return VDC
     raise Exception(f"[check_deploy_tool] Deploy tool {deploy_tool} not supported!!")
+
+
+def check_deploy_mode(deploy_tool: str, deploy_mode: str):
+    if deploy_tool in [Helm, OP, Operator] and deploy_mode in [CLUSTER, STANDALONE]:
+        return deploy_mode
+    elif deploy_tool in [VDC]:
+        if hasattr(ClassID, deploy_mode):
+            return deploy_mode
+        else:
+            _dp = deploy_mode.replace('-', '_')
+            exec(f"ClassIDBase.{_dp} = '{deploy_mode}'")
+            log.info(
+                f"[check_deploy_mode] deploy_mode isn't defined in the code, automatically add a new deploy_mode:{_dp}")
+            return _dp
+    raise Exception(f"[check_deploy_mode] Deploy tool {deploy_tool} not supported!!")
 
 
 def hide_value(source, keys):

@@ -26,6 +26,13 @@ class CloudRMApi:
             "SourceApp": self.SourceApp,
         }
 
+    def update_headers(self, user_id: str = ""):
+        return {
+            "UserId": user_id or self.UserId,
+            "RequestId": str(uuid.uuid1()),
+            "SourceApp": self.SourceApp,
+        }
+
     @request_catch()
     def create(self, class_id=ClassID.class1cu, db_version="v2.0.1", instance_name="fouram-benchmark-vdc", region_id="",
                mock_tag=False, white_list_address="0.0.0.0/0", instance_type=1, project_id="000000000",
@@ -58,9 +65,9 @@ class CloudRMApi:
         return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
 
     @request_catch()
-    def describe(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+    def describe(self, instance_id: str, user_id: str = "", log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/resource/v1/instance/milvus/describe?InstanceId=" + instance_id
-        return self.req.get(url=url, headers=self.headers, log_level=log_level)
+        return self.req.get(url=url, headers=self.update_headers(user_id=user_id), log_level=log_level)
 
     @request_catch()
     def list(self, class_id=None, db_version=None, instance_description=None, page_num=None, per_page_num=50,
@@ -97,29 +104,30 @@ class CloudRMApi:
         return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
 
     @request_catch()
-    def resume(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+    def resume(self, instance_id: str, user_id: str = "", log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/resource/v1/instance/milvus/resume"
         body = {
             "instanceId": instance_id,
         }
-        return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
+        return self.req.post(url=url, body=body, headers=self.update_headers(user_id=user_id), log_level=log_level)
 
     @request_catch()
-    def stop(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+    def stop(self, instance_id: str, user_id: str = "", log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/resource/v1/instance/milvus/stop"
         body = {
             "instanceId": instance_id,
         }
-        return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
+        return self.req.post(url=url, body=body, headers=self.update_headers(user_id=user_id), log_level=log_level)
 
     @request_catch()
-    def upgrade_version(self, instance_id: str, db_version: str, log_level=Log_Level) -> RequestResponseParser:
+    def upgrade_version(self, instance_id: str, db_version: str, user_id: str = "",
+                        log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/resource/v1/instance/milvus/upgradeVersion"
         body = {
             "instanceId": instance_id,
             "dbVersion": db_version,
         }
-        return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
+        return self.req.post(url=url, body=body, headers=self.update_headers(user_id=user_id), log_level=log_level)
 
     @request_catch()
     def release_version(self, current_page: int = 1, page_size: int = 9999,
@@ -128,7 +136,7 @@ class CloudRMApi:
         return self.req.get(url=url, headers=self.headers, log_level=log_level)
 
     @request_catch()
-    def modify_instance_params(self, instance_id: str, parameter_name: str, parameter_value: str,
+    def modify_instance_params(self, instance_id: str,  parameter_name: str, parameter_value: str, user_id: str = "",
                                log_level=Log_Level) -> RequestResponseParser:
         url = self.host + "/resource/v1/parameter/milvus/modifyInstanceParams"
         body = {
@@ -136,4 +144,37 @@ class CloudRMApi:
             "parameterName": parameter_name,
             "parameterValue": parameter_value
         }
+        return self.req.post(url=url, body=body, headers=self.update_headers(user_id=user_id), log_level=log_level)
+
+    """ Inner Api Manager """
+
+    @request_catch()
+    def get_ins_conn(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+        url = self.host + "/resource/v1/cache/milvus/get_ins_conn?instanceId={0}".format(instance_id)
+        return self.req.get(url=url, headers=self.headers, log_level=log_level)
+
+    """ Serverless Manager """
+
+    @request_catch()
+    def serverless_create(self, region_id: str, instance_name: str, ap_point_host_id: str = "", collection_name="xxx",
+                          create_collection=False, create_example_collection=False, description="", dim=768,
+                          metric_type="IP", project_id="0", log_level=Log_Level) -> RequestResponseParser:
+        url = self.host + "/resource/v1/serverless/create"
+        body = {
+            "appointHostId": ap_point_host_id,
+            "collectionName": collection_name,
+            "createCollection": create_collection,
+            "createExampleCollection": create_example_collection,
+            "description": description,
+            "dim": dim,
+            "instanceName": instance_name,
+            "metricType": metric_type,
+            "projectId": project_id,
+            "regionId": region_id
+        }
         return self.req.post(url=url, body=body, headers=self.headers, log_level=log_level)
+
+    @request_catch()
+    def get_host(self, instance_id: str, log_level=Log_Level) -> RequestResponseParser:
+        url = self.host + "/resource/v1/serverless/getHost?instanceId={0}".format(instance_id)
+        return self.req.get(url=url, headers=self.headers, log_level=log_level)

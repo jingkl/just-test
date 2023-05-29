@@ -11,7 +11,8 @@ from client.client_base import (
 from client.common.common_func import (
     gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, parser_data_size, loop_files, loop_ids,
     gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, loop_gen_files, remove_list_values,
-    parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params, parser_search_params_expr)
+    parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params, parser_search_params_expr,
+    hide_dict_value)
 from client.common.common_param import TransferNodesParams, TransferReplicasParams
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
@@ -180,13 +181,14 @@ class Base:
         host = host or param_info.param_host
         port = port or param_info.param_port
         uri = kwargs.get("uri", "") or param_info.param_uri
+        token = kwargs.get("token", "") or param_info.param_token
         secure = secure or param_info.param_secure
         user = user or param_info.param_user
         password = password or param_info.param_password
         db_name = db_name or param_info.param_db_name
 
-        params = {"alias": alias, "host": host, "port": port, "uri": uri,
-                  "secure": secure, "user": user, "password": password, "db_name": db_name}
+        params = {"alias": alias, "host": host, "port": port, "uri": uri, "secure": secure,
+                  "user": user, "password": password, "token": token, "db_name": db_name}
         params.update(kwargs)
 
         # create user and password if secure is False, which means testing for RBAC
@@ -200,14 +202,17 @@ class Base:
             self.check_backup_connect(**params)
             self.create_db(db_name=db_name, using=dv.default_backup_alias)
 
-        log.customize(log_level)("[Base] Connection params: {}".format(params))
+        log.customize(log_level)("[Base] Connection params: {}".format(hide_dict_value(params, ["token"])))
         return self.connection_wrap.connect(**params)
 
     def check_backup_connect(self, **kwargs):
         _kwargs = copy.deepcopy(kwargs)
-        _kwargs.update({"alias": dv.default_backup_alias, "user": dv.default_rbac_user,
-                        "password": dv.default_rbac_password, "db_name": dv.default_database})
 
+        update_params = {"alias": dv.default_backup_alias, "db_name": dv.default_database}
+        if _kwargs["user"] != dv.default_rbac_user:
+            update_params.update({"user": dv.default_rbac_user,  "password": dv.default_rbac_password})
+
+        _kwargs.update(update_params)
         if not self.connection_wrap.has_connection(alias=dv.default_backup_alias).response:
             self.connection_wrap.connect(**_kwargs)
 

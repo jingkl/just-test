@@ -13,7 +13,7 @@ from typing import Union
 
 from deploy.commons.common_params import (
     CLUSTER, STANDALONE, dataNode, queryNode, indexNode, proxy, APIVERSION, DefaultApiVersion, ClassID, RMNodeCategory,
-    Helm, Operator, OP, VDC)
+    Helm, Operator, OP, VDC, ComponentsLabel)
 
 from utils.util_log import log
 
@@ -476,9 +476,9 @@ def check_dict_keys(target: dict, keys: list):
     return True
 
 
-def is_number(key):
+def is_number(key, keep_decimal_places: int = 6):
     try:
-        return float(key)
+        return round(float(key), keep_decimal_places)
     except ValueError:
         pass
     try:
@@ -543,7 +543,45 @@ def gen_str(length=16):
     return ''.join(random.sample(string.ascii_letters + string.digits, length))
 
 
-def gen_db_resource(source: dict, class_id: list, db_raw: list, oversold: list):
+def parser_cpu_resources(resource_value: any):
+    return is_number(eval(str(resource_value)
+                          .replace("u", ' / 1000 / 1000')
+                          .replace("m", ' / 1000')
+                          )
+                     )
+
+
+def parser_mem_resources(resource_value: any):
+    return is_number(eval(str(resource_value)
+                          .replace("u", '/ 1024 / 1000 / 1024 / 1024 / 1000')
+                          .replace("m", '/ 1024 / 1024 / 1000')
+                          .replace("Mi", '')
+                          .replace("Gi", '*1024.0')
+                          )
+                     )
+
+
+def parser_class_id_name(m_value: str, l_value: str, default_len: int = 30):
+    s_value = "fouram-"
+    if len(m_value) >= default_len:
+        log.warning(f"[parser_class_id_name] Name of class_id is too long, please check: {m_value}")
+        return m_value[:default_len]
+
+    _value = s_value + m_value
+    if len(_value) >= default_len:
+        log.warning(f"[parser_class_id_name] Name of class_id is too long, please check: {_value}")
+        return _value[-default_len:]
+
+    _len = default_len - len(_value) - 1
+    if _len <= 2:
+        log.warning(f"[parser_class_id_name] Name of class_id is too long, please check: {_value}")
+        return _value
+
+    value_len = min(_len, 8)
+    return _value + '-' + l_value[-value_len:]
+
+
+def gen_db_resource(source: dict, instance_id: str, class_id: list, db_raw: list, oversold: list, child_classes: list):
     for k, v in source.items():
         if isinstance(v, dict) and hasattr(RMNodeCategory, k):
             if "replicas" in v and str(v["replicas"]).isdigit() and int(v["replicas"]) != 0 and \
@@ -551,35 +589,38 @@ def gen_db_resource(source: dict, class_id: list, db_raw: list, oversold: list):
                 r_l = v["resources"]["limits"]
                 r_r = v["resources"]["requests"]
 
-                # if "cpu" in r_l and "memory" in r_l and str(r_l["cpu"]).isdigit() and int(r_l["cpu"]) != 0:
                 if "cpu" in r_l and "memory" in r_l:
-                    l_cpu = is_number(eval(str(r_l["cpu"]).replace("m", ' / 1000')))
-                    # l_memory = eval(str(r_l["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
-                    l_memory = is_number(eval(str(r_l["memory"]).replace("Mi", '').replace("Gi", '*1024.0')))
+                    l_cpu = parser_cpu_resources(r_l["cpu"])
+                    l_memory = parser_mem_resources(r_l["memory"])
 
-                    fouram_id = "fouram-{0}c{1}g".format(l_cpu, is_number(l_memory / 1024.0))
+                    # set class id name
+                    # fouram_id = "fouram-{0}c{1}g-{2}-{3}".format(
+                    #     l_cpu, is_number(l_memory / 1024.0), eval(f"RMNodeCategory.{k}"), instance_id[-8:])
+                    fouram_id = parser_class_id_name(
+                        m_value="{0}c{1}g-{2}".format(l_cpu, is_number(l_memory / 1024.0), eval(f"RMNodeCategory.{k}")),
+                        l_value=instance_id)
+
                     class_id.append((fouram_id, l_cpu, l_memory))
                     db_raw.append((k, int(v["replicas"]), fouram_id, l_cpu, l_memory))
-                    # if "cpu" in r_r and "memory" in r_r and str(r_r["cpu"]).isdigit() and int(r_r["cpu"]) != 0:
                     if "cpu" in r_r and "memory" in r_r:
-                        r_cpu = is_number(eval(str(r_r["cpu"]).replace("m", ' / 1000')))
-                        # r_memory = eval(str(r_r["memory"]).replace("Mi", '/1024.0').replace("Gi", ''))
-                        r_memory = is_number(eval(str(r_r["memory"]).replace("Mi", '').replace("Gi", '*1024.0')))
+                        r_cpu = parser_cpu_resources(r_r["cpu"])
+                        r_memory = parser_mem_resources(r_r["memory"])
                         extend_field = {
                             "requests.cpu": str('%.3f' % r_cpu),
-                            "requests.memory": str('%.1f' % r_memory),
+                            "requests.memory": str('%.1f' % r_memory) + "Mi",
                             "limits.cpu": str('%.3f' % l_cpu),
-                            "limits.memory": str('%.1f' % l_memory)
+                            "limits.memory": str('%.1f' % l_memory) + "Mi"
                         }
                         oversold.append((k, fouram_id, extend_field))
+                    child_classes.append((k, fouram_id, json.dumps(v)))
             else:
-                gen_db_resource(v, class_id, db_raw, oversold)
-    return class_id, db_raw, oversold
+                gen_db_resource(v, instance_id, class_id, db_raw, oversold, child_classes)
+    return class_id, db_raw, oversold, child_classes
 
 
-def get_child_class_id(spec: dict):
-    class_ids, db_raw, oversold = gen_db_resource(spec, [], [], [])
-    return list(set(class_ids)), db_raw, oversold
+def get_child_class_id(spec: dict, instance_id: str):
+    class_ids, db_raw, oversold, child_classes = gen_db_resource(spec, instance_id, [], [], [], [])
+    return list(set(class_ids)), db_raw, oversold, child_classes
 
 
 def parser_modify_params(modify_params: dict, parent_key=None, params_key_value=None):
@@ -622,3 +663,26 @@ def check_file_exist(file_dir, out_put=True):
             log.info("[check_file_exist] File not exist:{}".format(file_dir))
         return False
     return True
+
+
+def deal_child_instance_class(res):
+    results = {}
+    if res and isinstance(res, list):
+        for i in res:
+            component_name = ComponentsLabel(i["category"]).name
+            if component_name in results.keys():
+                results[component_name]["replicas"] += 1
+                if results[component_name]["child_class_id"] != i["child_class_id"]:
+                    raise ValueError(
+                        f"[deal_child_instance_class] Same component:{component_name} has different child_class_id:{res}")
+            else:
+                results[component_name] = {"replicas": 1, "child_class_id": i["child_class_id"]}
+    return results
+
+
+def compare_cpu_value(left_v, right_v):
+    return parser_cpu_resources(left_v) == parser_cpu_resources(right_v)
+
+
+def compare_mem_value(left_v, right_v):
+    return parser_mem_resources(left_v) == parser_mem_resources(right_v)

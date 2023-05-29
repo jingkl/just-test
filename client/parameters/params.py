@@ -148,6 +148,7 @@ class ParamsFormat:
     }, common_scene_build_index)
 
     common_concurrent = update_dict_value({
+        load_params: {prepare_load: ([type(bool())], OPTION)},
         concurrent_params: {concurrent_number: ([type((int())), type(list())], MUST),
                             during_time: ([type((int())), type((str()))], MUST),
                             interval: ([type((int()))], MUST),

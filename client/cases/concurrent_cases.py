@@ -280,12 +280,19 @@ class ConcurrentClientBase(CommonCases):
         obj_params = self.parser_concurrent_tasks(self.params_obj.concurrent_tasks, vector_default_field_name,
                                                   self.params_obj.dataset_params[pn.metric_type])
 
+        # load prepare params
+        _prepare_load = self.params_obj.load_params.pop("prepare_load", False)
+
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
         if prepare:
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type],
                                clean_index_before=True)
+
+            if _prepare_load:
+                self.prepare_load(**self.params_obj.load_params)
+
             self.prepare_insert(data_type=self.params_obj.dataset_params[pn.dataset_name],
                                 dim=self.params_obj.dataset_params[pn.dim],
                                 size=self.params_obj.dataset_params[pn.dataset_size],

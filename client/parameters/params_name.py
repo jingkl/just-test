@@ -53,7 +53,6 @@ metric_type = "metric_type"
 field_name = "field_name"
 ni_per = "ni_per"
 req_run_counts = "req_run_counts"
-prepare_flush = "prepare_flush"
 
 # collection
 shards_num = "shards_num"
@@ -64,6 +63,10 @@ varchar_id = "varchar_id"
 replica_number = "replica_number"
 refresh = "_refresh"
 resource_groups = "_resource_groups"
+prepare_load = "prepare_load"
+
+# flush
+prepare_flush = "prepare_flush"
 
 # index
 index_type = "index_type"

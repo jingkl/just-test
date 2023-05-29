@@ -16,6 +16,7 @@ class ParamInfo:
         self.param_host = DefaultConfig.DEFAULT_HOST
         self.param_port = DefaultConfig.DEFAULT_PORT
         self.param_uri = "tcp://127.0.0.1:19530"  # DefaultConfig.GRPC_URI
+        self.param_token = ""
         self.param_handler = ""
         self.param_secure = False
         self.param_user = ""  # root
@@ -39,11 +40,12 @@ class ParamInfo:
         self.vdc_user = "default"
         self.vdc_env = "UAT3"
         self.vdc_region_id = ""
+        self.vdc_serverless_host = ""
 
     def prepare_param_info(
             self, client_version, host, port,
-            uri="", handler="", secure="", param_user="", param_password="", param_db_name="",
-            vdc_user="", vdc_env="", vdc_region_id="",
+            token="", uri="", handler="", secure="", param_user="", param_password="", param_db_name="",
+            vdc_user="", vdc_env="", vdc_region_id="", vdc_serverless_host="",
             milvus_tag=None, milvus_tag_prefix="", tag_repository=None, release_name_prefix="", release_name="",
             update_helm_file=False, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False,
             client_test_skip=False, replica_num=1,
@@ -54,6 +56,7 @@ class ParamInfo:
         self.param_port = port
 
         self.param_uri = uri
+        self.param_token = token
         self.param_handler = handler
         self.param_secure = secure
         self.param_user = param_user
@@ -64,6 +67,7 @@ class ParamInfo:
         self.vdc_user = vdc_user
         self.vdc_env = vdc_env
         self.vdc_region_id = vdc_region_id
+        self.vdc_serverless_host = vdc_serverless_host
 
         # deploy
         self.milvus_tag = milvus_tag or self.milvus_tag

@@ -4,7 +4,7 @@ from deploy.commons.common_params import Helm, Operator, STANDALONE
 
 from utils.util_log import log
 from configs.log_config import log_config
-from commons.common_func import modify_file, check_deploy_tool
+from commons.common_func import modify_file, check_deploy_tool, check_deploy_mode
 from parameters.input_params import param_info, InputParamsBase
 
 
@@ -13,6 +13,7 @@ def pytest_addoption(parser):
     parser.addoption("--host", action="store", default="localhost", help="service's ip")
     parser.addoption("--port", action="store", default=19530, help="service's port")
     parser.addoption("--uri", action="store", default="", help="service's uri")
+    parser.addoption("--token", action="store", default="", help="service's token")
     parser.addoption("--tag", action="store", default="all", help="only run tests matching the tag.")
     parser.addoption('--clean_log', action='store_true', default=False, help="clean log before testing")
     parser.addoption('--secure', action='store_true', default=False, help="using secure when connection server")
@@ -24,6 +25,7 @@ def pytest_addoption(parser):
     parser.addoption("--vdc_user", action="store", default="default", help="vdc user name")
     parser.addoption("--vdc_env", action="store", default="UAT3", help="vdc env")
     parser.addoption("--vdc_region_id", action="store", default="", help="vdc region id")
+    parser.addoption("--vdc_serverless_host", action="store", default="", help="vdc serverless host instance id")
 
     # others
     parser.addoption('--locust_patch_switch', action='store_true', default=False, help="rollback locust patch")
@@ -98,6 +100,7 @@ def initialize_env(request):
     param_info.prepare_param_info(
         client_version, host, port,
         uri=request.config.getoption("--uri"),
+        token=request.config.getoption("--token"),
         # secure
         secure=request.config.getoption("--secure"),
         param_user=request.config.getoption("--user"),
@@ -108,6 +111,7 @@ def initialize_env(request):
         vdc_user=request.config.getoption("--vdc_user"),
         vdc_env=request.config.getoption("--vdc_env"),
         vdc_region_id=request.config.getoption("--vdc_region_id"),
+        vdc_serverless_host=request.config.getoption("--vdc_serverless_host"),
 
         # deploy
         deploy_skip=request.config.getoption("--deploy_skip"),
@@ -145,9 +149,12 @@ def initialize_env(request):
 
 @pytest.fixture(scope="session")
 def input_params(request) -> InputParamsBase:
+    deploy_tool = check_deploy_tool(str(request.config.getoption("--deploy_tool")).lower())
+    deploy_mode = check_deploy_mode(deploy_tool=deploy_tool,
+                                    deploy_mode=str(request.config.getoption("--deploy_mode")).lower())
     return InputParamsBase(**{
-        "deploy_tool": check_deploy_tool(str(request.config.getoption("--deploy_tool")).lower()),
-        "deploy_mode": str(request.config.getoption("--deploy_mode")).lower(),
+        "deploy_tool": deploy_tool,
+        "deploy_mode": deploy_mode,
         "deploy_config": request.config.getoption("--deploy_config"),
         "upgrade_config": request.config.getoption("--upgrade_config"),
         "case_params": request.config.getoption("--case_params"),
