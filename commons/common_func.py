@@ -227,6 +227,14 @@ def dict2str(source_dict, _charts=['/', '.', '\\', '$']):
     return dict_rm_point(s_dict, _charts)
 
 
+def get_class_key_name(class_name, value):
+    if type(class_name) == type(classmethod):
+        for n in dir(class_name):
+            if eval(f"class_name.{n}") == value:
+                return True, n
+    return False, None
+
+
 def check_deploy_tool(deploy_tool: str):
     if deploy_tool == Helm:
         return Helm
@@ -238,17 +246,22 @@ def check_deploy_tool(deploy_tool: str):
 
 
 def check_deploy_mode(deploy_tool: str, deploy_mode: str):
-    if deploy_tool in [Helm, OP, Operator] and deploy_mode in [CLUSTER, STANDALONE]:
+    if deploy_tool in [Helm, OP, Operator]:
         return deploy_mode
     elif deploy_tool in [VDC]:
-        if hasattr(ClassID, deploy_mode):
-            return deploy_mode
-        else:
+        if not hasattr(ClassID, deploy_mode) and deploy_mode:
+            # find the defined value
+            result, key = get_class_key_name(ClassID, deploy_mode)
+            if result:
+                return key
+
+            # setting a new value
             _dp = deploy_mode.replace('-', '_')
             exec(f"ClassIDBase.{_dp} = '{deploy_mode}'")
             log.info(
                 f"[check_deploy_mode] deploy_mode isn't defined in the code, automatically add a new deploy_mode:{_dp}")
             return _dp
+        return deploy_mode
     raise Exception(f"[check_deploy_mode] Deploy tool {deploy_tool} not supported!!")
 
 
