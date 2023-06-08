@@ -246,10 +246,11 @@ def check_deploy_tool(deploy_tool: str):
 
 
 def check_deploy_mode(deploy_tool: str, deploy_mode: str):
+    deploy_mode_lower = deploy_mode.lower()
     if deploy_tool in [Helm, OP, Operator]:
-        return deploy_mode
+        return deploy_mode_lower
     elif deploy_tool in [VDC]:
-        if not hasattr(ClassID, deploy_mode) and deploy_mode:
+        if not hasattr(ClassID, deploy_mode_lower) and deploy_mode:
             # find the defined value
             result, key = get_class_key_name(ClassID, deploy_mode)
             if result:
@@ -259,9 +260,9 @@ def check_deploy_mode(deploy_tool: str, deploy_mode: str):
             _dp = deploy_mode.replace('-', '_')
             exec(f"ClassIDBase.{_dp} = '{deploy_mode}'")
             log.info(
-                f"[check_deploy_mode] deploy_mode isn't defined in the code, automatically add a new deploy_mode:{_dp}")
+                f"[check_deploy_mode] {deploy_mode} isn't defined in the code, automatically add a deploy_mode:{_dp}")
             return _dp
-        return deploy_mode
+        return deploy_mode_lower
     raise Exception(f"[check_deploy_mode] Deploy tool {deploy_tool} not supported!!")
 
 

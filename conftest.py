@@ -151,7 +151,7 @@ def initialize_env(request):
 def input_params(request) -> InputParamsBase:
     deploy_tool = check_deploy_tool(str(request.config.getoption("--deploy_tool")).lower())
     deploy_mode = check_deploy_mode(deploy_tool=deploy_tool,
-                                    deploy_mode=str(request.config.getoption("--deploy_mode")).lower())
+                                    deploy_mode=str(request.config.getoption("--deploy_mode")))
     return InputParamsBase(**{
         "deploy_tool": deploy_tool,
         "deploy_mode": deploy_mode,
