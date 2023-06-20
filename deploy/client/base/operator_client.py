@@ -213,6 +213,9 @@ class OperatorClient(BaseClient):
                         for c in item["status"]["conditions"]:
                             if "type" in c and c["type"] == "MilvusUpdated" and "status" in c:
                                 _milvus_updated_status = c["status"]
+        log.debug(
+            "[get_status] status:%s, metadata_generation:%s, status_observed_generation:%s, milvus_updated_status:%s" % (
+                _status, _metadata_generation, _status_observed_generation, _milvus_updated_status))
         return _status, _metadata_generation, _status_observed_generation, _milvus_updated_status
 
     def get_all_values(self, release_name: str, namespace=None):
