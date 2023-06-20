@@ -4,8 +4,10 @@ from deploy.client.default_client import DefaultClient
 
 from utils.util_log import log
 from parameters.input_params import param_info
-from commons.common_func import parser_input_config, execute_funcs, update_dict_value, check_deploy_config
+from commons.common_func import (
+    parser_input_config, execute_funcs, update_dict_value, check_deploy_config, write_shell_file)
 from commons.auto_get import AutoGetTag
+from commons.common_params import EnvVariable
 from data_report.metrics import Report_Metric_Object
 
 
@@ -53,6 +55,10 @@ class Base:
         if not param_info.deploy_retain and not param_info.deploy_skip:
             self.set_teardown_funcs(self.deploy_delete, deploy_retain_pvc=param_info.deploy_retain_pvc)
 
+        # Save env params
+        if str(EnvVariable.FOURAM_SAVE_CONNECT_PARAMS).lower() == 'true':
+            self.set_teardown_funcs(self.save_env_params)
+
         log.info("[setup_method] Test case: {0}, Test run_id: {1}".format(Report_Metric_Object.client.test_case_name,
                                                                           Report_Metric_Object.client.run_id))
 
@@ -73,6 +79,21 @@ class Base:
         c = [callable_obj, ]
         c.extend(list(args))
         self.teardown_funcs.append((c, kwargs))
+
+    @staticmethod
+    def save_env_params():
+        save_path = EnvVariable.FOURAM_SAVE_CONNECT_PARAMS_PATH
+        save_params = []
+
+        save_list = ["host", "port", "uri", "token", "secure", "user", "password", "db_name"]
+        input_content = "#!/bin/bash \n "
+        for s in save_list:
+            input_content += f"export FOURAM_CONNECT_{s.upper()}={eval(f'param_info.param_{s}')} \n"
+            save_params.append(f"FOURAM_CONNECT_{s.upper()}")
+
+        write_shell_file(file_path=save_path, input_content=input_content)
+        log.info(f"[Base] Save connect params path:{save_path}, params:{save_params}")
+        return save_path
 
     @staticmethod
     def parser_endpoint_to_global(endpoint):
