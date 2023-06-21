@@ -100,7 +100,7 @@ class Base:
         save_list = ["host", "port", "uri", "token", "secure", "user", "password", "db_name"]
         input_content = "#!/bin/bash \n "
         for s in save_list:
-            input_content += f"export FOURAM_CONNECT_{s.upper()}={eval(f'param_info.param_{s}')} \n"
+            input_content += f"export FOURAM_CONNECT_{s.upper()}='{eval(f'param_info.param_{s}')}' \n"
             save_params.append(f"FOURAM_CONNECT_{s.upper()}")
 
         write_shell_file(file_path=save_path, input_content=input_content)
