@@ -6,8 +6,9 @@ from client.common.common_type import DefaultValue as dv
 from client.parameters.input_params import ConcurrentParams
 from client.parameters import params_name as pn
 import client.parameters.input_params.define_params as cdp
-from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar
+from deploy.commons.common_params import CLUSTER, STANDALONE, queryNode, dataNode, indexNode, proxy, kafka, pulsar, ClassID
 from deploy.configs.default_configs import NodeResource, SetDependence
+from deploy.commons.common_func import get_class_key_name
 
 from workflow.performance_template import PerfTemplate
 from parameters.input_params import InputParamsBase
@@ -39,6 +40,22 @@ class TestConcurrentCases(PerfTemplate):
                     a. concurrent test
                 3. check test result and report
                 4. clean env"""
+    
+    @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
+    def test_concurrent_locust_search_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        default_case_params = ConcurrentParams().params_scene_concurrent(
+            [ConcurrentParams.params_search(nq=1, top_k=1, search_param={"level": 1})],
+            concurrent_number=[50], during_time="24h", interval=20, **cdp.DefaultIndexParams.AUTOINDEX)
+
+        self.concurrency_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
 
     def test_concurrent_locust_custom_parameters(self, input_params: InputParamsBase):
         """
