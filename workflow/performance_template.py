@@ -157,8 +157,9 @@ class ServerTemplate(Base):
     def server_template(self, input_params: InputParamsBase, cpu=8, mem=16, deploy_mode=STANDALONE, deploy_skip=False,
                         node_resources=None, set_dependence=None, deploy_uninstall=True, input_configs: dict = {},
                         **kwargs):
-        # clear self.teardown_funcs
-        self.teardown_funcs = []
+        # pop self.deploy_delete from self.teardown_funcs
+        # self.teardown_funcs = []
+        self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
 
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
@@ -179,8 +180,9 @@ class ServerTemplate(Base):
 
     def upgrade_server_template(self, input_params: InputParamsBase, release_name=None, deploy_mode=STANDALONE,
                                 upgrade_config: str = ""):
-        # clear self.teardown_funcs
-        self.teardown_funcs = []
+        # pop self.deploy_delete from self.teardown_funcs
+        # self.teardown_funcs = []
+        self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
 
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)

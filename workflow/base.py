@@ -75,6 +75,18 @@ class Base:
             param_info.test_status = True
             assert False
 
+    def pop_specified_func(self, father_funcs: list, pop_func: callable):
+        _subscript = None
+        for f in range(len(father_funcs)):
+            if father_funcs[f] == pop_func:
+                _subscript = f
+                break
+
+        if _subscript:
+            father_funcs.pop(_subscript)
+            log.info(f"[Base] Popped specified func:{pop_func} from {father_funcs}")
+        return father_funcs
+
     def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
         c = [callable_obj, ]
         c.extend(list(args))
