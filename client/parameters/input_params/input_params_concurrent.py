@@ -324,8 +324,8 @@ class ConcurrentParams(CommonParams):
                            "search_counts": search_counts, "prepare_before_insert": prepare_before_insert,
                            "new_connect": new_connect, "new_user": new_user}}
 
-    def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.SIFT, dim=128,
-                                dataset_size="1m", ni_per=50000, other_fields=[], shards_num=2,
+    def params_scene_concurrent(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.LOCAL, dim=768,
+                                dataset_size="1m", ni_per=10000, other_fields=[], shards_num=2,
                                 replica_number=None, resource_groups=None,
                                 reset_rg=False, groups=None, reset_rbac=False, reset_db=False,
                                 metric_type=pn.MetricsTypeName.L2, index_type=pn.IndexTypeName.HNSW,

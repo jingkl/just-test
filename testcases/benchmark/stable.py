@@ -61,11 +61,9 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
-        # concurrent_tasks = [ConcurrentParams.params_search(), ConcurrentParams.params_query(ids=[1, 10, 100, 1000]),
-        #                     ConcurrentParams.params_scene_insert_delete_flush(random_id=True, random_vector=True)]
         self.concurrency_template(
             input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, old_version_format=False,
-            case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
+            case_callable_obj=ConcurrentClientBase().scene_concurrent_locust, default_case_params=default_case_params)
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
