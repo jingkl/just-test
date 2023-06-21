@@ -82,8 +82,7 @@ class Base:
         c.extend(list(args))
         self.teardown_funcs.append((c, kwargs))
 
-    @staticmethod
-    def pop_specified_func(father_funcs: list, pop_func: callable):
+    def pop_specified_func(self, father_funcs: list, pop_func: callable):
         _father_funcs = copy.deepcopy(father_funcs)
         _subscript = None
 
