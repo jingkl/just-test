@@ -1,3 +1,5 @@
+import copy
+
 from deploy.configs.default_configs import DefaultConfigs
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository
 from deploy.client.default_client import DefaultClient
@@ -75,18 +77,20 @@ class Base:
             param_info.test_status = True
             assert False
 
-    def pop_specified_func(self, father_funcs: list, pop_func: callable):
+    @staticmethod
+    def pop_specified_func(father_funcs: list, pop_func: callable):
+        _father_funcs = copy.deepcopy(father_funcs)
         _subscript = None
-        for f in range(len(father_funcs)):
-            print(father_funcs[f], father_funcs[f][0][0], pop_func, father_funcs[f][0][0] == pop_func)
-            if father_funcs[f][0][0] == pop_func:
+
+        for f in range(len(_father_funcs)):
+            if _father_funcs[f][0][0] == pop_func:
                 _subscript = f
                 break
 
-        if _subscript:
-            father_funcs.pop(_subscript)
-            log.info(f"[Base] Popped specified func:{pop_func} from {father_funcs}")
-        return father_funcs
+        if _subscript is not None:
+            _father_funcs.pop(_subscript)
+            log.info(f"[Base] Popped specified func:{pop_func} from {_father_funcs}")
+        return _father_funcs
 
     def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
         c = [callable_obj, ]

@@ -159,7 +159,7 @@ class ServerTemplate(Base):
                         **kwargs):
         # pop self.deploy_delete from self.teardown_funcs
         # self.teardown_funcs = []
-        self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
+        self.teardown_funcs = self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
 
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
@@ -182,7 +182,7 @@ class ServerTemplate(Base):
                                 upgrade_config: str = ""):
         # pop self.deploy_delete from self.teardown_funcs
         # self.teardown_funcs = []
-        self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
+        self.teardown_funcs = self.pop_specified_func(self.teardown_funcs, self.deploy_delete)
 
         log.info("[PerfTemplate] Input parameters: {0}".format(vars(input_params)))
         input_params = copy.deepcopy(input_params)
