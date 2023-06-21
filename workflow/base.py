@@ -1,5 +1,3 @@
-import copy
-
 from deploy.configs.default_configs import DefaultConfigs
 from deploy.commons.common_params import CLUSTER, STANDALONE, Helm, Operator, DefaultRepository
 from deploy.client.default_client import DefaultClient
@@ -10,6 +8,7 @@ from commons.common_func import (
     parser_input_config, execute_funcs, update_dict_value, check_deploy_config, write_shell_file)
 from commons.auto_get import AutoGetTag
 from commons.common_params import EnvVariable
+from commons.common_type import TeardownType
 from data_report.metrics import Report_Metric_Object
 
 
@@ -39,7 +38,7 @@ class Base:
 
         log.info("[setup_method] Start setup test case {0}, test document:{1}".format(method.__name__, method.__doc__))
 
-        self.teardown_funcs = []
+        self.teardown_funcs = {}
 
         self.deploy_client = None
         self.deploy_config = {}
@@ -55,11 +54,12 @@ class Base:
 
         # Delete the service after the test is over
         if not param_info.deploy_retain and not param_info.deploy_skip:
-            self.set_teardown_funcs(self.deploy_delete, deploy_retain_pvc=param_info.deploy_retain_pvc)
+            self.set_teardown_funcs(
+                TeardownType.DeployDelete, self.deploy_delete, deploy_retain_pvc=param_info.deploy_retain_pvc)
 
         # Save env params
         if str(EnvVariable.FOURAM_SAVE_CONNECT_PARAMS).lower() == 'true':
-            self.set_teardown_funcs(self.save_env_params)
+            self.set_teardown_funcs(TeardownType.SaveEnvParams, self.save_env_params)
 
         log.info("[setup_method] Test case: {0}, Test run_id: {1}".format(Report_Metric_Object.client.test_case_name,
                                                                           Report_Metric_Object.client.run_id))
@@ -68,7 +68,7 @@ class Base:
         log.info(" teardown ".center(100, "*"))
         log.info("[teardown_method] Start teardown test case %s." % method.__name__)
         log.info("[teardown_method] Execute teardown functions: {0}".format(self.teardown_funcs))
-        execute_funcs(self.teardown_funcs)
+        execute_funcs(list(self.teardown_funcs.values()))
         log.info("[teardown_method] Teardown test case %s done." % method.__name__)
 
         if param_info.test_status is False:
@@ -77,27 +77,10 @@ class Base:
             param_info.test_status = True
             assert False
 
-    def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
+    def set_teardown_funcs(self, key_name: str, callable_obj: callable, *args, **kwargs):
         c = [callable_obj, ]
         c.extend(list(args))
-        self.teardown_funcs.append((c, kwargs))
-
-    def pop_specified_func(self, father_funcs: list, pop_func: callable):
-        _father_funcs = copy.deepcopy(father_funcs)
-        _subscript = None
-
-        for f in range(len(_father_funcs)):
-            print(_father_funcs[f][0][0] == pop_func)
-            print(_father_funcs[f][0][0], pop_func)
-            if _father_funcs[f][0][0] == pop_func:
-                _subscript = f
-                print(f"_subscript:{_subscript}")
-                break
-        print(f"_subscript: {_subscript}; _father_funcs:{_father_funcs}, pop_func:{pop_func}; {_subscript is not None}")
-        if _subscript is not None:
-            _father_funcs.pop(_subscript)
-            log.info(f"[Base] Popped specified func:{pop_func} from {_father_funcs}")
-        return _father_funcs
+        self.teardown_funcs[key_name] = (c, kwargs)
 
     @staticmethod
     def save_env_params():
