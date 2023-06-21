@@ -77,25 +77,28 @@ class Base:
             param_info.test_status = True
             assert False
 
+    def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
+        c = [callable_obj, ]
+        c.extend(list(args))
+        self.teardown_funcs.append((c, kwargs))
+
     @staticmethod
     def pop_specified_func(father_funcs: list, pop_func: callable):
         _father_funcs = copy.deepcopy(father_funcs)
         _subscript = None
 
         for f in range(len(_father_funcs)):
+            print(_father_funcs[f][0][0] == pop_func)
+            print(_father_funcs[f][0][0], pop_func)
             if _father_funcs[f][0][0] == pop_func:
                 _subscript = f
+                print(f"_subscript:{_subscript}")
                 break
         print(f"_subscript: {_subscript}; _father_funcs:{_father_funcs}, pop_func:{pop_func}; {_subscript is not None}")
         if _subscript is not None:
             _father_funcs.pop(_subscript)
             log.info(f"[Base] Popped specified func:{pop_func} from {_father_funcs}")
         return _father_funcs
-
-    def set_teardown_funcs(self, callable_obj: callable, *args, **kwargs):
-        c = [callable_obj, ]
-        c.extend(list(args))
-        self.teardown_funcs.append((c, kwargs))
 
     @staticmethod
     def save_env_params():
