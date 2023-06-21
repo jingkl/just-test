@@ -86,7 +86,7 @@ class Base:
             if _father_funcs[f][0][0] == pop_func:
                 _subscript = f
                 break
-
+        print(f"_subscript: {_subscript}; _father_funcs:{_father_funcs}, pop_func:{pop_func}; {_subscript is not None}")
         if _subscript is not None:
             _father_funcs.pop(_subscript)
             log.info(f"[Base] Popped specified func:{pop_func} from {_father_funcs}")
