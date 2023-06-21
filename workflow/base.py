@@ -78,7 +78,7 @@ class Base:
     def pop_specified_func(self, father_funcs: list, pop_func: callable):
         _subscript = None
         for f in range(len(father_funcs)):
-            if father_funcs[f] == pop_func:
+            if father_funcs[f][0] == pop_func:
                 _subscript = f
                 break
 
