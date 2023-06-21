@@ -161,11 +161,11 @@ class SearchParams(CommonParams):
         log.debug("[SearchParams] Default params of params_scene_search_ivf_flat: {0}".format(default_params))
         return default_params
 
-    def params_scene_search_auto_index(self, dataset_name=pn.DatasetsName.SIFT, dim=128, dataset_size="6m",
-                                       ni_per=50000, other_fields=dp.other_fields, metric_type=pn.MetricsTypeName.L2,
-                                       index_type=pn.IndexTypeName.AUTOINDEX, index_param={}, top_k=[1, 10, 100, 1000],
-                                       nq=[1, 10, 100, 200, 500, 1000, 1200], search_param={"level": [1, 2, 3]},
-                                       search_expr=dp.search_expr, req_run_counts=10):
+    def params_scene_search_auto_index(self, dataset_name=pn.DatasetsName.LOCAL, dim=768, dataset_size="1m",
+                                       ni_per=10000, other_fields=dp.other_fields, metric_type=pn.MetricsTypeName.L2,
+                                       index_type=pn.IndexTypeName.AUTOINDEX, index_param={}, top_k=[1],
+                                       nq=[1], search_param={"level": [1, 2, 3]},
+                                       search_expr=dp.search_expr, req_run_counts=1000000):
         dataset_size = parser_data_size(dataset_size)
 
         _search_expr = []

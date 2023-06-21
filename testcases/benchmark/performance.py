@@ -761,7 +761,7 @@ class TestPerformanceCases(PerfTemplate):
         self.serial_template(input_params=input_params, cpu=None, mem=None, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
                              default_case_params=SearchParams().params_scene_search_auto_index(
-                                 other_fields=[], search_expr=None, req_run_counts=30))
+                                 other_fields=[], search_expr=None, req_run_counts=1000000))
 
     def test_search_recall_custom_parameters(self, input_params: InputParamsBase):
         """
