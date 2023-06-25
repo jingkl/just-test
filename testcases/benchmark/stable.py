@@ -43,7 +43,7 @@ class TestConcurrentCases(PerfTemplate):
     
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
-    def test_concurrent_locust_search_standalone(self, input_params: InputParamsBase):
+    def test_concurrent_locust_search_standalone(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. concurrent test and calculation of RT and QPS
@@ -52,7 +52,7 @@ class TestConcurrentCases(PerfTemplate):
             [ConcurrentParams.params_search(nq=1, top_k=1, search_param={"level": 1})],
             concurrent_number=[50], during_time="24h", interval=20, **cdp.DefaultIndexParams.AUTOINDEX)
 
-        self.concurrency_template(input_params=input_params, old_version_format=False,
+        self.concurrency_template(input_params=input_params,  cpu=None, mem=None, deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
                                   default_case_params=default_case_params)
 
@@ -61,9 +61,11 @@ class TestConcurrentCases(PerfTemplate):
         :test steps:
             1. concurrent test and calculation of RT and QPS
         """
+        # concurrent_tasks = [ConcurrentParams.params_search(), ConcurrentParams.params_query(ids=[1, 10, 100, 1000]),
+        #                     ConcurrentParams.params_scene_insert_delete_flush(random_id=True, random_vector=True)]
         self.concurrency_template(
             input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, old_version_format=False,
-            case_callable_obj=ConcurrentClientBase().scene_concurrent_locust, default_case_params=default_case_params)
+            case_callable_obj=ConcurrentClientBase().scene_concurrent_locust)
 
     @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [STANDALONE])
