@@ -42,7 +42,7 @@ class TestConcurrentCases(PerfTemplate):
                 4. clean env"""
     
     @pytest.mark.locust
-    # @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
+    @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
     def test_concurrent_locust_search_standalone(self, input_params: InputParamsBase):
         """
         :test steps:
