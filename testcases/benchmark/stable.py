@@ -50,7 +50,7 @@ class TestConcurrentCases(PerfTemplate):
         """
         default_case_params = ConcurrentParams().params_scene_concurrent(
             [ConcurrentParams.params_search(nq=1, top_k=1, search_param={"level": 1})],
-            concurrent_number=[50], during_time="24h", interval=20, **cdp.DefaultIndexParams.AUTOINDEX)
+            concurrent_number=[50], during_time="2h", interval=20, **cdp.DefaultIndexParams.AUTOINDEX)
 
         self.concurrency_template(input_params=input_params,  cpu=None, mem=None, deploy_mode=deploy_mode, old_version_format=False,
                                   case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
