@@ -39,7 +39,7 @@ class MyTaskSet(TaskSet):
         self.client.debug(self.tasks_params.debug.params)
     
     def upsert(self):
-        self.client.debug(self.tasks_params.upsert.params)
+        self.client.upsert(self.tasks_params.upsert.params)
 
     def search(self):
         self.client.search(self.tasks_params.search.params)
