@@ -204,7 +204,6 @@ class ConcurrentClientBase(CommonCases):
             _p.set_params()
             return _p
         
-        
         elif req_type == pn.scene_test:
             return ConcurrentTaskSceneTest(**ConcurrentInputParamsSceneTest(**req_params).to_dict)
 

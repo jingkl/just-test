@@ -690,7 +690,6 @@ class ConcurrentObjParams(DataClassBase):
 @dataclass
 class ConcurrentTasksParams:
     debug: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": DataClassBase})
-    upsert:Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params":ConcurrentTaskUpsert})
     search: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSearch})
     query: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskQuery})
     flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskFlush})
@@ -698,6 +697,7 @@ class ConcurrentTasksParams:
     release: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskRelease})
     load_release: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskLoadRelease})
     insert: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskInsert})
+    upsert:Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskUpsert})
     delete: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskDelete})
     scene_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneTest})
     scene_insert_delete_flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(
