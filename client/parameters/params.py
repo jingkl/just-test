@@ -299,8 +299,13 @@ class ConcurrentTaskUpsert(DataClassBase):
 
     @property
     def get_ids(self):
-        return concurrent_global_params.get_data_from_insert_queue(
-            concurrent_global_params.concurrent_insert_ids, self.upsert_number)
+        if self.random_id:
+            _ids = next(self._loop_ids)
+            concurrent_global_params.put_data_to_insert_queue(concurrent_global_params.concurrent_insert_ids, _ids)
+            return _ids
+        concurrent_global_params.put_data_to_insert_queue(
+            concurrent_global_params.concurrent_insert_ids, self.fixed_ids)
+        return self.fixed_ids
 
     @property
     def get_vectors(self):
