@@ -20,7 +20,7 @@ from client.parameters.params import (
     ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, ConcurrentTaskRelease,
     ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest,
     ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskIterateSearch, ConcurrentTaskLoadSearchRelease,
-    ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition)
+    ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition, ConcurrentInputParamsUpsert, ConcurrentTaskUpsert)
 from client.parameters.params_name import (
     reset, groups, max_length, dim, transfer_nodes, transfer_replicas, resource_groups)
 from client.util.api_request import func_time_catch
@@ -385,7 +385,7 @@ class Base:
                 "batch": ni
             }
         }
-
+    
     def ann_insert(self, source_vectors, ni=100, scalars_params={}):
         size = len(source_vectors)
         data_size_format = str(format(size, ',d'))
@@ -415,6 +415,7 @@ class Base:
                 "total_time": total_time
             }
         }
+    
 
     def build_index(self, field_name, index_type, metric_type, index_param, collection_obj: callable = None,
                     collection_name="", log_level=LogLevel.INFO):
@@ -735,6 +736,9 @@ class Base:
 
     def concurrent_query(self, params: ConcurrentTaskQuery):
         return self.collection_wrap.query(check_task=CheckTasks.assert_result, **params.obj_params)
+    
+    def concurrent_upsert(self, params: ConcurrentTaskUpsert):
+        return self.collection_wrap.upsert(check_task=CheckTasks.assert_result, **params.obj_params)
 
     def concurrent_flush(self, params: ConcurrentTaskFlush):
         return self.collection_wrap.flush(check_task=CheckTasks.assert_result, **params.obj_params)
@@ -755,6 +759,10 @@ class Base:
     def concurrent_insert(self, params: ConcurrentTaskInsert):
         entities = gen_entities(self.collection_schema, params.get_vectors, params.get_ids, params.varchar_filled)
         return self.collection_wrap.insert(entities, check_task=CheckTasks.assert_result, **params.obj_params)
+    
+    def concurrent_upsert(self, params: ConcurrentTaskUpsert):
+        entities = gen_entities(self.collection_schema, params.get_vectors, params.get_ids, params.varchar_filled)
+        return self.collection_wrap.upsert(entities, check_task=CheckTasks.assert_result, **params.obj_params)
 
     def concurrent_delete(self, params: ConcurrentTaskDelete):
         return self.collection_wrap.delete(expr="id in {}".format(params.get_ids), check_task=CheckTasks.assert_result,

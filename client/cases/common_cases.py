@@ -63,6 +63,7 @@ class CommonCases(Base):
                                  scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
         self.case_report.add_attr(**res_insert)
 
+     
     def prepare_load(self, **kwargs):
         res_load = self.load_collection(**kwargs)
         self.case_report.add_attr(**{"load": {"RT": round(res_load.rt, Precision.LOAD_PRECISION)}})

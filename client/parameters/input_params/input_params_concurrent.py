@@ -162,6 +162,14 @@ class ConcurrentParams(CommonParams):
         return {"type": "insert", "weight": weight,
                 "params": {"nb": nb, "timeout": timeout, "random_id": random_id, "random_vector": random_vector,
                            "varchar_filled": varchar_filled}}
+    
+    @staticmethod
+    def params_upsert(weight=1, upsert_number=1, timeout: int = 30):
+        """
+        upsert_number: Optional[int] = 1
+        timeout: Optional[int] = 30
+        """
+        return {"type": "upsert", "weight": weight, "params": {"upsert_number": upsert_number, "timeout": timeout}}
 
     @staticmethod
     def params_delete(weight=1, delete_length=1, timeout: int = 30):

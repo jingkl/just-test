@@ -24,6 +24,7 @@ release = "release"
 load_release = "load_release"
 insert = "insert"
 delete = "delete"
+upsert = "upsert"
 scene_test = "scene_test"
 scene_insert_delete_flush = "scene_insert_delete_flush"
 scene_insert_partition = "scene_insert_partition"
@@ -64,6 +65,9 @@ replica_number = "replica_number"
 refresh = "_refresh"
 resource_groups = "_resource_groups"
 prepare_load = "prepare_load"
+
+# upsert
+upsert_number = "upsert_number"
 
 # flush
 prepare_flush = "prepare_flush"

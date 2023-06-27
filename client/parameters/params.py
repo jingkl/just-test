@@ -53,7 +53,7 @@ class ParamsFormat:
                             collection_name: ([type(str())], OPTION)},
         load_params: {replica_number: ([type(int())], OPTION),
                       refresh: ([type(bool())], OPTION),
-                      resource_groups: ([type(int()), type(list())], OPTION)},
+                      resource_groups: ([type(int()), type(list())], OPTION)},  
         flush_params: {prepare_flush: ([type(bool())], OPTION)},
         query_params: {output_fields: ([type(list()), type(None)], OPTION),
                        ignore_growing: ([type(bool())], OPTION)},
@@ -266,6 +266,50 @@ class ConcurrentTaskLoad(DataClassBase):
     replica_number: Optional[int] = 1
     timeout: Optional[int] = DefaultValue.default_timeout
 
+@dataclass
+class ConcurrentInputParamsUpsert(DataClassBase):
+    upsert_number: Optional[int] = 1
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    # random id or vectors
+    random_id: Optional[bool] = False
+    random_vector: Optional[bool] = False
+    varchar_filled: Optional[bool] = False
+
+
+@dataclass
+class ConcurrentTaskUpsert(DataClassBase):
+    dim: int
+    upsert_number: Optional[int] = 1
+    timeout: Optional[int] = DefaultValue.default_timeout
+
+    # random id or vectors
+    random_id: Optional[bool] = False
+    random_vector: Optional[bool] = False
+    varchar_filled: Optional[bool] = False
+
+    _loop_ids = None
+    fixed_ids = None
+    fixed_vectors = None
+
+    def set_params(self):
+        self._loop_ids = loop_ids(step=self.upsert_number)
+        self.fixed_ids = [k for k in range(self.upsert_number)]
+        self.fixed_vectors = gen_vectors(self.upsert_number, self.dim)
+
+    @property
+    def get_ids(self):
+        return concurrent_global_params.get_data_from_insert_queue(
+            concurrent_global_params.concurrent_insert_ids, self.upsert_number)
+
+    @property
+    def get_vectors(self):
+        if self.random_vector:
+            return gen_vectors(self.upsert_number, self.dim)
+        return self.fixed_vectors
+
+
+
 
 @dataclass
 class ConcurrentInputParamsRelease(DataClassBase):
@@ -339,6 +383,7 @@ class ConcurrentTaskInsert(DataClassBase):
     @property
     def obj_params(self):
         return {"timeout": self.timeout}
+    
 
 
 @dataclass
@@ -645,6 +690,7 @@ class ConcurrentObjParams(DataClassBase):
 @dataclass
 class ConcurrentTasksParams:
     debug: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": DataClassBase})
+    upsert:Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params":ConcurrentTaskUpsert})
     search: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSearch})
     query: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskQuery})
     flush: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskFlush})

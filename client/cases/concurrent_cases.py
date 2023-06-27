@@ -25,7 +25,8 @@ from client.parameters.params import (
     ConcurrentTaskLoadSearchRelease, ConcurrentInputParamsLoadSearchRelease,
     ConcurrentTaskSceneSearchTest, ConcurrentInputParamsSceneSearchTest,
     ConcurrentTaskSceneInsertPartition, ConcurrentInputParamsSceneInsertPartition,
-    ConcurrentInputParamsSceneTestPartition, ConcurrentTaskSceneTestPartition
+    ConcurrentInputParamsSceneTestPartition, ConcurrentTaskSceneTestPartition,
+    ConcurrentInputParamsUpsert, ConcurrentTaskUpsert
 )
 
 from utils.util_log import log
@@ -195,11 +196,19 @@ class ConcurrentClientBase(CommonCases):
             _p = ConcurrentTaskInsert(**params)
             _p.set_params()
             return _p
-
+        
+        elif req_type == pn.upsert:
+            params = ConcurrentInputParamsUpsert(**req_params).to_dict
+            params.update({"dim": self.params_obj.dataset_params[pn.dim]})
+            _p = ConcurrentTaskUpsert(**params)
+            _p.set_params()
+            return _p
+        
+        
         elif req_type == pn.scene_test:
             return ConcurrentTaskSceneTest(**ConcurrentInputParamsSceneTest(**req_params).to_dict)
 
-        elif req_type in [pn.flush, pn.load, pn.release, pn.delete, "debug"]:
+        elif req_type in [pn.flush, pn.load, pn.release, pn.delete, pn.upsert, "debug"]:
             return eval(
                 "ConcurrentTask{0}(**ConcurrentInputParams{0}(**req_params).to_dict)".format(req_type.capitalize()))
 
