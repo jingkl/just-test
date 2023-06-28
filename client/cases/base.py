@@ -20,7 +20,7 @@ from client.parameters.params import (
     ConcurrentTaskSearch, ConcurrentTaskQuery, ConcurrentTaskFlush, ConcurrentTaskLoad, ConcurrentTaskRelease,
     ConcurrentTaskLoadRelease, ConcurrentTaskInsert, ConcurrentTaskDelete, ConcurrentTaskSceneTest,
     ConcurrentTaskSceneInsertDeleteFlush, DataClassBase, ConcurrentTaskIterateSearch, ConcurrentTaskLoadSearchRelease,
-    ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition, ConcurrentInputParamsUpsert, ConcurrentTaskUpsert)
+    ConcurrentTaskSceneSearchTest, ConcurrentTaskSceneInsertPartition, ConcurrentTaskSceneTestPartition, ConcurrentTaskSceneTestGrow, ConcurrentTaskUpsert)
 from client.parameters.params_name import (
     reset, groups, max_length, dim, transfer_nodes, transfer_replicas, resource_groups)
 from client.util.api_request import func_time_catch
@@ -1000,6 +1000,78 @@ class Base:
                 param={"metric_type": params.metric_type, "params": params.search_param},
                 limit=params.top_k, check_task=CheckTasks.assert_result)
             search_results.append(res.check_result)
+
+        # drop collection
+        log.customize(log_level)("[Base] Drop collection {}.".format(collection_name))
+        self.utility_wrap.drop_collection(collection_name, using=connect_using)
+
+        # remove connect
+        if params.new_connect:
+            # delete role, user
+            if params.new_user:
+                self.delete_user_from_role(user=user, role_name=role_name, log_level=log_level)
+                self.delete_users(user=user, log_level=log_level)
+            self.remove_connect(alias=connect_using, log_level=log_level)
+
+        if params.search_counts > sum(search_results):
+            raise Exception("[Base] Search of concurrent_scene_search_test failed, please check.")
+
+        return "[Base] concurrent_scene_search_test finished."
+    
+    @func_time_catch()
+    def concurrent_scene_test_grow(self, params: ConcurrentTaskSceneTestGrow):
+        log_level = LogLevel.DEBUG
+        collection_obj = ApiCollectionWrapper()
+        collection_name, user, password, role_name = gen_unique_str(), "", "", ""
+
+        # connect params
+        connect_using = DefaultConfig.DEFAULT_USING
+        if params.new_connect:
+            connect_using = collection_name
+            # create new user, role
+            if params.new_user:
+                user, password, role_name = collection_name, dv.default_rbac_password, dv.default_rbac_role_name
+                self.create_user_role(user=user, password=password, role_name=role_name, log_level=log_level)
+            self.connect(user=user, password=password, alias=connect_using, log_level=log_level)
+
+        # create collection
+        self.create_collection(collection_obj=collection_obj, collection_name=collection_name,
+                               shards_num=params.shards_num, vector_field_name=params.vector_field_name, dim=params.dim,
+                               using=connect_using, log_level=log_level)
+        time.sleep(1)
+
+        self.build_index(field_name=params.vector_field_name, index_type=params.index_type,
+                             metric_type=params.metric_type, index_param=params.index_param,
+                             collection_name=collection_name, collection_obj=collection_obj, log_level=log_level)
+
+            # load collection
+        self.load_collection(replica_number=params.replica_number, collection_obj=collection_obj,
+                                 log_level=log_level)
+
+        # insert vectors
+        self.insert(data_type=params.dataset, dim=params.dim, size=params.data_size, ni=params.nb,
+                    collection_obj=collection_obj, collection_name=collection_name,
+                    collection_schema=collection_obj.schema.to_dict(), log_level=log_level)
+
+        # flush collection
+        self.flush_collection(collection_obj=collection_obj, log_level=log_level)
+
+        # count vectors
+        self.count_entities(collection_obj=collection_obj, log_level=log_level)
+
+
+        # search collection
+        search_results = []
+        log.customize(log_level)("[Base] Search collection {}.".format(collection_obj.name))
+        for i in range(params.search_counts):
+            res = collection_obj.search(
+                gen_vectors(nb=params.nq, dim=params.dim), anns_field=params.vector_field_name,
+                param={"metric_type": params.metric_type, "params": params.search_param},
+                limit=params.top_k, check_task=CheckTasks.assert_result)
+            search_results.append(res.check_result)
+
+        # delete vectors
+        self.collection_wrap.delete(expr="id in {}".format(params.get_delete_ids))
 
         # drop collection
         log.customize(log_level)("[Base] Drop collection {}.".format(collection_name))

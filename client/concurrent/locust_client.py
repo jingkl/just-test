@@ -85,3 +85,6 @@ class MyTaskSet(TaskSet):
 
     def scene_search_test(self):
         self.client.scene_search_test(self.tasks_params.scene_search_test.params)
+    
+    def scene_test_grow(self):
+        self.client.scene_test_grow(self.tasks_params.scene_search_test.params)

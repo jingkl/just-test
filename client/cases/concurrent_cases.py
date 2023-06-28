@@ -26,7 +26,8 @@ from client.parameters.params import (
     ConcurrentTaskSceneSearchTest, ConcurrentInputParamsSceneSearchTest,
     ConcurrentTaskSceneInsertPartition, ConcurrentInputParamsSceneInsertPartition,
     ConcurrentInputParamsSceneTestPartition, ConcurrentTaskSceneTestPartition,
-    ConcurrentInputParamsUpsert, ConcurrentTaskUpsert
+    ConcurrentInputParamsUpsert, ConcurrentTaskUpsert,
+    ConcurrentInputParamsSceneTestGrow,ConcurrentTaskSceneTestGrow
 )
 
 from utils.util_log import log
@@ -243,6 +244,9 @@ class ConcurrentClientBase(CommonCases):
 
         elif req_type == pn.scene_search_test:
             return ConcurrentTaskSceneSearchTest(**ConcurrentInputParamsSceneSearchTest(**req_params).to_dict)
+        
+        elif req_type == pn.scene_test_grow:
+            return ConcurrentTaskSceneTestGrow(**ConcurrentInputParamsSceneTestGrow(**req_params).to_dict)
 
         return DataClassBase()
 

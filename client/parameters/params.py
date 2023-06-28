@@ -686,6 +686,70 @@ class ConcurrentTaskSceneSearchTest(DataClassBase):
 
 
 @dataclass
+class ConcurrentInputParamsSceneTestGrow(DataClassBase):
+    dataset: Optional[str] = DefaultValue.default_dataset
+    dim: Optional[int] = DefaultValue.default_dim
+    shards_num: Optional[int] = DefaultValue.default_shards_num
+    data_size: Optional[int] = 3000
+    nb: Optional[int] = 3000
+    index_type: Optional[str] = IndexTypeName.IVF_SQ8
+    index_param: Optional[dict] = field(default_factory=lambda: {'nlist': 2048})
+    metric_type: Optional[str] = MetricsTypeName.L2
+
+    # load
+    replica_number: Optional[int] = 1
+
+    # search
+    nq: Optional[int] = 1
+    top_k: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+    # delete
+    delete_length: Optional[int] = 1
+
+    # other
+    prepare_before_insert: Optional[bool] = False
+    search_counts: Optional[int] = 1
+    new_connect: Optional[bool] = False
+
+    # use db and user
+    new_user: Optional[bool] = False
+
+
+@dataclass
+class ConcurrentTaskSceneTestGrow(DataClassBase):
+    dataset: Optional[str] = DefaultValue.default_dataset
+    dim: Optional[int] = DefaultValue.default_dim
+    shards_num: Optional[int] = DefaultValue.default_shards_num
+    data_size: Optional[int] = 3000
+    nb: Optional[int] = 3000
+    index_type: Optional[str] = IndexTypeName.IVF_SQ8
+    index_param: Optional[dict] = field(default_factory=lambda: {'nlist': 2048})
+    metric_type: Optional[str] = MetricsTypeName.L2
+    vector_field_name: Optional[str] = get_default_field_name()
+
+    # load
+    replica_number: Optional[int] = 1
+
+    # search
+    nq: Optional[int] = 1
+    top_k: Optional[int] = 10
+    search_param: Optional[dict] = field(default_factory=lambda: {'nprobe': 16})
+
+    #delete
+    delete_length: Optional[int] = 1
+
+
+    # other
+    prepare_before_insert: Optional[bool] = False
+    search_counts: Optional[int] = 1
+    new_connect: Optional[bool] = False
+
+    # use user
+    new_user: Optional[bool] = False
+
+
+@dataclass
 class ConcurrentObjParams(DataClassBase):
     type: str = ""
     weight: int = 0
@@ -715,6 +779,7 @@ class ConcurrentTasksParams:
     load_search_release: Optional[ConcurrentObjParams] = ConcurrentObjParams(
         **{"params": ConcurrentTaskLoadSearchRelease})
     scene_search_test: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneSearchTest})
+    scene_test_grow: Optional[ConcurrentObjParams] = ConcurrentObjParams(**{"params": ConcurrentTaskSceneTestGrow})
 
     @property
     def all_obj(self):
