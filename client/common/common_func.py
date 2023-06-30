@@ -182,6 +182,7 @@ def gen_file_name(file_id, dim, data_type):
 
 def gen_parquet_file_name(file_id, data_type):
     file_name = "%s-%02d-of-10.parquet" % (dv.FILE_TITLE, int(file_id))
+    print(file_name)
     return DatasetPath[data_type] + file_name
     # if data_type in DatasetPath.keys():
     #     return DatasetPath[data_type] + file_name
