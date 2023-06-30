@@ -4,7 +4,7 @@ import pandas as pd
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_func import (
     gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, parser_time, update_dict_value,
-    get_input_params, gen_parquet_file_name, read_cohere_parquet_file, normalize_data, read_parquet_file)
+    get_input_params)
 from client.util.params_check import check_params
 from client.util.api_request import info_logout
 from client.cases.common_cases import CommonCases
