@@ -1,9 +1,10 @@
 import copy
+import pandas as pd
 
 from client.common.common_type import Precision, CaseIterParams
 from client.common.common_func import (
     gen_combinations, get_vector_type, get_default_field_name, GoSearchParams, parser_time, update_dict_value,
-    get_input_params)
+    get_input_params, gen_parquet_file_name, read_cohere_parquet_file, normalize_data, read_parquet_file)
 from client.util.params_check import check_params
 from client.util.api_request import info_logout
 from client.cases.common_cases import CommonCases
@@ -306,6 +307,105 @@ class ConcurrentClientBase(CommonCases):
                 self.prepare_load(**self.params_obj.load_params)
 
             self.prepare_insert(data_type=self.params_obj.dataset_params[pn.dataset_name],
+                                dim=self.params_obj.dataset_params[pn.dim],
+                                size=self.params_obj.dataset_params[pn.dataset_size],
+                                ni=self.params_obj.dataset_params[pn.ni_per])
+            self.prepare_flush()
+            self.prepare_index(vector_field_name=vector_default_field_name,
+                               metric_type=self.params_obj.dataset_params[pn.metric_type])
+        else:
+            # if pass in rebuild_index, indexes of collection will be dropped before building index
+            if rebuild_index:
+                self.prepare_index(vector_field_name=vector_default_field_name,
+                                   metric_type=self.params_obj.dataset_params[pn.metric_type],
+                                   clean_index_before=rebuild_index)
+
+        self.count_entities()
+        # load collection
+        self.prepare_load(**self.params_obj.load_params)
+
+        self.show_all_resource(shards_num=self.params_obj.collection_params.get(pn.shards_num, 2),
+                               show_resource_groups=self.params_obj.dataset_params.get(pn.show_resource_groups, True),
+                               show_db_user=self.params_obj.dataset_params.get(pn.show_db_user, False))
+
+        # set output log
+        info_logout.reset_output()
+
+        # concurrent test
+        c_params = self.parser_concurrent_params()
+        params_list = []
+        for c_p in c_params:
+            spawn_rate = c_p[pn.spawn_rate] if pn.spawn_rate in c_p else None
+            con_client = LocustRunner(obj=self, obj_params=obj_params,
+                                      interval=c_p[pn.interval], during_time=parser_time(c_p[pn.during_time]),
+                                      concurrent_number=c_p[pn.concurrent_number], spawn_rate=spawn_rate)
+
+            actual_params_used = copy.deepcopy(params)
+            actual_params_used[pn.concurrent_params] = {
+                pn.concurrent_number: c_p[pn.concurrent_number],
+                pn.during_time: c_p[pn.during_time],
+                pn.interval: c_p[pn.interval],
+                pn.spawn_rate: spawn_rate
+            }
+            p = CaseIterParams(callable_object=con_client.start_runner, object_args=[self.case_report],
+                               actual_params_used=actual_params_used, case_type=self.__class__.__name__)
+            params_list.append(p)
+        yield params_list
+
+        # recover output log
+        info_logout.recover_output()
+
+        # clear env
+        self.clear_collections(clean_collection=clean_collection)
+        yield True
+    
+
+    @check_params(ParamsFormat.common_concurrent)
+    def scene_concurrent_locust_cohere(self, **kwargs):
+        """
+        :param kwargs:
+            params: dict
+            prepare: bool
+            prepare_clean: bool
+            rebuild_index: bool
+            clean_collection: bool
+        :return:
+        """
+        from gevent import monkey
+        _patch_params = {} if param_info.locust_patch_switch else {"ssl": False}
+        monkey.patch_all(**_patch_params)
+        # from requests.packages.urllib3.util.ssl_ import create_urllib3_context; create_urllib3_context()
+        import grpc.experimental.gevent as grpc_gevent
+        grpc_gevent.init_gevent()
+        from client.concurrent.locust_runner import LocustRunner
+
+        # params prepare
+        params, prepare, prepare_clean, rebuild_index, clean_collection = get_input_params(**kwargs)
+        log.info("[ConcurrentClientBase] The detailed test steps are as follows: {}".format(self))
+
+        # params parsing
+        self.parsing_params(params)
+        vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
+        vector_default_field_name = get_default_field_name(
+            vector_type, self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+
+        obj_params = self.parser_concurrent_tasks(self.params_obj.concurrent_tasks, vector_default_field_name,
+                                                  self.params_obj.dataset_params[pn.metric_type])
+
+        # load prepare params
+        _prepare_load = self.params_obj.load_params.pop("prepare_load", False)
+
+        # prepare data
+        self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
+        if prepare:
+            self.prepare_index(vector_field_name=vector_default_field_name,
+                               metric_type=self.params_obj.dataset_params[pn.metric_type],
+                               clean_index_before=True)
+
+            if _prepare_load:
+                self.prepare_load(**self.params_obj.load_params)
+
+            self.prepare_insert_cohere(data_type=self.params_obj.dataset_params[pn.dataset_name],
                                 dim=self.params_obj.dataset_params[pn.dim],
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])

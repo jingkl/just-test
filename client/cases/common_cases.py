@@ -62,8 +62,14 @@ class CommonCases(Base):
         res_insert = self.insert(data_type=data_type, dim=dim, size=size, ni=ni, varchar_filled=varchar_filled,
                                  scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
         self.case_report.add_attr(**res_insert)
+    
 
-     
+    def prepare_insert_cohere(self, data_type, dim, size, ni, varchar_filled=False):
+        varchar_filled = self.params_obj.dataset_params.get(pn.varchar_filled, varchar_filled)
+        res_insert = self.insert_cohere(data_type=data_type, dim=dim, size=size, ni=ni, varchar_filled=varchar_filled,
+                                 scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
+        self.case_report.add_attr(**res_insert)
+ 
     def prepare_load(self, **kwargs):
         res_load = self.load_collection(**kwargs)
         self.case_report.add_attr(**{"load": {"RT": round(res_load.rt, Precision.LOAD_PRECISION)}})
@@ -683,3 +689,5 @@ class SearchRecall(CommonCases):
         # clear env
         self.clear_collections(clean_collection=clean_collection)
         yield True
+
+

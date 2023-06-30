@@ -162,7 +162,7 @@ def get_default_field_name(data_type=DataType.FLOAT_VECTOR, default_field_name: 
 
 
 def get_vector_type(data_type):
-    if data_type in ["random", "sift", "deep", "glove", "local", "gist", "text2img", "laion"]:
+    if data_type in ["random", "sift", "deep", "glove", "local", "gist", "text2img", "laion", "cohere"]:
         vector_type = DataType.FLOAT_VECTOR
     elif data_type in ["binary", "kosarak"]:
         vector_type = DataType.BINARY_VECTOR
@@ -177,6 +177,16 @@ def gen_file_name(file_id, dim, data_type):
         return DatasetPath[data_type] + file_name
     else:
         log.error("[gen_file_name] data type not supported: {}".format(data_type))
+        return ""
+    
+
+def gen_parquet_file_name(file_id, data_type):
+    # shuffle_train-00-of-10.parquet
+    file_name = "%s-%02d-of-10.parquet" % (dv.FILE_TITLE, int(file_id))
+    if data_type in DatasetPath.keys():
+        return DatasetPath[data_type] + file_name
+    else:
+        log.error("[gen_parquet_file_name] data type not supported: {}".format(data_type))
         return ""
 
 
@@ -219,6 +229,31 @@ def get_file_list(data_size, dim, data_type):
             file_names.append(file_name)
 
             file_size = len(read_npy_file(file_name))
+            data_size -= file_size
+            bar.update(file_size)
+            if data_size <= 0:
+                break
+    if data_size > 0:
+        log.error("[get_file_list] The current dataset size is less than {}".format(data_size))
+        return []
+    return file_names
+
+def get_cohere_file_list(data_size, data_type):
+    """
+    :param data_size: end with w/m/b or number
+    :param dim: int
+    :param data_type: random/deep/jaccard/hamming/sift/binary/structure
+    :return: list of file name
+    """
+    data_size = parser_data_size(data_size)
+    file_names = []
+    _data_size = data_size
+    with tqdm.tqdm(range(_data_size)) as bar:
+        bar.set_description("Get File List Processing")
+        for i in range(dv.Max_file_count):
+            file_name = gen_parquet_file_name(i, data_type)
+            file_names.append(file_name)
+            file_size = len(read_parquet_file(file_name))
             data_size -= file_size
             bar.update(file_size)
             if data_size <= 0:
@@ -316,6 +351,16 @@ def get_source_file(file_name: str):
     log.error(msg)
     raise Exception(msg)
 
+def get_cohere_source_file(file_name: str):
+    file_path = "{0}{1}.parquet".format(NAS.RAW_DATA_DIR, file_name)
+
+    if check_file_exist(file_path):
+        return file_path
+
+    msg = "[get_cohere_source_file] Can not get source file: {}, please check".format(file_path)
+    log.error(msg)
+    raise Exception(msg)
+
 
 def get_acc_metric_type(file_name: str):
     metric = file_name.split('-')[-1]
@@ -401,7 +446,12 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
 
     elif dataset_name == "local":
         return gen_vectors(nq, dimension)
-
+    
+    elif dataset_name == "cohere":
+        file_name = DatasetPath[dataset_name] + "test.parquet"
+        file_data = read_parquet_file["file_name"]["emb"]
+        return file_data
+    
     else:
         raise Exception("[get_vectors_from_binary] Not support dataset: {0}, please check".format(dataset_name))
 
@@ -538,6 +588,15 @@ def read_npy_file(file_name, allow_pickle=False):
     log.error(msg)
     return []
 
+def read_parquet_file(file_name):
+    if check_file_exist(file_name):
+        data = pd.read_parquet(file_name)["emb"]
+        data = data.tolist()
+        return data
+    msg = "[read_parquet_file] Can not read npy file, please check."
+    log.error(msg)
+    return []
+
 
 def read_hdf5_file(file_name):
     if check_file_exist(file_name):
@@ -586,6 +645,11 @@ def loop_gen_files(dim, data_type):
 def loop_gen_scalar_files(dataset_name):
     for i in range(dv.Max_file_count):
         yield gen_scalar_file_name(i, dataset_name)
+
+
+def loop_gen_parquet_files(dataset_name):
+    for i in range(dv.Max_file_count):
+        yield gen_parquet_file_name(i, dataset_name)
 
 
 def loop_ids(step=50000, start_id=0):

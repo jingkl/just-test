@@ -55,6 +55,7 @@ class DefaultValue:
     value_content = "value_content"
 
     FILE_PREFIX = "binary"
+    FILE_TITLE = "shuffle_train"
     Max_file_count = 10000
 
     SCALAR_FILE_PREFIX = "scalar"
@@ -81,9 +82,10 @@ class SimilarityMetrics:
 
 class NAS:
     DATASET_DIR = EnvVariable.DATASET_DIR
-    RAW_DATA_DIR = DATASET_DIR + "/raw_data/"
-    ANN_DATA_DIR = DATASET_DIR + "/ann_hdf5/"
-    SCALAR_DATA_DIR = DATASET_DIR + "/scalar/"
+    RAW_DATA_DIR = DATASET_DIR + "milvus/raw_data/"
+    ANN_DATA_DIR = DATASET_DIR + "milvus/ann_hdf5/"
+    SCALAR_DATA_DIR = DATASET_DIR + "milvus/scalar/"
+    Cohere_Data_DIR = DATASET_DIR + "cohere_dataset/"
 
 
 class AccMetrics:

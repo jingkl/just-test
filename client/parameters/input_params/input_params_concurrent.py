@@ -395,3 +395,24 @@ class ConcurrentParams(CommonParams):
         default_params = update_dict_value(concurrent_default_params, base_default_params)
         log.debug("[ConcurrentParams] Default params of params_scene_concurrent: {0}".format(default_params))
         return default_params
+    
+    def params_scene_concurrent_cohere(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.COHERE, dim=768,
+                                dataset_size="1m", ni_per=10000, other_fields=[], shards_num=1,
+                                replica_number=None, resource_groups=None,
+                                reset_rg=False, groups=None, reset_rbac=False, reset_db=False,
+                                metric_type=pn.MetricsTypeName.COSINE, index_type=pn.IndexTypeName.HNSW,
+                                index_param={"M": 8, "efConstruction": 200}, concurrent_number=[20],
+                                during_time=120, interval=20, spawn_rate=None):
+        dataset_size = parser_data_size(dataset_size)
+
+        base_default_params = self.base(dataset_name=dataset_name, dim=dim, dataset_size=dataset_size, ni_per=ni_per,
+                                        other_fields=other_fields, shards_num=shards_num, metric_type=metric_type,
+                                        index_type=index_type, index_param=index_param, reset_rg=reset_rg, groups=groups,
+                                        replica_number=replica_number, resource_groups=resource_groups,
+                                        reset_rbac=reset_rbac, reset_db=reset_db)
+        concurrent_default_params = self.concurrent_base(concurrent_number=concurrent_number, during_time=during_time,
+                                                         interval=interval, concurrent_tasks=concurrent_tasks,
+                                                         spawn_rate=spawn_rate)
+        default_params = update_dict_value(concurrent_default_params, base_default_params)
+        log.debug("[ConcurrentParams] Default params of params_scene_concurrent: {0}".format(default_params))
+        return default_params

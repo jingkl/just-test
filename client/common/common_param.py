@@ -18,6 +18,8 @@ DatasetPath = {
     "gist": NAS.RAW_DATA_DIR + 'gist1m/',
     "structure": NAS.RAW_DATA_DIR + 'structure/',
     "binary": NAS.RAW_DATA_DIR + 'binary/',
+    "glove" :NAS.RAW_DATA_DIR +'glove1m/',
+    "cohere":NAS.Cohere_Data_DIR +'cohere_10M/'
 }
 
 ScalarDatasetPath = {

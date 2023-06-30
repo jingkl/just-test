@@ -42,6 +42,22 @@ class TestConcurrentCases(PerfTemplate):
                 4. clean env"""
     
     @pytest.mark.locust
+    @pytest.mark.parametrize("deploy_mode", [STANDALONE])
+    def test_concurrent_locust_corhere_search_standalone(self, input_params: InputParamsBase, deploy_mode):
+        """
+        :test steps:
+            1. concurrent test and calculation of RT and QPS
+        """
+        default_case_params = ConcurrentParams().params_scene_concurrent_cohere(
+            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
+            concurrent_number=[100], during_time=100, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+
+        self.concurrency_template(input_params=input_params, cpu=6, mem=6,
+                                  deploy_mode=deploy_mode, old_version_format=False,
+                                  case_callable_obj=ConcurrentClientBase().scene_concurrent_locust,
+                                  default_case_params=default_case_params)
+    
+    @pytest.mark.locust
     @pytest.mark.parametrize("deploy_mode", [get_class_key_name(ClassID, ClassID.class1cu)])
     def test_concurrent_locust_search_standalone(self, input_params: InputParamsBase, deploy_mode):
         """

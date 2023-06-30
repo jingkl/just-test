@@ -3,7 +3,8 @@ from configs.base_config import BaseConfig
 
 class EnvVariable:
     DATASET_DIR_NAME = "DATASET_DIR"
-    DATASET_DIR = BaseConfig.get_env_variable(default_var=DATASET_DIR_NAME, default_value="/test/milvus/")
+    DATASET_DIR = BaseConfig.get_env_variable(default_var=DATASET_DIR_NAME, default_value="/test/")
+
 
     FOURAM_LOG_PATH_NAME = 'FOURAM_LOG_PATH'
     FOURAM_LOG_PATH = BaseConfig.get_env_variable(default_var=FOURAM_LOG_PATH_NAME, default_value='/tmp/fouram_logs/')
