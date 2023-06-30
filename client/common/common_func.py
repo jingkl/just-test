@@ -182,13 +182,11 @@ def gen_file_name(file_id, dim, data_type):
 
 def gen_parquet_file_name(file_id, data_type):
     file_name = "%s-%02d-of-10.parquet" % (dv.FILE_TITLE, int(file_id))
-    print(file_name)
-    return DatasetPath[data_type] + file_name
-    # if data_type in DatasetPath.keys():
-    #     return DatasetPath[data_type] + file_name
-    # else:
-    #     log.error("[gen_parquet_file_name] data type not supported: {}".format(data_type))
-    #     return ""
+    if data_type in DatasetPath.keys():
+        return DatasetPath[data_type] + file_name
+    else:
+        log.error("[gen_parquet_file_name] data type not supported: {}".format(data_type))
+        return ""
 
 
 def gen_scalar_file_name(file_id, dataset_name):
@@ -648,9 +646,9 @@ def loop_gen_scalar_files(dataset_name):
         yield gen_scalar_file_name(i, dataset_name)
 
 
-def loop_gen_parquet_files(dataset_name):
+def loop_gen_parquet_files(data_type):
     for i in range(dv.Max_file_count):
-        yield gen_parquet_file_name(i, dataset_name)
+        yield gen_parquet_file_name(i, data_type)
 
 
 def loop_ids(step=50000, start_id=0):

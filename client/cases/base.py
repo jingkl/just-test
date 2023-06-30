@@ -403,11 +403,8 @@ class Base:
         _loop_ids = loop_ids(int(ni))
         insert_scalars_params = gen_scalar_values(scalars_params, ni)
 
-        files = get_cohere_file_list(data_size, data_type) 
-        if len(files) == 0:
-            raise Exception("[insert] Can not get files, please check.")
         
-        _loop_file = loop_gen_parquet_files(files)
+        _loop_file = loop_gen_parquet_files(data_type)
         vectors = []
 
         for i in range(0, ni_cunt):
