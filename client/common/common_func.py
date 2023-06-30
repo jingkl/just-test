@@ -449,7 +449,7 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
     
     elif dataset_name == "cohere":
         file_name = DatasetPath[dataset_name] + "test.parquet"
-        file_data = read_parquet_file["file_name"]["emb"]
+        file_data = read_parquet_file(file_name)
         return file_data
     
     else:
