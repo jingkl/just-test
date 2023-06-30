@@ -181,14 +181,13 @@ def gen_file_name(file_id, dim, data_type):
     
 
 def gen_parquet_file_name(file_id, data_type):
-    # shuffle_train-00-of-10.parquet
     file_name = "%s-%02d-of-10.parquet" % (dv.FILE_TITLE, int(file_id))
-    if data_type in DatasetPath.keys():
-        print(",,,,," , data_type)
-        return DatasetPath[data_type] + file_name
-    else:
-        log.error("[gen_parquet_file_name] data type not supported: {}".format(data_type))
-        return ""
+    return DatasetPath[data_type] + file_name
+    # if data_type in DatasetPath.keys():
+    #     return DatasetPath[data_type] + file_name
+    # else:
+    #     log.error("[gen_parquet_file_name] data type not supported: {}".format(data_type))
+    #     return ""
 
 
 def gen_scalar_file_name(file_id, dataset_name):
