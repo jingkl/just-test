@@ -2,7 +2,7 @@
 
 export PYTHONPATH=/src/fouram
 
-export DATASET_DIR=/test/milvus/
+export DATASET_DIR=/test/
 
 export FOURAM_LOG_PATH=/test/fouram/log/
 #export FOURAM_LOG_SUB_FOLDER_PREFIX=fouram
