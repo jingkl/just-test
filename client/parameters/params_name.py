@@ -138,7 +138,7 @@ class DatasetsName:
     GIST = "gist"
     TEXT2IMG = "text2img"
     LAION = "laion"
-    COHERE = "COHERE"
+    COHERE = "cohere"
 
 
 class MetricsTypeName:
