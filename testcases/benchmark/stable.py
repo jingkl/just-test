@@ -49,8 +49,8 @@ class TestConcurrentCases(PerfTemplate):
             1. concurrent test and calculation of RT and QPS
         """
         default_case_params = ConcurrentParams().params_scene_concurrent_cohere(
-            [ConcurrentParams.params_search(nq=10000, top_k=10, search_param={"nprobe": 16})],
-            concurrent_number=[1], during_time=100, interval=20, **cdp.DefaultIndexParams.IVF_SQ8)
+            [ConcurrentParams.params_search(nq=10, top_k=10, search_param={"ef": 16})],
+            concurrent_number=[1], during_time=100, interval=20, **cdp.DefaultIndexParams.HNSW)
 
         self.concurrency_template(input_params=input_params, cpu=6, mem=6,
                                   deploy_mode=deploy_mode, old_version_format=False,
