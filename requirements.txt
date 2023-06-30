@@ -44,6 +44,8 @@ kubernetes==17.17.0
 #locust==2.15.1
 git+https://github.com/wangting0128/locust.git@wt
 pymongo==3.10.0
+pyarrow
+fastparquet
 #apscheduler==3.7.0
 pyhelm==2.14.5
 timeout_decorator==0.5.0
