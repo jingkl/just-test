@@ -167,8 +167,8 @@ class CommonCases(Base):
         nq = _params.pop(pn.nq)
         top_k = _params.pop(pn.top_k)
         search_param = _params.pop(pn.search_param)
-        if nq > len(self.dataset_test):
-            raise Exception("[AccCases] nq large than file support: {0}".format(len(self.dataset_test)))
+        # if nq > len(self.dataset_test):
+        #     raise Exception("[AccCases] nq large than file support: {0}".format(len(self.dataset_test)))
 
         data = self.dataset_test[:nq]
         limit = top_k
