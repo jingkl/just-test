@@ -123,8 +123,8 @@ class AccDatasetsName:
     glove_100_angular = "glove-100-angular"
     glove_25_angular = "glove-25-angular"
     kosarak_27983_jaccard = "kosarak-27983-jaccard"
-    gist_960_euclidea = "gist-960-euclidea"
-    gist_768_euclidea = "gist-768-euclidea"
+    gist_960_euclidea = "gist-960-euclidean"
+    gist_768_euclidea = "gist-768-euclidean"
 
 
 
@@ -141,6 +141,7 @@ class DatasetsName:
     TEXT2IMG = "text2img"
     LAION = "laion"
     COHERE = "cohere"
+    GLOVE = "glove"
 
 
 class MetricsTypeName:
