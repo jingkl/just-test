@@ -50,7 +50,7 @@ class AccParams:
     
 
     def gist_768_euclidean_hnsw(self, dataset_name=pn.AccDatasetsName.gist_768_euclidea,
-                                index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None):
+                                index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None, metric_type=""):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
@@ -58,30 +58,30 @@ class AccParams:
         search_param = {"ef": ef}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=768,  metric_type=metric_type)
         log.debug("[AccParams] Default params of gist_768_euclidean_hnsw: {0}".format(default_params))
         return default_params
     
     def gist_768_euclidean_diskann(self, dataset_name=pn.AccDatasetsName.gist_768_euclidea,
-                                   index_type=pn.IndexTypeName.DISKANN, search_list=None):
+                                   index_type=pn.IndexTypeName.DISKANN, search_list=None, metric_type="" ):
         index_param = {}
 
         search_list = [20, 30, 40, 50, 60, 70] if search_list is None else search_list
         search_param = {"search_list": search_list}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=768, metric_type=metric_type)
         log.debug("[AccParams] Default params of gist_768_euclidean_diskann: {0}".format(default_params))
 
     def gist_768_euclidean_ivf_flat(self, dataset_name=pn.AccDatasetsName.gist_768_euclidea,
-                                    index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None):
+                                    index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None, metric_type=""):
         index_param = {"nlist": nlist}
 
         nprobe = [8, 16, 32, 64, 128, 256, 512] if nprobe is None else nprobe
         search_param = {"nprobe": nprobe}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
-                                   search_param=search_param)
+                                   search_param=search_param, dim=768, metric_type=metric_type)
         log.debug("[AccParams] Default params of gist_128_euclidean_ivf_flat: {0}".format(default_params))
         return default_params
 
