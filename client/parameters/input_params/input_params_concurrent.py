@@ -397,7 +397,7 @@ class ConcurrentParams(CommonParams):
         return default_params
     
     def params_scene_concurrent_cohere(self, concurrent_tasks: list, dataset_name=pn.DatasetsName.COHERE, dim=768,
-                                dataset_size="1m", ni_per=10000, other_fields=[], shards_num=1,
+                                dataset_size="10m", ni_per=10000, other_fields=[], shards_num=1,
                                 replica_number=None, resource_groups=None,
                                 reset_rg=False, groups=None, reset_rbac=False, reset_db=False,
                                 metric_type=pn.MetricsTypeName.COSINE, index_type=pn.IndexTypeName.HNSW,
