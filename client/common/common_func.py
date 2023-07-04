@@ -436,7 +436,7 @@ def parser_search_params_expr(expr):
 
 
 def get_vectors_from_binary(nq, dimension, dataset_name):
-    if dataset_name in ["sift", "deep", "binary", "gist", "text2img", "laion"]:
+    if dataset_name in ["sift", "deep", "binary", "gist", "text2img", "laion", "glove"]:
         # dataset_name: local, sift, deep, binary
         file_name = DatasetPath[dataset_name] + "query.npy"
 
