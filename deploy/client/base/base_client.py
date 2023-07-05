@@ -25,7 +25,7 @@ class BaseClient(metaclass=abc.ABCMeta):
         log.debug("[BaseClient] Delete pvc: {}".format(args, kwargs))
     
     @abc.abstractmethod
-    def resume_pods(self, *args, **kwargs):
+    def resume_server(self, *args, **kwargs):
         log.debug("[BaseClient] resume pods: {}".format(args, kwargs))
 
     @abc.abstractmethod
