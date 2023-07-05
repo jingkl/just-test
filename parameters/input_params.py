@@ -107,6 +107,7 @@ class InputParamsBase:
     deploy_tool: Optional[str] = Helm
     deploy_mode: Optional[str] = ""
     deploy_config: Union[str, dict] = ""
+    deploy_resume : Optional[bool] = False
     upgrade_config: Optional[Union[str, dict]] = ""
     case_params: Union[str, dict] = ""
     case_skip_prepare: Optional[bool] = False

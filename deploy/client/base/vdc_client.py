@@ -15,11 +15,12 @@ class VDCClient(BaseClient):
     INSTANCE_TYPE = None
 
     def __init__(self, kubeconfig=EnvVariable.KUBECONFIG, deploy_mode=get_class_key_name(ClassID, ClassID.class1cu),
-                 release_name="", **kwargs):
+                 release_name="", deploy_resume=False, **kwargs):
         super().__init__()
         self.kubeconfig = kubeconfig
         self.deploy_class_id = eval(f"ClassID.{deploy_mode}") if hasattr(ClassID, deploy_mode) else ""
         self.release_name = release_name
+        self.deploy_resume =deploy_resume
 
         self.client = VDCClientBase(instance_name=self.release_name, kubeconfig=self.kubeconfig)
 
@@ -61,7 +62,7 @@ class VDCClient(BaseClient):
         return obj(image_tag=image_tag, server_resource=server_resource, milvus_config=milvus_config,
                    return_release_name=return_release_name)
 
-    def _delicate_install(self, image_tag, server_resource, milvus_config, return_release_name, **kwargs):
+    def _delicate_install(self, image_tag, server_resource, milvus_config, return_release_name**kwargs):
         log.debug(f"[VDCClient] Final config for VDC deployment, release_name: {self.release_name}, " +
                   f"deploy_class_id: {self.deploy_class_id}, image_tag: {image_tag}, " +
                   f"server_resource: {server_resource}, milvus_config: {milvus_config}")
@@ -69,7 +70,7 @@ class VDCClient(BaseClient):
             instance_name=self.release_name, image_tag=image_tag, deploy_mode=self.deploy_class_id)
 
         self.upgrade(body={"server_resource": server_resource, "milvus_config": milvus_config},
-                     release_name=self.release_name, check_release_exist=False)
+                     release_name=self.release_name, check_release_exist=False, deploy_resume=self.deploy_resume)
 
         self.instance_id_maps.update({self.release_name: instance_id})
         return self.release_name if return_release_name else (self.release_name, instance_id)
@@ -87,7 +88,7 @@ class VDCClient(BaseClient):
         self.instance_id_maps.update({self.release_name: instance_id})
         return self.release_name if return_release_name else (self.release_name, instance_id)
 
-    def upgrade(self, body: dict, release_name="", parser_result=True, check_release_exist=True):
+    def upgrade(self, body: dict, release_name="", parser_result=True, check_release_exist=True, deploy_resume=False):
         """
         Only 4 upgrades are supported: image_tag, deploy_mode, server_resource, milvus_config
         """
@@ -98,6 +99,9 @@ class VDCClient(BaseClient):
         # check instance exist
         if check_release_exist:
             self.check_server_and_set_params(release_name=release_name)
+
+        if deploy_resume:
+            self.resume_server(release_name=release_name)
 
         if image_tag:
             log.info("[VDCClient] Upgrade release_name: %s, image_tag: %s, instance_type: %s" % (
@@ -171,7 +175,7 @@ class VDCClient(BaseClient):
         log.info(f"[VDCClient] Delete release's: {release_name} pvc.")
         return True
     
-    def resume_pods(self, release_name: str):
+    def resume_server(self, release_name: str):
         # todo: need to check delete pvc failed or not if uninstall first
         release_name = release_name or self.release_name
         self.check_server_and_set_params(release_name=release_name)

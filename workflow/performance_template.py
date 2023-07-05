@@ -21,6 +21,8 @@ class PerfTemplate(Base):
         # input_params.deploy_tool = ""
         input_params.deploy_mode = ""
         input_params.deploy_config = ""
+        input_params.deploy_resume = False
+
 
     def serial_template(self, input_params: InputParamsBase, case_callable_obj: callable,
                         default_case_params: dict = {}, cpu=8, mem=16, deploy_mode=STANDALONE,
@@ -34,7 +36,7 @@ class PerfTemplate(Base):
             self.deploy_default(deploy_tool=input_params.deploy_tool,
                                 deploy_mode=input_params.deploy_mode,
                                 other_config=input_params.deploy_config,
-                                cpu=cpu, mem=mem, input_configs=input_configs,
+                                cpu=cpu, mem=mem, input_configs=input_configs, 
                                 node_resources=node_resources, set_dependence=set_dependence, **kwargs)
             # update server metric
             Report_Metric_Object.update_server(deploy_tool=input_params.deploy_tool,
@@ -42,7 +44,7 @@ class PerfTemplate(Base):
                                                config_name=self.deploy_config[1], config=self.deploy_config[2])
         else:
             if param_info.release_name:
-                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode, deploy_resume= input_params.deploy_resume)
                 self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
         Report_Metric_Object.update_server(
@@ -102,7 +104,7 @@ class PerfTemplate(Base):
                                                config_name=self.deploy_config[1], config=self.deploy_config[2])
         else:
             if param_info.release_name:
-                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+                self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode, deploy_resume=input_params.deploy_resume)
                 self.set_global_function_before_test(release_name=param_info.release_name)
             self.clear_deploy_report_params(input_params=input_params)
         Report_Metric_Object.update_server(
@@ -173,10 +175,10 @@ class ServerTemplate(Base):
                                 cpu=cpu, mem=mem, input_configs=input_configs,
                                 node_resources=node_resources, set_dependence=set_dependence, **kwargs)
         else:
-            self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+            self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode, deploy_resume=input_params.deploy_resume)
 
         if not param_info.deploy_retain:
-            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall, deploy_resume=param_info.deploy_resume)
+            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
 
     def upgrade_server_template(self, input_params: InputParamsBase, release_name=None, deploy_mode=STANDALONE,
                                 upgrade_config: str = ""):

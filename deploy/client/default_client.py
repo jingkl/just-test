@@ -8,7 +8,7 @@ from parameters.input_params import param_info
 
 class DefaultClient:
 
-    def __init__(self, deploy_tool=Helm, deploy_mode=CLUSTER, kubeconfig=EnvVariable.KUBECONFIG,
+    def __init__(self, deploy_tool=Helm, deploy_mode=CLUSTER, kubeconfig=EnvVariable.KUBECONFIG, deploy_resume=False,
                  namespace=EnvVariable.NAMESPACE, **kwargs):
         """
         :param deploy_tool: helm or operator or vdc
@@ -21,6 +21,7 @@ class DefaultClient:
         self.deploy_mode = deploy_mode
         self.kubeconfig = kubeconfig
         self.namespace = namespace
+        self.deploy_resume =deploy_resume
 
         # params for helm
         self.chart = kwargs.get("chart", EnvVariable.FOURAM_HELM_CHART_PATH)
