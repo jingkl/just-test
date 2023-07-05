@@ -170,6 +170,16 @@ class VDCClient(BaseClient):
 
         log.info(f"[VDCClient] Delete release's: {release_name} pvc.")
         return True
+    
+    def resume_pods(self, release_name: str):
+        # todo: need to check delete pvc failed or not if uninstall first
+        release_name = release_name or self.release_name
+        self.check_server_and_set_params(release_name=release_name)
+
+        self.client.resume_server()
+
+        log.info(f"[VDCClient] resume release's: {release_name} pvc.")
+        return True
 
     def get_all_values(self, release_name: str):
         release_name = release_name or self.release_name

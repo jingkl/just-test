@@ -32,6 +32,7 @@ class ParamInfo:
         self.deploy_skip = False
         self.deploy_retain = False
         self.deploy_retain_pvc = False
+        self.deploy_resume = False
         self.client_test_skip = False
         self.release_name_prefix = ""
         self.release_name = ""
@@ -47,7 +48,7 @@ class ParamInfo:
             token="", uri="", handler="", secure="", param_user="", param_password="", param_db_name="",
             vdc_user="", vdc_env="", vdc_region_id="", vdc_serverless_host="",
             milvus_tag=None, milvus_tag_prefix="", tag_repository=None, release_name_prefix="", release_name="",
-            update_helm_file=False, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False,
+            update_helm_file=False, deploy_skip=False, deploy_retain=False, deploy_retain_pvc=False, deploy_resume=False,
             client_test_skip=False, replica_num=1,
             run_id=None, sync_report=False, async_report=False,
             locust_patch_switch=False):
@@ -79,6 +80,7 @@ class ParamInfo:
         self.deploy_skip = deploy_skip or self.deploy_skip
         self.deploy_retain = deploy_retain or self.deploy_retain
         self.deploy_retain_pvc = deploy_retain_pvc or self.deploy_retain_pvc
+        self.deploy_resume = deploy_resume
 
         # client
         self.client_test_skip = client_test_skip or self.client_test_skip

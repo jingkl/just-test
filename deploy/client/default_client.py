@@ -66,6 +66,10 @@ class DefaultClient:
     def delete_pvc(self, release_name=""):
         release_name = release_name or self.release_name
         return self.obj.delete_pvc(release_name)
+    
+    def resume_pods(self, release_name=""):
+        release_name = release_name or self.release_name
+        return self.obj.resume_pods(release_name)
 
     def endpoint(self, release_name=""):
         release_name = release_name or self.release_name
