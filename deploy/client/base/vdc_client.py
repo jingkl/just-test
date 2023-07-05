@@ -62,7 +62,7 @@ class VDCClient(BaseClient):
         return obj(image_tag=image_tag, server_resource=server_resource, milvus_config=milvus_config,
                    return_release_name=return_release_name)
 
-    def _delicate_install(self, image_tag, server_resource, milvus_config, return_release_name**kwargs):
+    def _delicate_install(self, image_tag, server_resource, milvus_config, return_release_name, **kwargs):
         log.debug(f"[VDCClient] Final config for VDC deployment, release_name: {self.release_name}, " +
                   f"deploy_class_id: {self.deploy_class_id}, image_tag: {image_tag}, " +
                   f"server_resource: {server_resource}, milvus_config: {milvus_config}")
