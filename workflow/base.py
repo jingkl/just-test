@@ -205,7 +205,7 @@ class Base:
         log.info("[Base] Service upgraded successfully:{0}".format(release_name))
         return server_upgrade_params
 
-    def deploy_delete(self, deploy_client=None, deploy_release_name="", deploy_retain_pvc=False, deploy_uninstall=True):
+    def deploy_delete(self, deploy_client=None, deploy_release_name="", deploy_retain_pvc=False, deploy_uninstall=True, deploy_resume=False):
         deploy_client = deploy_client or self.deploy_client
         deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
 
@@ -221,6 +221,8 @@ class Base:
                 deploy_client.uninstall(release_name=deploy_release_name)
             if not deploy_retain_pvc:
                 deploy_client.delete_pvc(release_name=deploy_release_name)
+            if deploy_resume:
+                deploy_client.resume_server(release_name=deploy_release_name)
             log.info("[Base] Service deleted successfully: {0}".format(deploy_release_name))
 
     def run_perf_case(self, callable_obj: callable, default_case_params, case_params, case_prepare, case_prepare_clean,
