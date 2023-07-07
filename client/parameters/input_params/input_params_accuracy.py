@@ -54,7 +54,7 @@ class AccParams:
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
-        ef = [8, 16, 32, 64, 128, 256, 512] if ef is None else ef
+        ef = [16, 32, 64, 128, 256, 512] if ef is None else ef
         search_param = {"ef": ef}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
@@ -77,7 +77,7 @@ class AccParams:
                                     index_type=pn.IndexTypeName.IVF_FLAT, nlist=1024, nprobe=None, metric_type=""):
         index_param = {"nlist": nlist}
 
-        nprobe = [8, 16, 32, 64, 128, 256, 512] if nprobe is None else nprobe
+        nprobe = [16, 32, 64, 128, 256, 512] if nprobe is None else nprobe
         search_param = {"nprobe": nprobe}
 
         default_params = self.base(dataset_name=dataset_name, index_type=index_type, index_param=index_param,
