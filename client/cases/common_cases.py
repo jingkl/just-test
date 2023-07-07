@@ -63,7 +63,6 @@ class CommonCases(Base):
                                  scalars_params=self.params_obj.dataset_params.get(pn.scalars_params, {}))
         self.case_report.add_attr(**res_insert)
     
-
     def prepare_insert_cohere(self, data_type, dim, size, ni, varchar_filled=False):
         varchar_filled = self.params_obj.dataset_params.get(pn.varchar_filled, varchar_filled)
         res_insert = self.insert_cohere(data_type=data_type, dim=dim, size=size, ni=ni, varchar_filled=varchar_filled,
@@ -73,6 +72,11 @@ class CommonCases(Base):
     def prepare_load(self, **kwargs):
         res_load = self.load_collection(**kwargs)
         self.case_report.add_attr(**{"load": {"RT": round(res_load.rt, Precision.LOAD_PRECISION)}})
+
+
+    def prepare_delete(self, expr):
+        res_delete = self.delete(expr=expr)
+        self.case_report.add_attr(**{"delete": {"RT": round(res_delete.rt, Precision.LOAD_PRECISION)}})
 
     def prepare_flush(self):
         if self.params_obj.flush_params.get(pn.prepare_flush, True):
@@ -533,6 +537,8 @@ class Search(CommonCases):
         vector_type = get_vector_type(self.params_obj.dataset_params[pn.dataset_name])
         vector_default_field_name = get_default_field_name(
             vector_type, self.params_obj.dataset_params.get(pn.vector_field_name, ""))
+        
+        _prepare_load = self.params_obj.load_params.pop("prepare_load", False)
 
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
@@ -540,6 +546,9 @@ class Search(CommonCases):
             self.prepare_index(vector_field_name=vector_default_field_name,
                                metric_type=self.params_obj.dataset_params[pn.metric_type],
                                clean_index_before=True)
+            if _prepare_load:
+                self.prepare_load(**self.params_obj.load_params)
+
             self.prepare_insert(data_type=self.params_obj.dataset_params[pn.dataset_name],
                                 dim=self.params_obj.dataset_params[pn.dim],
                                 size=self.params_obj.dataset_params[pn.dataset_size],
@@ -587,6 +596,9 @@ class Search(CommonCases):
                                actual_params_used=actual_params_used, case_type=self.__class__.__name__)
             params_list.append(p)
         yield params_list
+        
+        # delete data
+        self.prepare_delete(self.params_obj.delete_params[pn.delete_expr])
 
         # clear env
         self.clear_collections(clean_collection=clean_collection)

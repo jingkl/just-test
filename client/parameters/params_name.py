@@ -9,6 +9,7 @@ flush_params = "flush_params"
 index_params = "index_params"
 search_params = "search_params"
 query_params = "query_params"
+delete_params = "delete_params"
 go_search_params = "go_search_params"
 concurrent_params = "concurrent_params"
 concurrent_tasks = "concurrent_tasks"
@@ -91,6 +92,9 @@ search_param = "search_param"
 expr = "expr"
 guarantee_timestamp = "guarantee_timestamp"
 output_fields = "output_fields"
+
+# delete
+delete_expr =  "delete_expr"
 
 # go search
 concurrent_number = "concurrent_number"

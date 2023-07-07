@@ -16,6 +16,7 @@ class ParamsBase:
     load_params: Optional[dict] = field(default_factory=lambda: {})
     flush_params: Optional[dict] = field(default_factory=lambda: {})
     index_params: Optional[dict] = field(default_factory=lambda: {})
+    delete_params: Optional[dict] = field(default_factory=lambda: {})
     search_params: Optional[dict] = field(default_factory=lambda: {})
     query_params: Optional[dict] = field(default_factory=lambda: {})
     go_search_params: Optional[dict] = field(default_factory=lambda: {})
@@ -57,6 +58,7 @@ class ParamsFormat:
         flush_params: {prepare_flush: ([type(bool())], OPTION)},
         query_params: {output_fields: ([type(list()), type(None)], OPTION),
                        ignore_growing: ([type(bool())], OPTION)},
+        delete_params: {delete_expr: ([type(bool())], OPTION)},
         search_params: {
             expr: ([type(str()), type(list()), type(None)], OPTION),
             guarantee_timestamp: ([type(int())], OPTION),
