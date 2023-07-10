@@ -48,7 +48,7 @@ class TestServerDeploy(ServerTemplate):
         # node_resources = [NodeResource(
         #     nodes=[queryNode, indexNode], replicas=2).custom_resource(requests_cpu=1.5, requests_mem=1)]
         # set_dependence = SetDependence(mq_type=pulsar)
-        # self.server_template(input_params=input_params, cpu=4, mem=4, deploy_mode=CLUSTER,
+        # self.server_template(input_params=input_params, cpu=4, mem=16, deploy_mode=CLUSTER,
         #                      node_resources=node_resources, set_dependence=set_dependence)
 
         self.server_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem,
@@ -124,7 +124,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_hnsw())
         
@@ -135,7 +135,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_hnsw())
         
@@ -146,7 +146,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_hnsw())
         
@@ -157,7 +157,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_diskann())
         
@@ -168,7 +168,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_diskann())
         
@@ -179,7 +179,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=12, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_ivf_flat())
 
@@ -195,7 +195,7 @@ class TestRecallCases(PerfTemplate):
             NodeResource(nodes=[queryNode], cpu=8, mem=16)
         ]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().gist_768_euclidean_ivf_flat(),
                              node_resources=node_resources)
@@ -209,9 +209,9 @@ class TestRecallCases(PerfTemplate):
             1. serial search and calculation of RT and recall
         """
 
-        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=8)]
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_hnsw(), node_resources=node_resources)
 
@@ -222,7 +222,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_diskann())
 
@@ -234,9 +234,9 @@ class TestRecallCases(PerfTemplate):
             1. serial search and calculation of RT and recall
         """
 
-        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=8)]
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_diskann(),
                              node_resources=node_resources)
@@ -270,7 +270,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=10, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_flat())
 
@@ -282,9 +282,9 @@ class TestRecallCases(PerfTemplate):
             1. serial search and calculation of RT and recall
         """
 
-        node_resources = [NodeResource(nodes=[queryNode], cpu=8, mem=4)]
+        node_resources = [NodeResource(nodes=[queryNode], cpu=8, mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_flat(), node_resources=node_resources)
 
@@ -295,7 +295,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=12, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_flat())
 
@@ -308,11 +308,11 @@ class TestRecallCases(PerfTemplate):
         """
 
         node_resources = [
-            NodeResource(nodes=[indexNode], cpu=4, mem=8),
-            NodeResource(nodes=[queryNode], cpu=8, mem=6)
+            NodeResource(nodes=[indexNode], cpu=4, mem=16),
+            NodeResource(nodes=[queryNode], cpu=8, mem=16)
         ]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_flat(),
                              node_resources=node_resources)
@@ -324,7 +324,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=8, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_sq8())
 
@@ -338,7 +338,7 @@ class TestRecallCases(PerfTemplate):
 
         node_resources = [NodeResource(nodes=[queryNode], cpu=8)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_sq8(),
                              node_resources=node_resources)
@@ -350,7 +350,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=6, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_pq())
 
@@ -362,9 +362,9 @@ class TestRecallCases(PerfTemplate):
             1. serial search and calculation of RT and recall
         """
 
-        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=4)]
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().sift_128_euclidean_ivf_pq(), node_resources=node_resources)
 
@@ -385,7 +385,7 @@ class TestRecallCases(PerfTemplate):
         :test steps:
             1. serial search and calculation of RT and recall
         """
-        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=6, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_hnsw())
 
@@ -397,9 +397,9 @@ class TestRecallCases(PerfTemplate):
             1. serial search and calculation of RT and recall
         """
 
-        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=6)]
+        node_resources = [NodeResource(nodes=[indexNode, queryNode], cpu=8, mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_hnsw(), node_resources=node_resources)
 
@@ -448,10 +448,10 @@ class TestRecallCases(PerfTemplate):
 
         node_resources = [
             NodeResource(nodes=[indexNode], cpu=8, mem=16),
-            NodeResource(nodes=[queryNode], cpu=8, mem=4)
+            NodeResource(nodes=[queryNode], cpu=8, mem=16)
         ]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=AccCases().scene_recall,
                              default_case_params=AccParams().glove_200_angular_ivf_flat(),
                              node_resources=node_resources)
@@ -604,7 +604,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. batch insert and calculation of insert time
         """
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=6, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=InsertBatch().scene_insert_batch,
                              default_case_params=InsertBatchParams().params_insert_batch())
 
@@ -616,9 +616,9 @@ class TestPerformanceCases(PerfTemplate):
             1. batch insert and calculation of insert time
         """
 
-        node_resources = [NodeResource(nodes=[dataNode], mem=6)]
+        node_resources = [NodeResource(nodes=[dataNode], mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=InsertBatch().scene_insert_batch,
                              default_case_params=InsertBatchParams().params_insert_batch(),
                              node_resources=node_resources)
@@ -638,7 +638,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of build index time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=BuildIndex().scene_build_index,
                              default_case_params=BuildIndexParams().params_build_index_hnsw())
 
@@ -649,7 +649,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of build index time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=BuildIndex().scene_build_index,
                              default_case_params=BuildIndexParams().params_build_index_hnsw())
 
@@ -660,7 +660,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of build index time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=BuildIndex().scene_build_index,
                              default_case_params=BuildIndexParams().params_build_index_ivf_flat())
 
@@ -671,7 +671,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of build index time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=BuildIndex().scene_build_index,
                              default_case_params=BuildIndexParams().params_build_index_ivf_flat())
 
@@ -718,7 +718,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of query time
         """
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=4, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=16, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_expr,
                              default_case_params=QueryParams().params_scene_query_expr_sift())
 
@@ -730,9 +730,9 @@ class TestPerformanceCases(PerfTemplate):
             1. insert and calculation of query time
         """
 
-        node_resources = [NodeResource(nodes=[indexNode], mem=4)]
+        node_resources = [NodeResource(nodes=[indexNode], mem=16)]
 
-        self.serial_template(input_params=input_params, cpu=dp.min_cpu, mem=dp.min_mem, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=dp.default_cpu, mem=dp.default_mem, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_ids,
                              default_case_params=QueryParams().params_scene_query_ids_sift(),
                              node_resources=node_resources)
@@ -744,7 +744,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of query time
         """
-        self.serial_template(input_params=input_params, cpu=8, mem=128, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=8, mem=dp.default_mem8, deploy_mode=deploy_mode,
                              case_callable_obj=Query().scene_query_ids,
                              default_case_params=QueryParams().params_scene_query_ids_local())
 
@@ -763,7 +763,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
                              default_case_params=SearchParams().params_scene_search_ivf_flat())
 
@@ -776,11 +776,11 @@ class TestPerformanceCases(PerfTemplate):
         """
 
         node_resources = [
-            NodeResource(nodes=[dataNode], cpu=2, mem=4),
+            NodeResource(nodes=[dataNode], cpu=2, mem=16),
             NodeResource(nodes=[indexNode], mem=20)
         ]
 
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
                              default_case_params=SearchParams().params_scene_search_ivf_flat(),
                              node_resources=node_resources)
@@ -792,7 +792,7 @@ class TestPerformanceCases(PerfTemplate):
         :test steps:
             1. insert and calculation of search time
         """
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
                              default_case_params=SearchParams().params_scene_search_ivf_flat(
                                  other_fields=[], search_expr=None, req_run_counts=30))
@@ -806,11 +806,11 @@ class TestPerformanceCases(PerfTemplate):
         """
 
         node_resources = [
-            NodeResource(nodes=[dataNode], cpu=2, mem=4),
+            NodeResource(nodes=[dataNode], cpu=2, mem=16),
             NodeResource(nodes=[indexNode], mem=16)
         ]
 
-        self.serial_template(input_params=input_params, cpu=16, mem=64, deploy_mode=deploy_mode,
+        self.serial_template(input_params=input_params, cpu=16, mem=164, deploy_mode=deploy_mode,
                              case_callable_obj=Search().scene_search,
                              default_case_params=SearchParams().params_scene_search_ivf_flat(
                                  other_fields=[], search_expr=None, req_run_counts=30), node_resources=node_resources)
