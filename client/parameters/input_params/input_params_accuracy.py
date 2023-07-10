@@ -166,7 +166,7 @@ class AccParams:
         return default_params
 
     def glove_200_angular_hnsw(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
-                               index_type=pn.IndexTypeName.HNSW, m=36, ef_construction=500, ef=None, metric_type=""):
+                               index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None, metric_type=""):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
