@@ -175,10 +175,13 @@ class ServerTemplate(Base):
                                 cpu=cpu, mem=mem, input_configs=input_configs,
                                 node_resources=node_resources, set_dependence=set_dependence, **kwargs)
         else:
-            self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode, deploy_resume=input_params.deploy_resume)
+            self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
+        
+        if param_info.deploy_resume:
+            self.resume_server(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_resume=input_params.deploy_resume)
 
         if not param_info.deploy_retain:
-            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall, deploy_resume=param_info.deploy_resume)
+            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
 
     def upgrade_server_template(self, input_params: InputParamsBase, release_name=None, deploy_mode=STANDALONE,
                                 upgrade_config: str = ""):

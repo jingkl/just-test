@@ -70,7 +70,7 @@ class VDCClient(BaseClient):
             instance_name=self.release_name, image_tag=image_tag, deploy_mode=self.deploy_class_id)
 
         self.upgrade(body={"server_resource": server_resource, "milvus_config": milvus_config},
-                     release_name=self.release_name, check_release_exist=False, deploy_resume=self.deploy_resume)
+                     release_name=self.release_name, check_release_exist=False)
 
         self.instance_id_maps.update({self.release_name: instance_id})
         return self.release_name if return_release_name else (self.release_name, instance_id)
@@ -88,7 +88,7 @@ class VDCClient(BaseClient):
         self.instance_id_maps.update({self.release_name: instance_id})
         return self.release_name if return_release_name else (self.release_name, instance_id)
 
-    def upgrade(self, body: dict, release_name="", parser_result=True, check_release_exist=True, deploy_resume=False):
+    def upgrade(self, body: dict, release_name="", parser_result=True, check_release_exist=True):
         """
         Only 4 upgrades are supported: image_tag, deploy_mode, server_resource, milvus_config
         """

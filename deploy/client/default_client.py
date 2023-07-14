@@ -21,7 +21,6 @@ class DefaultClient:
         self.deploy_mode = deploy_mode
         self.kubeconfig = kubeconfig
         self.namespace = namespace
-        self.deploy_resume =deploy_resume
 
         # params for helm
         self.chart = kwargs.get("chart", EnvVariable.FOURAM_HELM_CHART_PATH)
@@ -76,6 +75,10 @@ class DefaultClient:
     def get_pvc(self, release_name=""):
         release_name = release_name or self.release_name
         return self.obj.get_pvc(release_name)
+    
+    def resume_server(self, release_name=""):
+        release_name = release_name or self.release_name
+        return self.obj.resume_server(release_name)
 
     def get_pods(self, release_name=""):
         release_name = release_name or self.release_name

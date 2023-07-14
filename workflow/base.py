@@ -108,8 +108,19 @@ class Base:
         else:
             raise Exception(f"[Base] Can not parser endpoint: {endpoint}, type: {type(endpoint)}, please check.")
 
-    def init_server_client(self, deploy_tool=Operator, deploy_mode=STANDALONE, deploy_resume=False):
-        self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode, deploy_resume=deploy_resume)
+    def init_server_client(self, deploy_tool=Operator, deploy_mode=STANDALONE):
+        self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
+    
+    def resume_server(self, deploy_client=None, deploy_release_name="", deploy_resume=False):
+        deploy_client = deploy_client or self.deploy_client
+        deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
+        if deploy_client:
+            log.info("[Base] Start get services: {0}".format(deploy_release_name))
+            deploy_client.get_pvc(release_name=deploy_release_name)
+            if deploy_resume:
+                deploy_client.resume_server(release_name=deploy_release_name)
+                log.info("[Base] Service resume successfully: {0}".format(deploy_release_name))
+
 
     def set_global_function_before_test(self, release_name: str = ""):
         # set global password
@@ -205,7 +216,7 @@ class Base:
         log.info("[Base] Service upgraded successfully:{0}".format(release_name))
         return server_upgrade_params
 
-    def deploy_delete(self, deploy_client=None, deploy_release_name="", deploy_retain_pvc=False, deploy_uninstall=True, deploy_resume=False):
+    def deploy_delete(self, deploy_client=None, deploy_release_name="", deploy_retain_pvc=False, deploy_uninstall=True):
         deploy_client = deploy_client or self.deploy_client
         deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
 
@@ -221,8 +232,6 @@ class Base:
                 deploy_client.uninstall(release_name=deploy_release_name)
             if not deploy_retain_pvc:
                 deploy_client.delete_pvc(release_name=deploy_release_name)
-            if deploy_resume:
-                deploy_client.resume_server(release_name=deploy_release_name)
             log.info("[Base] Service deleted successfully: {0}".format(deploy_release_name))
 
     def run_perf_case(self, callable_obj: callable, default_case_params, case_params, case_prepare, case_prepare_clean,
