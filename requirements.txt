@@ -44,7 +44,7 @@ kubernetes==17.17.0
 #locust==2.15.1
 git+https://github.com/wangting0128/locust.git@wt
 pymongo==3.10.0
-pyarrow==9.0.0
+pyarrow==12.0.0
 fastparquet
 #apscheduler==3.7.0
 pyhelm==2.14.5
