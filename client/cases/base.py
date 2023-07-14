@@ -551,8 +551,8 @@ class Base:
         log.info(msg.format(len(data), anns_field, param, limit, expr, kwargs))
         return self.collection_wrap.search(data, anns_field, param, limit, expr=expr, timeout=timeout, **kwargs)
     
-    def delete(self, expr, timeout=300, **kwargs):
-        return self.collection_wrap.delete(expr=expr, timeout=timeout, **kwargs)
+    # def delete(self, expr, timeout=300, **kwargs):
+    #     return self.collection_wrap.delete(expr=expr, timeout=timeout, **kwargs)
 
     def go_search(self, index_type: str, go_search_params: GoSearchParams, concurrent_number: int,
                   during_time: int, interval: int, uri="", go_benchmark="", timeout=300, output_format="json",

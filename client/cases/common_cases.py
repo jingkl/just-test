@@ -74,9 +74,9 @@ class CommonCases(Base):
         self.case_report.add_attr(**{"load": {"RT": round(res_load.rt, Precision.LOAD_PRECISION)}})
 
 
-    def prepare_delete(self, expr):
-        res_delete = self.delete(expr=expr)
-        self.case_report.add_attr(**{"delete": {"RT": round(res_delete.rt, Precision.LOAD_PRECISION)}})
+    # def prepare_delete(self, expr):
+    #    res_delete = self.delete(expr=expr)
+    #    self.case_report.add_attr(**{"delete": {"RT": round(res_delete.rt, Precision.LOAD_PRECISION)}})
 
     def prepare_flush(self):
         if self.params_obj.flush_params.get(pn.prepare_flush, True):
@@ -598,7 +598,7 @@ class Search(CommonCases):
         yield params_list
         
         # delete data
-        self.prepare_delete(self.params_obj.delete_params[pn.delete_expr])
+        # self.prepare_delete(self.params_obj.delete_params[pn.delete_expr])
 
         # clear env
         self.clear_collections(clean_collection=clean_collection)
