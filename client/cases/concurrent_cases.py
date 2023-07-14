@@ -354,6 +354,7 @@ class ConcurrentClientBase(CommonCases):
 
         # recover output log
         info_logout.recover_output()
+        
 
         # clear env
         self.clear_collections(clean_collection=clean_collection)
@@ -455,5 +456,13 @@ class ConcurrentClientBase(CommonCases):
         info_logout.recover_output()
 
         # clear env
-        self.clear_collections(clean_collection=clean_collection)
+        self.collection_wrap.release()
+        log.info("[Base] Release collections done")
+
+        self.utility_wrap.drop_collection(collection_name=self.params_obj.dataset_params[pn.dataset_name])
+        log.info("[Base] drop collection!")
+        
+        log.info("[Base] Start disconnect connection.")
+        self.remove_connect()
+        # self.clear_collections(clean_collection=clean_collection)
         yield True
