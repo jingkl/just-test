@@ -460,8 +460,8 @@ class ConcurrentClientBase(CommonCases):
         log.info("[Base] Release collections done")
 
         self.utility_wrap.drop_collection(collection_name=self.params_obj.dataset_params[pn.dataset_name])
-        log.info("[Base] drop collection!")
-        
+        log.info("[Base] drop collection")
+
         log.info("[Base] Start disconnect connection.")
         self.remove_connect()
         # self.clear_collections(clean_collection=clean_collection)

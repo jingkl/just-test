@@ -100,9 +100,6 @@ class VDCClient(BaseClient):
         if check_release_exist:
             self.check_server_and_set_params(release_name=release_name)
 
-        if deploy_resume:
-            self.resume_server(release_name=release_name)
-
         if image_tag:
             log.info("[VDCClient] Upgrade release_name: %s, image_tag: %s, instance_type: %s" % (
                 release_name, image_tag, get_class_key_name(InstanceType, self.INSTANCE_TYPE)))
@@ -175,12 +172,13 @@ class VDCClient(BaseClient):
         log.info(f"[VDCClient] Delete release's: {release_name} pvc.")
         return True
     
-    def resume_server(self, release_name: str):
+    def resume_server(self, release_name: str, deploy_resume=False):
         # todo: need to check delete pvc failed or not if uninstall first
         release_name = release_name or self.release_name
         self.check_server_and_set_params(release_name=release_name)
 
-        self.client.resume_server()
+        if deploy_resume:
+            self.client.resume_server()
 
         log.info(f"[VDCClient] resume release's: {release_name} pvc.")
         return True

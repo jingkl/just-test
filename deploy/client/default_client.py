@@ -68,9 +68,6 @@ class DefaultClient:
         release_name = release_name or self.release_name
         return self.obj.delete_pvc(release_name)
     
-    # def resume_server(self, release_name=""):
-    #     release_name = release_name or self.release_name
-    #     return self.obj.resume_server(release_name)
 
     def endpoint(self, release_name=""):
         release_name = release_name or self.release_name
