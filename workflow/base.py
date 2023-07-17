@@ -115,7 +115,7 @@ class Base:
         deploy_client = deploy_client or self.deploy_client
         deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
         if deploy_client:
-            if not deploy_resume:
+            if deploy_resume:
                 deploy_client.resume_server(release_name=deploy_release_name)
                 log.info("[Base] Service resume successfully: {0}".format(deploy_release_name))
         # self.deploy_end_state=deploy_client.get_pods(release_name=self.deploy_release_name)

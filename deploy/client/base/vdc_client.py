@@ -176,7 +176,7 @@ class VDCClient(BaseClient):
         # todo: need to check delete pvc failed or not if uninstall first
         release_name = release_name or self.release_name
         self.check_server_and_set_params(release_name=release_name)
-
+        
         if deploy_resume:
             self.client.resume_server()
 
