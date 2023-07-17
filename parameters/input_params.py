@@ -108,6 +108,7 @@ class InputParamsBase:
     deploy_mode: Optional[str] = ""
     deploy_config: Union[str, dict] = ""
     upgrade_config: Optional[Union[str, dict]] = ""
+    deploy_resume : Optional[bool] = False
     case_params: Union[str, dict] = ""
     case_skip_prepare: Optional[bool] = False
     case_skip_prepare_clean: Optional[bool] = False
