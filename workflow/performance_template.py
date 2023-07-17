@@ -177,7 +177,7 @@ class ServerTemplate(Base):
         else:
             self.init_server_client(deploy_tool=input_params.deploy_tool, deploy_mode=input_params.deploy_mode)
         
-        if param_info.deploy_resume:
+        if not param_info.deploy_resume:
             self.resume_server(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_resume=input_params.deploy_resume)
 
         if not param_info.deploy_retain:
