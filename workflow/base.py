@@ -115,11 +115,11 @@ class Base:
         deploy_client = deploy_client or self.deploy_client
         deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
         if deploy_client:
-            log.info("[Base] Start get services: {0}".format(deploy_release_name))
-            deploy_client.get_pvc(release_name=deploy_release_name)
             if deploy_resume:
                 deploy_client.resume_server(release_name=deploy_release_name)
                 log.info("[Base] Service resume successfully: {0}".format(deploy_release_name))
+            self.deploy_end_state=deploy_client.get_pods(release_name=self.deploy_release_name)
+            log.info("[Base] Deploy initial state: \n{}".format(self.deploy_end_state))
 
 
     def set_global_function_before_test(self, release_name: str = ""):
