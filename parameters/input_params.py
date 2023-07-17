@@ -80,7 +80,7 @@ class ParamInfo:
         self.deploy_skip = deploy_skip or self.deploy_skip
         self.deploy_retain = deploy_retain or self.deploy_retain
         self.deploy_retain_pvc = deploy_retain_pvc or self.deploy_retain_pvc
-        self.deploy_resume = deploy_resume
+        self.deploy_resume = deploy_resume or self.deploy_resume
 
         # client
         self.client_test_skip = client_test_skip or self.client_test_skip
@@ -107,7 +107,6 @@ class InputParamsBase:
     deploy_tool: Optional[str] = Helm
     deploy_mode: Optional[str] = ""
     deploy_config: Union[str, dict] = ""
-    deploy_resume : Optional[bool] = False
     upgrade_config: Optional[Union[str, dict]] = ""
     case_params: Union[str, dict] = ""
     case_skip_prepare: Optional[bool] = False
