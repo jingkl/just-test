@@ -180,8 +180,8 @@ class ServerTemplate(Base):
         if param_info.deploy_resume and param_info.deploy_skip:
             self.resume_server(deploy_resume=input_params.deploy_resume)
 
-        if not param_info.deploy_retain:
-            self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
+        # if not param_info.deploy_retain:
+        #     self.deploy_delete(deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_uninstall=deploy_uninstall)
 
     def upgrade_server_template(self, input_params: InputParamsBase, release_name=None, deploy_mode=STANDALONE,
                                 upgrade_config: str = ""):
