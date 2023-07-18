@@ -131,8 +131,8 @@ class ApiCollectionWrapper:
 
     def search(self, data, anns_field, param, limit, expr=None, partition_names=None, output_fields=None, timeout=None,
                round_decimal=-1, check_task=None, check_items=None, **kwargs):
-        consistency_level = kwargs.get("consistency_level", CONSISTENCY_EVENTUALLY)
-        kwargs.update({"consistency_level": consistency_level})
+        # consistency_level = kwargs.get("consistency_level", CONSISTENCY_EVENTUALLY)
+        # kwargs.update({"consistency_level": consistency_level})
 
         func_name = sys._getframe().f_code.co_name
         res, res_result = api_request([self.collection.search, data, anns_field, param, limit, expr, partition_names,
