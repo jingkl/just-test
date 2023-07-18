@@ -8,7 +8,7 @@ from parameters.input_params import param_info
 
 class DefaultClient:
 
-    def __init__(self, deploy_tool=Helm, deploy_mode=CLUSTER, kubeconfig=EnvVariable.KUBECONFIG, deploy_resume=False,
+    def __init__(self, deploy_tool=Helm, deploy_mode=CLUSTER, kubeconfig=EnvVariable.KUBECONFIG,
                  namespace=EnvVariable.NAMESPACE, **kwargs):
         """
         :param deploy_tool: helm or operator or vdc
@@ -66,7 +66,6 @@ class DefaultClient:
     def delete_pvc(self, release_name=""):
         release_name = release_name or self.release_name
         return self.obj.delete_pvc(release_name)
-    
 
     def endpoint(self, release_name=""):
         release_name = release_name or self.release_name
@@ -75,10 +74,6 @@ class DefaultClient:
     def get_pvc(self, release_name=""):
         release_name = release_name or self.release_name
         return self.obj.get_pvc(release_name)
-    
-    def resume_server(self, release_name=""):
-        release_name = release_name or self.release_name
-        return self.obj.resume_server(release_name)
 
     def get_pods(self, release_name=""):
         release_name = release_name or self.release_name

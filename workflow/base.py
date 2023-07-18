@@ -55,7 +55,7 @@ class Base:
         # Delete the service after the test is over
         if not param_info.deploy_retain and not param_info.deploy_skip:
             self.set_teardown_funcs(
-                TeardownType.DeployDelete, self.deploy_delete, deploy_retain_pvc=param_info.deploy_retain_pvc, deploy_resume=param_info.deploy_resume)
+                TeardownType.DeployDelete, self.deploy_delete, deploy_retain_pvc=param_info.deploy_retain_pvc)
 
         # Save env params
         if str(EnvVariable.FOURAM_SAVE_CONNECT_PARAMS).lower() == 'true':
@@ -110,17 +110,6 @@ class Base:
 
     def init_server_client(self, deploy_tool=Operator, deploy_mode=STANDALONE):
         self.deploy_client = DefaultClient(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
-    
-    def resume_server(self, deploy_client=None, deploy_release_name="", deploy_resume=False):
-        deploy_client = deploy_client or self.deploy_client
-        deploy_release_name = deploy_release_name or self.deploy_release_name or param_info.release_name
-        if deploy_client:
-            if deploy_resume:
-                deploy_client.resume_server(release_name=deploy_release_name)
-                log.info("[Base] Service resume successfully: {0}".format(deploy_release_name))
-        # self.deploy_end_state=deploy_client.get_pods(release_name=self.deploy_release_name)
-        # log.info("[Base] Deploy initial state: \n{}".format(self.deploy_end_state))
-
 
     def set_global_function_before_test(self, release_name: str = ""):
         # set global password
@@ -171,7 +160,8 @@ class Base:
         release_name = release_name or param_info.release_name
         if not release_name:
             raise Exception(f"[Base] Can not upgrade empty release name:{release_name}, please check.")
-        tag = tag or param_info.milvus_tag
+        tag = tag or param_info.milvus_tag or (
+            AutoGetTag().auto_tag(deploy_tool=deploy_tool) if param_info.milvus_tag_prefix else "")
         repository = repository or param_info.tag_repository
 
         # parser configs and install server
@@ -182,7 +172,9 @@ class Base:
         config_obj = DefaultConfigs(deploy_tool=deploy_tool, deploy_mode=deploy_mode)
 
         # get image tag from cmd
-        set_image = config_obj.set_image(tag=tag, repository=repository, prefix="") if tag else {}
+        set_image = config_obj.set_image(
+            tag=tag, repository=repository,
+            prefix=param_info.milvus_tag_prefix) if tag or param_info.milvus_tag_prefix else {}
         get_deploy_mode = config_obj.get_deploy_mode(deploy_mode=deploy_mode)
 
         # merge configs

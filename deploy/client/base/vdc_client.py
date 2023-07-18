@@ -15,12 +15,11 @@ class VDCClient(BaseClient):
     INSTANCE_TYPE = None
 
     def __init__(self, kubeconfig=EnvVariable.KUBECONFIG, deploy_mode=get_class_key_name(ClassID, ClassID.class1cu),
-                 release_name="", deploy_resume=False, **kwargs):
+                 release_name="", **kwargs):
         super().__init__()
         self.kubeconfig = kubeconfig
         self.deploy_class_id = eval(f"ClassID.{deploy_mode}") if hasattr(ClassID, deploy_mode) else ""
         self.release_name = release_name
-        self.deploy_resume =deploy_resume
 
         self.client = VDCClientBase(instance_name=self.release_name, kubeconfig=self.kubeconfig)
 
@@ -93,8 +92,11 @@ class VDCClient(BaseClient):
         Only 4 upgrades are supported: image_tag, deploy_mode, server_resource, milvus_config
         """
         release_name = release_name or self.release_name
-        image_tag, deploy_mode, server_resource, milvus_config = \
-            [body.get(i, None) for i in ["image_tag", "deploy_mode", "server_resource", "milvus_config"]]
+        milvus_tag_prefix = body.get("milvus_tag_prefix", "")
+        image_tag = body.get("image_tag", "") or (
+            self.client.get_release_version(milvus_tag_prefix) if milvus_tag_prefix else "")
+        deploy_mode, server_resource, milvus_config = \
+            [body.get(i, None) for i in ["deploy_mode", "server_resource", "milvus_config"]]
 
         # check instance exist
         if check_release_exist:
@@ -170,17 +172,6 @@ class VDCClient(BaseClient):
         self.client.delete_server()
 
         log.info(f"[VDCClient] Delete release's: {release_name} pvc.")
-        return True
-    
-    def resume_server(self, release_name: str, deploy_resume=False):
-        # todo: need to check delete pvc failed or not if uninstall first
-        release_name = release_name or self.release_name
-        self.check_server_and_set_params(release_name=release_name)
-        
-        if deploy_resume:
-            self.client.resume_server()
-
-        log.info(f"[VDCClient] resume release's: {release_name} pvc.")
         return True
 
     def get_all_values(self, release_name: str):
