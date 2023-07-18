@@ -399,9 +399,9 @@ class ConcurrentClientBase(CommonCases):
         # prepare data
         self.prepare_collection(vector_default_field_name, prepare, prepare_clean)
         if prepare:
-            self.prepare_index(vector_field_name=vector_default_field_name,
-                               metric_type=self.params_obj.dataset_params[pn.metric_type],
-                               clean_index_before=True)
+            # self.prepare_index(vector_field_name=vector_default_field_name,
+            #                    metric_type=self.params_obj.dataset_params[pn.metric_type],
+            #                    clean_index_before=True)
 
             if _prepare_load:
                 self.prepare_load(**self.params_obj.load_params)
