@@ -814,8 +814,11 @@ class Base:
     def concurrent_load_release(self, params: ConcurrentTaskLoadRelease):
         self.collection_wrap.load(check_task=CheckTasks.assert_result, replica_number=params.replica_number,
                                   timeout=params.timeout)
-        self.collection_wrap.release(check_task=CheckTasks.assert_result, timeout=params.timeout)
+        if self.check_collection_load(self.collection_name):
+            self.collection_wrap.release(check_task=CheckTasks.assert_result, timeout=params.timeout)
+            time.sleep(10)
         return "[Base] concurrent_load_release finished."
+    
 
     def concurrent_insert(self, params: ConcurrentTaskInsert):
         entities = gen_entities(self.collection_schema, params.get_vectors, params.get_ids, params.varchar_filled)
