@@ -814,9 +814,10 @@ class Base:
     def concurrent_load_release(self, params: ConcurrentTaskLoadRelease):
         self.collection_wrap.load(check_task=CheckTasks.assert_result, replica_number=params.replica_number,
                                   timeout=params.timeout)
-        if self.check_collection_load(self.collection_name):
+        if self.check_collection_load(self.collection_name): 
+            time.sleep(60)
             self.collection_wrap.release(check_task=CheckTasks.assert_result, timeout=params.timeout)
-            time.sleep(10)
+            time.sleep(300)
         return "[Base] concurrent_load_release finished."
     
 
