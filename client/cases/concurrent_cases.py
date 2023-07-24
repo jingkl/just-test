@@ -311,8 +311,8 @@ class ConcurrentClientBase(CommonCases):
                                 size=self.params_obj.dataset_params[pn.dataset_size],
                                 ni=self.params_obj.dataset_params[pn.ni_per])
             self.prepare_flush()
-            self.prepare_index(vector_field_name=vector_default_field_name,
-                               metric_type=self.params_obj.dataset_params[pn.metric_type])
+            # self.prepare_index(vector_field_name=vector_default_field_name,
+            #                    metric_type=self.params_obj.dataset_params[pn.metric_type])
         else:
             # if pass in rebuild_index, indexes of collection will be dropped before building index
             if rebuild_index:
