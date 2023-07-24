@@ -163,7 +163,7 @@ class TestRecallCases(PerfTemplate):
         
     @pytest.mark.gist
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
-    def test_recall_gist_diskann_standalone(self, input_params: InputParamsBase, deploy_mode):
+    def test_recall_gist_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
         :test steps:
             1. serial search and calculation of RT and recall
