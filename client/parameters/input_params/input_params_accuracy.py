@@ -36,7 +36,7 @@ class AccParams:
         })
 
     def sift_128_euclidean_hnsw(self, dataset_name=pn.AccDatasetsName.sift_128_euclidean,
-                                index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None):
+                                index_type=pn.IndexTypeName.HNSW, m=30, ef_construction=360, ef=None):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
@@ -50,7 +50,7 @@ class AccParams:
     
 
     def gist_768_euclidean_hnsw(self, dataset_name=pn.AccDatasetsName.gist_768_euclidea,
-                                index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None, metric_type=""):
+                                index_type=pn.IndexTypeName.HNSW, m=30, ef_construction=360, ef=None, metric_type=""):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
@@ -168,7 +168,7 @@ class AccParams:
         return default_params
 
     def glove_200_angular_hnsw(self, dataset_name=pn.AccDatasetsName.glove_200_angular,
-                               index_type=pn.IndexTypeName.HNSW, m=8, ef_construction=200, ef=None, metric_type=""):
+                               index_type=pn.IndexTypeName.HNSW, m=30, ef_construction=360, ef=None, metric_type=""):
         index_param = {"M": m,
                        "efConstruction": ef_construction}
 
