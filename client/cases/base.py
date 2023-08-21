@@ -12,7 +12,7 @@ from client.common.common_func import (
     gen_collection_schema, gen_unique_str, get_file_list, read_npy_file, parser_data_size, loop_files, loop_ids,
     gen_vectors, gen_entities, run_go_bench_process, go_bench, GoSearchParams, loop_gen_files, remove_list_values, loop_gen_parquet_files,
     parser_segment_info, gen_scalar_values, update_dict_value, get_default_search_params, parser_search_params_expr,
-    hide_dict_value,  get_cohere_file_list, read_parquet_file)
+    hide_dict_value, read_parquet_file)
 from client.common.common_param import TransferNodesParams, TransferReplicasParams
 from client.common.common_type import Precision, CheckTasks
 from client.common.common_type import DefaultValue as dv
@@ -404,7 +404,7 @@ class Base:
         insert_scalars_params = gen_scalar_values(scalars_params, ni)
 
         
-        _loop_file = loop_gen_parquet_files(data_type)
+        _loop_file = loop_gen_parquet_files(dim, data_type)
         vectors = []
 
         for i in range(0, ni_cunt):

@@ -180,8 +180,8 @@ def gen_file_name(file_id, dim, data_type):
         return ""
     
 
-def gen_parquet_file_name(file_id, data_type):
-    file_name = "%s-%02d-of-10.parquet" % (dv.FILE_TITLE, int(file_id))
+def gen_parquet_file_name(file_id, dim, data_type):
+    file_name = "%s_%sd_%05d.parquet" % (dv.FILE_PREFIX, str(dim), int(file_id))
     if data_type in DatasetPath.keys():
         return DatasetPath[data_type] + file_name
     else:
@@ -237,7 +237,7 @@ def get_file_list(data_size, dim, data_type):
         return []
     return file_names
 
-def get_cohere_file_list(data_size, data_type):
+def get_cohere_file_list(data_size, dim ,data_type):
     """
     :param data_size: end with w/m/b or number
     :param dim: int
@@ -250,7 +250,7 @@ def get_cohere_file_list(data_size, data_type):
     with tqdm.tqdm(range(_data_size)) as bar:
         bar.set_description("Get File List Processing")
         for i in range(dv.Max_file_count):
-            file_name = gen_parquet_file_name(i, data_type)
+            file_name = gen_parquet_file_name(i, dim, data_type)
             file_names.append(file_name)
             file_size = len(read_parquet_file(file_name))
             data_size -= file_size
@@ -648,9 +648,9 @@ def loop_gen_scalar_files(dataset_name):
         yield gen_scalar_file_name(i, dataset_name)
 
 
-def loop_gen_parquet_files(data_type):
+def loop_gen_parquet_files(dim, data_type):
     for i in range(dv.Max_file_count):
-        yield gen_parquet_file_name(i, data_type)
+        yield gen_parquet_file_name(i, dim, data_type)
 
 
 def loop_ids(step=50000, start_id=0):
