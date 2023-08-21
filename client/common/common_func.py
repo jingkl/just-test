@@ -447,9 +447,8 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
         return gen_vectors(nq, dimension)
     
     elif dataset_name == "cohere":
-        file_name = DatasetPath[dataset_name] + "test.parquet"
-        file_name = read_parquet_file(file_name)
-        return file_name
+        file_name = DatasetPath[dataset_name] + "query.npy"
+        
     else:
         raise Exception("[get_vectors_from_binary] Not support dataset: {0}, please check".format(dataset_name))
     data = np.load(file_name)
