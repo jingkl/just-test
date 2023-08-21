@@ -448,10 +448,15 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
     
     elif dataset_name == "cohere":
         file_name = DatasetPath[dataset_name] + "query.npy"
-        
+
     else:
         raise Exception("[get_vectors_from_binary] Not support dataset: {0}, please check".format(dataset_name))
-    data = np.load(file_name)
+   
+    if dataset_name =="cohere":
+        data = np.load(file_name, allow_pickle=True)
+    else:
+        data = np.load(file_name)
+
     if nq > len(data):
         raise Exception("[get_vectors_from_binary] nq large than file support({0})".format(len(data)))
     vectors = data[0:nq].tolist()
