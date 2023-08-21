@@ -183,10 +183,10 @@ class ConcurrentClientBase(CommonCases):
         if req_type == pn.search:
             params = ConcurrentInputParamsSearch(**req_params)
             result, nq, top_k, expr, other_params = \
-                self.search_param_analysis(_search_params=params.to_dict, default_field_name=vector_field_name,
+            self.search_param_analysis(_search_params=params.to_dict, default_field_name=vector_field_name,
                                            metric_type=metric_type)
             return ConcurrentTaskSearch(**result)
-
+        
         elif req_type == pn.query:
             params = ConcurrentInputParamsQuery(**req_params)
             result = self.query_param_analysis(**params.to_dict)
@@ -455,17 +455,6 @@ class ConcurrentClientBase(CommonCases):
         # recover output log
         info_logout.recover_output()
 
-        # # clear env
-        # self.collection_wrap.release()
-        # log.info("[Base] Release collections done")
-
-        # self.utility_wrap.drop_collection(collection_name=self.params_obj.dataset_params[pn.dataset_name])
-        # log.info("[Base] drop collection")
-
-        # log.info("[Base] Start disconnect connection.")
-        # self.remove_connect()
-        # # self.clear_collections(clean_collection=clean_collection)
-        # yield True
 
         # clear env
         self.clear_collections(clean_collection=clean_collection)

@@ -448,12 +448,10 @@ def get_vectors_from_binary(nq, dimension, dataset_name):
     
     elif dataset_name == "cohere":
         file_name = DatasetPath[dataset_name] + "test.parquet"
-        file_data = read_parquet_file(file_name)
-        return file_data
-    
+        file_name = read_parquet_file(file_name)
+        return file_name
     else:
         raise Exception("[get_vectors_from_binary] Not support dataset: {0}, please check".format(dataset_name))
-
     data = np.load(file_name)
     if nq > len(data):
         raise Exception("[get_vectors_from_binary] nq large than file support({0})".format(len(data)))
