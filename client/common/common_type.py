@@ -59,7 +59,7 @@ class DefaultValue:
 
     SCALAR_FILE_PREFIX = "scalar"
 
-    default_timeout = 60
+    default_timeout = 600
     default_resource_group = "__default_resource_group"
     default_database = "default"
     default_rbac_user = "root"
