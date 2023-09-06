@@ -140,6 +140,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().gist_768_euclidean_hnsw())
         
     @pytest.mark.gist
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_gist_hnsw_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -162,6 +163,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().gist_768_euclidean_diskann())
         
     @pytest.mark.gist
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_gist_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -184,6 +186,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().gist_768_euclidean_ivf_flat())
 
     @pytest.mark.gist
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_gist_ivf_flat_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -202,6 +205,7 @@ class TestRecallCases(PerfTemplate):
 
 
     @pytest.mark.sift
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_sift_hnsw_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -227,6 +231,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().sift_128_euclidean_diskann())
 
     @pytest.mark.sift
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_sift_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -300,6 +305,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().sift_128_euclidean_ivf_flat())
 
     @pytest.mark.sift
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_sift_ivf_flat_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -390,6 +396,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().glove_200_angular_hnsw())
 
     @pytest.mark.glove
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_glove_hnsw_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -439,6 +446,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().glove_200_angular_ivf_flat())
 
     @pytest.mark.glove
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_glove_ivf_flat_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
@@ -493,6 +501,7 @@ class TestRecallCases(PerfTemplate):
                              default_case_params=AccParams().glove_200_angular_diskann())
 
     @pytest.mark.glove
+    @pytest.mark.cluster
     @pytest.mark.parametrize("deploy_mode", [CLUSTER])
     def test_recall_glove_diskann_cluster(self, input_params: InputParamsBase, deploy_mode):
         """
